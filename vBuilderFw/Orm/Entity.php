@@ -231,6 +231,31 @@ class Entity extends vBuilder\Object {
 	}
 	
 	/** 
+	 * Returns metadata object. This function is for public calling.
+	 * It has to be final, because it takes care about metadata caching.
+	 * 
+	 * If you need to overload metadata logic use getMetadataInternal()
+	 * 
+	 * PHP 5.3 REQUIRED for late static binding!
+	 * 
+	 * @return IMetaData
+	 */
+	final public static function & getMetadata() {		
+		$className = \get_called_class();
+		if(isset(self::$_metadata[$className])) return self::$_metadata[$className];
+		
+		self::$_metadata[$className] = static::getMetadataInternal();
+		
+		if(self::$_metadata[$className]->getTableName() == "")
+			  throw new \LogicException("Entity '$className' does not have table name defined");
+		
+		if(count(self::$_metadata[$className]->getFields()) == 0)
+			throw new \LogicException("Entity '$className' does not have defined any fields");
+		
+		return self::$_metadata[$className];
+	}
+	
+	/** 
 	 * Returns metadata object. This function is meant to be overloaded for supporting
 	 * different metadata structures (loading from config etc.).
 	 * 
@@ -238,7 +263,7 @@ class Entity extends vBuilder\Object {
 	 * 
 	 * @return IMetaData
 	 */
-	public static function & getMetadata() {
+	protected static function & getMetadataInternal() {
 		// Reflection teto tridy
 		$thisReflection = new Nette\Reflection\ClassReflection(__CLASS__);
 		
@@ -247,13 +272,9 @@ class Entity extends vBuilder\Object {
 		while($reflection !== null && ($parentReflection = $reflection->getParentClass()) != $thisReflection && !Nette\String::startsWith($parentReflection->getName(), 'vBuilder\Orm'))
 			$reflection = $parentReflection;
 		
-		$className = $reflection->getName();
-		if(isset(self::$_metadata[$className])) return self::$_metadata[$className];
+		$metadata = new AnnotationMetadata($reflection);
 		
-		self::$_metadata[$className] = new AnnotationMetadata($reflection);
-		
-		
-		return self::$_metadata[$className];
+		return $metadata;
 	}
 	
 	/**

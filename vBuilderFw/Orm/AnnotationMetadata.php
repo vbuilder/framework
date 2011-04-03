@@ -37,10 +37,10 @@ class AnnotationMetadata implements IEntityMetadata {
 	private $tableName;
 	
 	/** @var array of ID field names */
-	private $idFields;
+	private $idFields = array();
 	
 	/** @var array of fields */
-	private $fields;
+	private $fields = array();
 	
 	/**
 	 * Parses class annotation and build metadata object
@@ -54,8 +54,7 @@ class AnnotationMetadata implements IEntityMetadata {
 		$annotations = $reflection->getAnnotations();
 		if(isset($annotations['Table']) && isset($annotations['Table'][0]['name'])) {
 			$this->tableName = $annotations['Table'][0]['name'];
-		} else
-			throw new vBuilder\InvalidAnnotationException('Missing @Table(name = "my_table") annotation in class ' . $reflection->getName());
+		}
 		
 		// Sloupecky
 		if(isset($annotations['Column'])) {
@@ -67,8 +66,6 @@ class AnnotationMetadata implements IEntityMetadata {
 				$this->fields[$fieldMetadata['name']] = $fieldMetadata;
 				if(isset($fieldMetadata['id'])) $this->idFields[] = $fieldMetadata['name'];
 			}
-		} else {
-			throw new vBuilder\InvalidAnnotationException('Missing at least one @Column(...) annotation in class ' . $reflection->getName());
 		}
 		
 	}
