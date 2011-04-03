@@ -23,8 +23,7 @@
 
 namespace vBuilder\Orm;
 
-use vBuilder, Nette, dibi,
-	 vBuilder\dibi\DataSource;
+use vBuilder, Nette, dibi;
 
 /**
  * Repository class for ORM entities

@@ -113,10 +113,50 @@ class AnnotationMetadata implements IEntityMetadata {
 	/**
 	 * {@inheritdoc} 
 	 */
+	public function getFieldEntityName($name) {
+		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
+		
+		return isset($this->fields[$name]['entity']) ? $this->fields[$name]['entity'] : null;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
+	public function getFieldTableName($name) {
+		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
+		
+		if(isset($this->fields[$name]['entity'])) {
+			$class = $this->fields[$name]['entity'];
+			$metadata = $class::getMetadata();
+			return $metadata->getTableName();
+		} elseif(isset($this->fields[$name]['table'])) {
+			return $this->fields[$name]['table'];
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
+	public function getFieldJoinPairs($name) {
+		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
+		
+		$pairs = array();
+		
+		if(isset($this->fields[$name]["joinUsing"]))
+				  $pairs[] = array($this->fields[$name]["joinUsing"], $this->fields[$name]["joinUsing"]);
+		
+		return $pairs;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
 	public function isFieldGenerated($name) {
 		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
 		
-		return isset($this->fields[$name]['generated']) ? $this->fields[$name]['type'] : 'string';
+		return isset($this->fields[$name]['generatedValue']) ? (bool) $this->fields[$name]['generatedValue'] : false;
 	}
 	
 }

@@ -503,6 +503,10 @@ class Entity extends vBuilder\Object {
 		} elseif(Nette\String::compare($type, "String")) {
 			$data = (String) $data;
 			return $data;
+		
+		// OneToMany
+		} elseif(Nette\String::compare($type, "OneToMany")) {
+			return $data;
 		}
 
 		throw new EntityException("Data type '$type' is not defined", EntityException::DATATYPE_NOT_DEFINED);

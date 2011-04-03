@@ -89,7 +89,48 @@ class ActiveEntity extends Entity {
 		
 		$result = $query->fetch();
 		if($result !== false) {
-			$this->data->loadData((array) $result);
+			$loadedData = (array) $result;
+			
+			// Relace (OneToMany, ...)
+			// TODO: Bylo by hezky to udelat lazy
+			// imho by slo zrusit na zacatku $this->state != self::STATE_NEW
+			// a volat load s nazvem sloupce
+			foreach($this->metadata->getFields() as $curr) {
+				if($this->metadata->getFieldType($curr) == "OneToMany") {
+					// Vytvorim DS
+					if($this->metadata->getFieldEntityName($curr) !== null)
+						$ds = Repository::findAll($this->metadata->getFieldEntityName($curr));
+					else
+						$ds = new DataSource((String) dibi::select("*")->from($this->metadata->getFieldTableName($curr)), $class);
+					
+					// Podminky spojeni
+					foreach($this->metadata->getFieldJoinPairs($curr) as $join) 
+						$ds->where("[".$join[1]."] = %s", $this->{$join[0]});
+					
+					
+					// Stahnu data a pokud se jedna o jednoduche spojeni (bez entity)
+					// Rozparsuju to do pole
+					$joinedData = $ds->fetchAll();
+					if($this->metadata->getFieldEntityName($curr) === null) {
+						$joinKeys = array();
+						foreach($this->metadata->getFieldJoinPairs($curr) as $join) $joinKeys[$join[1]] = null;
+						
+						$d = array();
+						foreach($joinedData as $c) {
+							$cd = array_diff_key((array) $c, $joinKeys);
+							if(count($cd) == 1) $cd = current($cd);
+							
+							$d[] = $cd;
+						}
+
+						$loadedData[$curr] = $d;
+					} else						 
+						$loadedData[$curr] = $joinedData;
+				}
+			}
+			
+			$this->data->loadData($loadedData);
+			
 		} else {
 			$this->throwNoRecordFound();
 		}
@@ -157,49 +198,102 @@ class ActiveEntity extends Entity {
 				throw new \LogicException('More than one generated ID field is not supported');
 		}
 		
+		// Vytridim polozky, ktere nejsou primo v tyhle tabulce (relace)
+		$externalFields = array();
+		foreach($this->metadata->getFields() as $curr) {
+			if($this->metadata->getFieldType($curr) == "OneToMany") {
+				$externalFields[] = $curr;
+			}
+		}
+		
 
-		$changedFieldsData = $this->data->getChangedData();		
-		if(count($changedFieldsData) == 0) return ;		
-		$allFieldsData = $this->data->getAllData();
+		$allChangedFieldsData = $this->data->getChangedData();
+		$changedFieldsData = array_diff_key($allChangedFieldsData, array_flip($externalFields));		
+		if(count($allChangedFieldsData) == 0) return ;		
+		$allFieldsData = array_diff_key($this->data->getAllData(), array_flip($externalFields));
 		
 		
 		dibi::begin();	
 		
-		dibi::query('INSERT IGNORE ', $this->metadata->getTableName(),
-				  $allFieldsData, ' ON DUPLICATE KEY UPDATE %a', $changedFieldsData);
-		
-		// Provedl se INSERT
 		try {
-			if(dibi::affectedRows() == 1) {
+			// Pokud jsou k ulozeni nejaka TABULKOVA data musim je ulozid driv nez zacnu resit
+			// relace, protoze by jinak nemuselo byt k dispozici IDcko
+			if(count($changedFieldsData) > 0) {
+				dibi::query('INSERT IGNORE ', $this->metadata->getTableName(), $allFieldsData, ' ON DUPLICATE KEY UPDATE %a', $changedFieldsData);
 
-				// Zjistim ID pro generovane sloupce
-				$addtionalDataToMerge = $autoField === null ? array() : array($autoField => dibi::insertId());
-				$this->data->mergeData($addtionalDataToMerge);
+				// Provedl se INSERT
+				if(dibi::affectedRows() == 1) {
 
-				$this->onCreate($this);
+					// Zjistim ID pro generovane sloupce
+					$addtionalDataToMerge = $autoField === null ? array() : array($autoField => dibi::insertId());
+					$this->data->mergeData($addtionalDataToMerge);
+
+					$this->onCreate($this);
+				}
+
+				// Provedl se UPDATE
+				elseif(dibi::affectedRows() == 2) {
+					$this->onUpdate($this);
+				}
+
+				// Data se nezmenila
+				else {
+					// Nevim jestli je to takhle uplne idealni, sice insert ignore ... on duplicate key update
+					// setri zamykani tabulky, ale zese je treba overovat, jestli se neco neposralo
+					// a pokud jo, tak nemam zadny chybovy report
+					// Zkontroluju, jeslti byl zaznam opravdu ulozen do DB
+					$query = dibi::select('1')->from($this->metadata->getTableName());
+					$idFields = $this->metadata->getIdFields();
+					foreach($idFields as $name)
+						$query = $query->where("[$name] = %s", $this->data->$name);
+
+					$result = $query->fetch();
+					if($result === false)
+						throw new EntityException('Error saving entity. Missing mandatory fields?', EntityException::SAVE_FAILED);
+				}
 			}
-
-			// Provedl se UPDATE
-			elseif(dibi::affectedRows() == 2) {
-				$this->onUpdate($this);
+			
+			// Relace (OneToMany, ...) -> ulozeni extenrich sloupcu
+			foreach($externalFields as $curr) {
+				// Pokud se data zmenila
+				if(isset($allChangedFieldsData[$curr])) {
+					
+					// Momentalne nepodporuju relace s plnou entitou
+					if($this->metadata->getFieldEntityName($curr) !== null)
+						throw new \NotImplementedException("Entity based OneToMany save is currently not implemented");
+					
+					// Smazu soucasny zaznamy a vytvorim si ID data pro nove
+					$joinIdFields = array();
+					$query2 = dibi::delete($this->metadata->getFieldTableName($curr));
+					foreach($this->metadata->getFieldJoinPairs($curr) as $join)  {
+						$query2->where("[".$join[1]."] = %s", $this->{$join[0]});	
+						$joinIdFields[$join[1]] = $this->{$join[0]};
+					}
+					$query2->execute();
+					
+					if(count($allChangedFieldsData[$curr]) > 0) {
+						// Pokud se jedna o neassociativni pole, musim zjistit nazvy sloupcu
+						if(!is_array(reset($allChangedFieldsData[$curr]))) {
+							$columnNames = dibi::query("SHOW COLUMNS FROM [".$this->metadata->getFieldTableName($curr)."]")->fetchAll();
+							
+							$singleColumnKey = null;
+							foreach($columnNames as $column) {								
+								if(!array_key_exists($column["Field"], $joinIdFields)) {
+									if($singleColumnKey != null) throw new \LogicException("Saving joined single column data into multi column table");
+									$singleColumnKey = $column["Field"];
+								}
+							}
+						}
+						
+						// Nahazim tam nove
+						foreach($allChangedFieldsData[$curr] as $joinFields) {
+							$iData = array_merge(!is_array($joinFields) ? array($singleColumnKey => $joinFields) : $joinFields, $joinIdFields);
+							dibi::insert($this->metadata->getFieldTableName($curr), $iData)->execute();
+						}
+					}
+				}
 			}
-
-			// Data se nezmenila
-			else {
-				// Nevim jestli je to takhle uplne idealni, sice insert ignore ... on duplicate key update
-				// setri zamykani tabulky, ale zese je treba overovat, jestli se neco neposralo
-				// a pokud jo, tak nemam zadny chybovy report
-
-				// Zkontroluju, jeslti byl zaznam opravdu ulozen do DB
-				$query = dibi::select('1')->from($this->metadata->getTableName());
-				$idFields = $this->metadata->getIdFields();
-				foreach($idFields as $name) 
-					$query = $query->where("[$name] = %s", $this->data->$name);
-
-				$result = $query->fetch();
-				if($result === false)
-					throw new EntityException('Error saving entity. Missing mandatory fields?', EntityException::SAVE_FAILED);
-			}
+						
 			
 			dibi::commit();
 			$this->data->performSaveMerge();
@@ -243,6 +337,18 @@ class ActiveEntity extends Entity {
 		
 		$query->execute();
 		if(dibi::affectedRows() == 0) $this->throwNoRecordFound();
+		
+		// Relace (OneToMany, ...)
+		foreach($this->metadata->getFields() as $curr) {
+			if($this->metadata->getFieldType($curr) == "OneToMany") {
+				$query2 = dibi::delete($this->metadata->getFieldTableName($curr));
+				foreach($this->metadata->getFieldJoinPairs($curr) as $join) {
+					$query2->where("[".$join[1]."] = %s", $this->{$join[0]});
+				}
+				
+				$query2->execute();
+			}
+		}
 		
 		$tmpState = $this->state;
 		$this->state = self::STATE_DELETED;

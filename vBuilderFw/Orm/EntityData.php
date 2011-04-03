@@ -36,7 +36,7 @@ use vBuilder, Nette;
  * Any data can be changed directly by setter. In that case the onFieldChanged
  *  event is called for letting Entity class know about obligation to clear cache.
  * 
- * Every such change won't harm any data unless the performSaveMerge is called.
+ * Any such change won't harm any data unless the performSaveMerge is called.
  *  This method is used to project changes into global data storage. Which also means
  *  that all instances of saved entity will update their data to new state (Of course
  *  any local changes will persist).
@@ -223,6 +223,11 @@ class EntityData extends vBuilder\Object {
 		parent::__isset($name);
 	}
 	
+	/**
+	 * Function merges new data to repository
+	 * 
+	 * @param array of new data 
+	 */
 	private function mergeToRepository(array $newData) {		
 		$oldData = $this->data;
 

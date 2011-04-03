@@ -70,6 +70,31 @@ interface IEntityMetadata {
 	public function getFieldType($name);
 	
 	/**
+	 * Returns entity name for field (OneToMany, etc)
+	 * 
+	 * @param string field name
+	 * @return field type name
+	 */
+	public function getFieldEntityName($name);
+	
+	/**
+	 * Returns table name for field (OneToMany, etc)
+	 * 
+	 * @param string field name
+	 * @return field type name
+	 */
+	public function getFieldTableName($name);
+	
+	/**
+	 * Returns array of pairs which use as join keys in relations such as OneToMany.
+	 * First of the pair is always from "One" side.
+	 * 
+	 * @param string field name
+	 * @return array of column pairs
+	 */
+	public function getFieldJoinPairs($name);
+	
+	/**
 	 * Is field auto-generated (auto-increment, etc)?
 	 * 
 	 * @param string field name
