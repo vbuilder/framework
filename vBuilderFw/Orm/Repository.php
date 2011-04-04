@@ -65,8 +65,13 @@ class Repository extends vBuilder\Object {
 		if($class === false) throw new EntityException("Entity '$entity' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
 		
 		$metadata = $class::getMetadata();
-		
+
+		// Delam zvlast, protoze jinak by se mohla vyhazovat
+		// vyjimka pri DibiFluent::__toString
+		dibi::getConnection()->connect();
 		$stmt = dibi::select("*")->from($metadata->getTableName());
+		
+		
 		$ds = new DataSource((String) $stmt, $class);
 		return $ds;
 	}

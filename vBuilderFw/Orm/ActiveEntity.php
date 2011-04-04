@@ -82,6 +82,10 @@ class ActiveEntity extends Entity {
 		
 		$this->onPreLoad();
 		
+		// Delam zvlast, protoze jinak by se mohla vyhazovat
+		// vyjimka pri DibiFluent::__toString
+		dibi::getConnection()->connect();
+		
 		$query = dibi::select('*')->from($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();
 		foreach($idFields as $name) 
@@ -327,6 +331,8 @@ class ActiveEntity extends Entity {
 		$this->checkIfIdIsDefined(true);
 		
 		dibi::begin();
+		
+		
 		
 		$query = dibi::delete($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();
