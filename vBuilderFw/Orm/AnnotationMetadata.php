@@ -42,6 +42,9 @@ class AnnotationMetadata implements IEntityMetadata {
 	/** @var array of fields */
 	private $fields = array();
 	
+	/** @var array of entity behaviors */
+	private $behaviors = array();
+	
 	/**
 	 * Parses class annotation and build metadata object
 	 * 
@@ -54,6 +57,19 @@ class AnnotationMetadata implements IEntityMetadata {
 		$annotations = $reflection->getAnnotations();
 		if(isset($annotations['Table']) && isset($annotations['Table'][0]['name'])) {
 			$this->tableName = $annotations['Table'][0]['name'];
+		}
+		
+		// Entitni chovani
+		if(isset($annotations['Behavior'])) {
+			foreach($annotations['Behavior'] as $curr) {
+				if(!is_array($curr)) {
+					$this->behaviors[] = $curr;
+					continue;
+				}
+				
+				foreach($curr as $curr2)
+					$this->behaviors[] = $curr2;
+			}
 		}
 		
 		// Sloupecky
@@ -75,6 +91,13 @@ class AnnotationMetadata implements IEntityMetadata {
 	 */
 	public function getTableName() {
 		return $this->tableName;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
+	public function getBehaviors() {
+		return $this->behaviors;
 	}
 	
 	/**

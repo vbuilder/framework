@@ -193,8 +193,14 @@ class Entity extends vBuilder\Object {
 	/** @var array of cached info about methods of all objects */
 	private static $_methods = array();
 	
+	/** @var array of applied behaviors to this entity */
+	private $behaviors = array();
+	
 	/** @var array for caching IDataType implementation classes */
 	private static $_dataTypesImplementations;
+		
+	/** @var array for caching IBehavior implementation classes */
+	private static $_behaviorImplementations;
 	
 	/**
 	 * Constructor of Entity.
@@ -207,7 +213,7 @@ class Entity extends vBuilder\Object {
 	public function __construct($data = array()) {
 		// Nactu metadata
 		$this->metadata = static::getMetadata();
-		
+				
 		// Prebirani primary id
 		if(!is_array($data)) {
 			$data = array();
@@ -228,6 +234,10 @@ class Entity extends vBuilder\Object {
 		// Vytvorim data container
 		$this->data = new EntityData($this->metadata, $data);		
 		$this->data->onFieldChanged[] = callback($this, 'clearCache');
+		
+		// Chovani
+		foreach($this->metadata->getBehaviors() as $behaviorName)
+			$this->addBehavior($behaviorName);
 	}
 	
 	/** 
@@ -407,6 +417,13 @@ class Entity extends vBuilder\Object {
 	 * @throws \MemberAccessException if field doesn't exists or name is empty
 	 */
 	final public function __call($name, $args) {
+		// Volani metod entitniho chovani
+		foreach($this->behaviors as $behaviorInstance) {
+			if(method_exists($behaviorInstance, $name)) {
+				return call_user_func_array(array($behaviorInstance, $name), $args); 
+			}
+		}
+		
 		if((Nette\String::startsWith($name, "get") || Nette\String::startsWith($name, "set")) && mb_strlen($name) > 3) {
 			// Musim data bacha na MB kodovani
 			$fieldName = \mb_substr($name, 3);
@@ -480,31 +497,9 @@ class Entity extends vBuilder\Object {
 	 */
 	final private function & __dataTypeMapper($name, &$data) {
 
-		// Nactu vsechny implementace datovych typu
-		if(self::$_dataTypesImplementations === null) {
-			$loaders = Nette\Loaders\AutoLoader::getLoaders();
-			$classes = array();
-			if(count($loaders) > 0) {
-				foreach($loaders as $loader) {
-					if($loader instanceof Nette\Loaders\RobotLoader) {
-						$classes = \array_keys($loader->getIndexedClasses());
-						break;
-					}
-				}
-			} 
-
-			if(count($classes) == 0) $classes = get_declared_classes();
-			
-			foreach($classes as $className) {
-				// Protoze je to vyrazne rychlejsi nez overovat interface pro vsechny
-				if(Nette\String::startsWith($className, 'vBuilder\Orm\DataTypes\\')) {
-					$class = new Nette\Reflection\ClassReflection($className);
-
-					if($class->implementsInterface('vBuilder\Orm\IDataType'))
-						self::$_dataTypesImplementations = \array_merge((array) self::$_dataTypesImplementations, \array_fill_keys($className::acceptedDataTypes(), $className));
-				}
-			}
-		}
+		// Nactu vsechny implementace datovych typu, pokud je potreba
+		if(self::$_dataTypesImplementations === null)
+			self::searchForOrmClasses();
 
 		$type = $this->metadata->getFieldType($name);
 		if(isset(self::$_dataTypesImplementations[$type])) {
@@ -532,6 +527,61 @@ class Entity extends vBuilder\Object {
 
 		throw new EntityException("Data type '$type' is not defined", EntityException::DATATYPE_NOT_DEFINED);
 
+	}
+	/**
+	 * Register behavior to this entity 
+	 * 
+	 * @param string $behaviorName 
+	 */
+	final protected function addBehavior($behaviorName) {
+		
+		// Nactu implementace chovani entit
+		if(self::$_behaviorImplementations === null)
+			self::searchForOrmClasses();  
+		
+		if(!isset(self::$_behaviorImplementations[$behaviorName]))
+			throw new EntityException("Entity behavior '$behaviorName' was not defined", EntityException::ENTITY_BEHAVIOR_NOT_DEFINED);
+		
+		$this->behaviors[] = new self::$_behaviorImplementations[$behaviorName]($this);
+	}
+	
+	/**
+	 * Searches for all data type and behavior implementations
+	 */
+	private static function searchForOrmClasses() {
+		self::$_dataTypesImplementations = array();
+		self::$_behaviorImplementations = array();
+
+		$loaders = Nette\Loaders\AutoLoader::getLoaders();
+		$classes = array();
+		if(count($loaders) > 0) {
+			foreach($loaders as $loader) {
+				if($loader instanceof Nette\Loaders\RobotLoader) {
+					$classes = \array_keys($loader->getIndexedClasses());
+					break;
+				}
+			}
+		}
+
+		if(count($classes) == 0)
+			$classes = get_declared_classes();
+
+		foreach($classes as $className) {
+			// Protoze je to vyrazne rychlejsi nez overovat interface pro vsechny
+			if(Nette\String::startsWith($className, 'vBuilder\\Orm\\DataTypes')) {
+				$class = new Nette\Reflection\ClassReflection($className);
+
+				if($class->implementsInterface('vBuilder\\Orm\\IDataType'))
+					self::$_dataTypesImplementations = \array_merge((array) self::$_dataTypesImplementations, \array_fill_keys($className::acceptedDataTypes(), $className));
+			}
+			
+			elseif(Nette\String::startsWith($className, 'vBuilder\\Orm\\Behaviors')) {
+				$class = new Nette\Reflection\ClassReflection($className);
+				
+				if($class->implementsInterface('vBuilder\\Orm\\IBehavior'))
+					self::$_behaviorImplementations[mb_substr($className, 23)] = $className;
+			}
+		}
 	}
 	
 }

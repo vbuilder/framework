@@ -39,6 +39,13 @@ interface IEntityMetadata {
 	public function getTableName();
 	
 	/**
+	 * Returns names of entity behaviors
+	 * 
+	 * @return array of behavior names
+	 */
+	public function getBehaviors();
+	
+	/**
 	 * Return names of ID fields
 	 * 
 	 * @return array of field names

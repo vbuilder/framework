@@ -54,6 +54,18 @@ class MergedMetadata implements IEntityMetadata {
 	/**
 	 * {@inheritdoc} 
 	 */
+	public function getBehaviors() {
+		$merged = array();
+		
+		foreach($this->metadata as $curr)
+			$merged = array_merge($merged, $curr->getBehaviors());
+		
+		return $merged;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
 	public function getIdFields() {
 		$merged = array();
 		

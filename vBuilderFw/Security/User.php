@@ -31,6 +31,8 @@ use vBuilder, Nette, dibi;
  *
  * @Table(name="security_users")
  *
+ * @Behavior(Secure)
+ * 
  * @Column(id, name="id", type="integer", generatedValue)
  * @Column(name="username", type="string")
  * @Column(name="password", type="string")

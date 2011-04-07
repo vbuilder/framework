@@ -31,7 +31,7 @@ use vBuilder, Nette, dibi;
  * @author Adam Staněk (V3lbloud)
  * @since Feb 17, 2011
  */
-class ActiveEntity extends Entity {
+class ActiveEntity extends Entity implements Nette\Security\IResource {
 	
 	const STATE_NEW = 1;
 	const STATE_LOADED = 2;
@@ -369,6 +369,38 @@ class ActiveEntity extends Entity {
 		}
 		
 		return $this;
+	}
+	
+	/**
+	 * Return resource id of this entity, all entity instances are child of this
+	 * resource.
+	 * 
+	 * @return string resource id 
+	 */
+	public static function getParentResourceId() {
+		return \get_called_class();
+	}
+	
+	/**
+	 * Returns resource ID for ACL
+	 * 
+	 * @return string
+	 */
+	public function getResourceId() {
+		if($this->checkIfIdIsDefined() && count($this->metadata->getIdFields()) > 0) {
+			$ids = array();
+			foreach($this->metadata->getIdFields() as $name) $ids[] = $this->data->$name;
+			
+			$resId = self::getParentResourceId() . '(' . implode($ids, ',') . ')';
+			
+			$acl = Nette\Environment::getUser()->getAuthorizationHandler();
+			if($acl instanceof Nette\Security\Permission && !$acl->hasResource($resId))
+				$acl->addResource($resId, static::getParentResourceId()); 
+			
+			return $resId;
+			
+		} else
+			return static::getParentResourceId();
 	}
 	
 	/**

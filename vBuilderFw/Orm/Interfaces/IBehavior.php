@@ -24,18 +24,18 @@
 namespace vBuilder\Orm;
 
 /**
- * Custom exceptions for entity errors
+ * Interface for all ORM entity behaviors
  *
  * @author Adam Staněk (V3lbloud)
- * @since Feb 17, 2011
+ * @since Apr 7, 2011
  */
-class EntityException extends \Exception {
-
-	const NOT_FOUND = 1;
-	const ID_NOT_DEFINED = 2;
-	const DATATYPE_NOT_DEFINED = 3;
-	const ENTITY_TYPE_NOT_DEFINED = 4;
-	const SAVE_FAILED = 5;
-	const ENTITY_BEHAVIOR_NOT_DEFINED = 5;
+interface IBehavior {
+	
+	/**
+	 * Register behavior to entity
+	 * 
+	 * @param Entity entity reference
+	 */
+	public function __construct(Entity &$entity);
 	
 }
