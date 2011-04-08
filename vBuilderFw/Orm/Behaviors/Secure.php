@@ -53,7 +53,7 @@ class Secure implements vBuilder\Orm\IBehavior {
 	 * 
 	 * @param ActiveEntity entity reference
 	 */
-	public function __construct(Entity &$entity) {
+	public function __construct(Entity &$entity, array $args = array()) {
 		$this->entity = &$entity;
 		
 		$this->data->onFirstRead[] = \callback($this, 'readSecurityCheck');

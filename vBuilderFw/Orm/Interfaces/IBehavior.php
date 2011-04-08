@@ -36,6 +36,6 @@ interface IBehavior {
 	 * 
 	 * @param Entity entity reference
 	 */
-	public function __construct(Entity &$entity);
+	public function __construct(Entity &$entity, array $args = array());
 	
 }

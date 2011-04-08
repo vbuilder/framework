@@ -47,6 +47,9 @@ class TestEntityMetadata implements IEntityMetadata {
 		return "some_table";
 	}
 	
+	public function getBehaviors() { return array(); }
+	
+	public function getBehaviorArgs($behaviorName) { return array(); }
 	
 	public function getIdFields() {
 		return array("id");

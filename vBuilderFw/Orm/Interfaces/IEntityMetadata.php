@@ -46,6 +46,13 @@ interface IEntityMetadata {
 	public function getBehaviors();
 	
 	/**
+	 * Returns behavior arguments
+	 * 
+	 * @return array of arguments
+	 */
+	public function getBehaviorArgs($behaviorName);
+	
+	/**
 	 * Return names of ID fields
 	 * 
 	 * @return array of field names

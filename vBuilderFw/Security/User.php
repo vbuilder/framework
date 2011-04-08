@@ -33,12 +33,12 @@ use vBuilder, Nette, dibi;
  *
  * @Behavior(Secure)
  * 
- * @Column(id, name="id", type="integer", generatedValue)
- * @Column(name="username", type="string")
- * @Column(name="password", type="string")
- * @Column(name="email", type="string")
- * @Column(name="registrationTime", type="DateTime")
- * @Column(name="roles", type="OneToMany", table="security_user_roles")
+ * @Column(id, pk, type="integer", generatedValue)
+ * @Column(username, type="string")
+ * @Column(password, type="string")
+ * @Column(email, type="string")
+ * @Column(registrationTime, type="DateTime")
+ * @Column(roles, type="OneToMany", table="security_user_roles")
  *
  * @author Adam Staněk (V3lbloud)
  * @since Mar 4, 2011

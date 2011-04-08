@@ -39,9 +39,9 @@ use vBuilder, Nette,
 /**
  * @Table(name="some_table")
  *
- * @Column(id, name="id", type="integer")
- * @Column(name="name", type="string")
- * @Column(name="someDt", type="DateTime")
+ * @Column(id, id, type="integer")
+ * @Column(name, type="string")
+ * @Column(someDt, type="DateTime")
  */
 class TestEntity extends Entity {
 	

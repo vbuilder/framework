@@ -51,7 +51,7 @@ class Assert extends \Assert {
 			}
 
 			if(!($actual instanceof $class)) {
-				self::doFail('Failed asserting that '.get_class($actual)." is an instance of class $class");
+				self::fail('Failed asserting that '.get_class($actual)." is an instance of class $class");
 			}
 
 			if($message) {
@@ -60,12 +60,85 @@ class Assert extends \Assert {
 
 			if($code) {
 				if($actual->getCode() !== $code) {
-					self::doFail('Failed asserting that exception '.get_class($actual).' with code '.$actual->getCode().' has code '.$code);
+					self::fail('Failed asserting that exception '.get_class($actual).' with code '.$actual->getCode().' has code '.$code);
 				}
 			}
 			
 		} else
 			return parent::exception($class, $message, $actual);
+	}
+	
+	/**
+	 * Chacks if associative array is equal to another. Order doesn't matter.
+	 * It also accepts Traversable so DibiRow is Ok.
+	 * 
+	 * @param array|Traversable $expected
+	 * @param array|Traversable $actual 
+	 */
+	public static function arrayEqual($expected, $actual) {
+		if(!is_array($actual) && !($actual instanceof \Traversable)) 
+			self::fail("Failed asserting that $actual is array equal to $expected");
+		
+		if(!self::arrayEqualHelper($expected, $actual)) {			
+			echo "EXPECTED: \n";
+			dump($expected);
+			
+			echo "ACTUAL: \n";
+			dump($actual); 
+			
+			self::fail("Failed asserting that $actual is array equal to $expected");
+		}
+	}
+	
+	/**
+	 * Chacks if associative array is equal to another. Order doesn't matter.
+	 * It is helper function for arrayEqual which doesn't throw exception but return
+	 * boolean instead.
+	 * 
+	 * @param array|Traversable $expected
+	 * @param array|Traversable $actual
+	 * 
+	 * @return bool true if equal
+	 */
+	private static function arrayEqualHelper($expected, $actual) {
+		// Predpoklada se, ze kdyz je Traversable, tak je i Countable
+		if(count($expected) != count($actual)) return false;
+		
+		// Zjistim, jestli pole je asociativni
+		// Bacha na to, ze to nezohlednuje diry apod, ale nemelo by to vadit
+		if(array_keys($expected) !== range(0, count($expected) - 1)) {
+			foreach($expected as $key => $value) {
+				if(!isset($actual[$key]))
+					return false;
+				
+				if(is_array($value) || $value instanceof \Traversable) {
+					if(!self::arrayEqualHelper($value, $actual[$key]))
+						return false;
+				} else if($value != $actual[$key])
+					return false;
+			}			
+			
+		// Pole neni asociativni
+		} else {
+			foreach($expected as $value) {
+				$found = false;
+				foreach($actual as $value2) {
+					if(is_array($value) || $value instanceof \Traversable) {
+						if(self::arrayEqualHelper($value, $value2)) {
+							$found = true;
+							break;
+						}
+					} else if($value == $value2) {
+						$found = true;
+						break;
+					}
+				}
+				
+				if(!$found) return false;
+			}
+		}
+		
+		return true;
 	}
 
 }

@@ -39,8 +39,8 @@ use vBuilder, Nette;
  * In default implementation enity structure is defined by annotations. So
  *  you simply provide @Table and @Column in docblock before your class.
  *  This behavior can be overloaded to for example loading structure from
- *  config or some script. See function Entity::loadMetadata and interface IMetadata.
- * 
+ *  config or some script. See function Entity::loadMetadata and interface IMetadata. 
+ *
  * Syntax for annotations is:
  * <code>
  *  /**
@@ -48,9 +48,9 @@ use vBuilder, Nette;
  *    * 
  *    * @Table(name="table_name")
  *    *
- *    * @Column(name="id", id, type="integer")
- *    * @Column(name="lang", id)
- *    * @Column(name="text")
+ *    * @Column(id, pk, type="integer")
+ *    * @Column(lang, pk)
+ *    * @Column(text)
  *    * /
  *  class MyEntity extends vBuilder\Orm\Entity { }
  * </code>
@@ -172,6 +172,58 @@ use vBuilder, Nette;
  * </code>
  * 
  * As you can see in example above. You can access all fields by **$this->data** variable.
+ * 
+ * You can also extend entity classes with appending defined behavior. Behavior is 
+ *  class implementing vBuilder\Orm\IBehavior interface. It modify entity behavior
+ *  in situations such as saving or loading data from DB. It is general approach how to 
+ *  apply some routine workflow to entities without repeating same code over and over.
+ *  Because PHP currently don't support multiple inheritence you should easily workaround
+ *  this problem by using entity behaviors. All methods of behavior class can be
+ *  automatically called from entity itself.
+ * 
+ * Please note, that all behaviors have to be in **vBuilder\Orm\Behaviors** namespace.
+ * 
+ * <code>
+ *  class MyBehavior implements vBuilder\Orm\IBehavior {
+ *
+ *			private $entity;
+ * 
+ *			public function __construct(Entity &$entity, array $args = array()) {
+ *				echo "Behavior applied (".implode($args, ', ').")";
+ *				echo $arg['arg1'];
+ *		
+ *				$this->entity = &$entity;
+ *				$entity->onPreSave[] = \callback($this, 'preSave');
+ *			}
+ * 
+ *			public function preSave() {
+ *				// Some pre-save changes
+ *				$this->entity->id = 123;
+ *			}
+ *
+ *			public function behave() {
+ *				// Some custom function 
+ *			} 
+ *
+ *	 }
+ *
+ *  /**
+ *    * My entity
+ *    * 
+ *    * @Table(name="table_name")
+ *    *
+ *    * @Behavior(Secure)
+ *    * @Behavior(MyBehavior, arg1 = "foo", arg2 = "bar")
+ *    *
+ *    * @Column(id, pk, type="integer")
+ *    * @Column(text)
+ *    * /
+ *  class MyEntity extends vBuilder\Orm\Entity { }
+ * 
+ *  $e = new MyEntity;
+ *  $e->behave();
+ * 
+ * </code>
  *
  * @author Adam Staněk (V3lbloud)
  * @since Feb 17, 2011
@@ -237,7 +289,7 @@ class Entity extends vBuilder\Object {
 		
 		// Chovani
 		foreach($this->metadata->getBehaviors() as $behaviorName)
-			$this->addBehavior($behaviorName);
+			$this->addBehavior($behaviorName, $this->metadata->getBehaviorArgs($behaviorName));
 	}
 	
 	/** 
@@ -330,6 +382,15 @@ class Entity extends vBuilder\Object {
 	 */
 	final public function clearCache($fieldName) {
 		unset($this->cachedData[$fieldName]);
+	}
+	
+	/**
+	 * Returns true if any of entity fields has been changed
+	 * 
+	 * @return bool
+	 */
+	public function hasChanged() {
+		return count($this->data->getChangedData()) > 0;
 	}
 	
 	/**
@@ -532,8 +593,9 @@ class Entity extends vBuilder\Object {
 	 * Register behavior to this entity 
 	 * 
 	 * @param string $behaviorName 
+	 * @param array of arguments to pass to behavior
 	 */
-	final protected function addBehavior($behaviorName) {
+	final protected function addBehavior($behaviorName, array $args = array()) {
 		
 		// Nactu implementace chovani entit
 		if(self::$_behaviorImplementations === null)
@@ -542,7 +604,7 @@ class Entity extends vBuilder\Object {
 		if(!isset(self::$_behaviorImplementations[$behaviorName]))
 			throw new EntityException("Entity behavior '$behaviorName' was not defined", EntityException::ENTITY_BEHAVIOR_NOT_DEFINED);
 		
-		$this->behaviors[] = new self::$_behaviorImplementations[$behaviorName]($this);
+		$this->behaviors[] = new self::$_behaviorImplementations[$behaviorName]($this, $args);
 	}
 	
 	/**

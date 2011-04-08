@@ -56,6 +56,13 @@ class ConfigMetadata implements IEntityMetadata {
 	/**
 	 * {@inheritdoc} 
 	 */
+	public function getBehaviorArgs($behaviorName) {
+		return array();
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
 	public function getIdFields() {
 		return array();
 	}

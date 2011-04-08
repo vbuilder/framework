@@ -68,7 +68,7 @@ class Repository extends vBuilder\Object {
 
 		// Delam zvlast, protoze jinak by se mohla vyhazovat
 		// vyjimka pri DibiFluent::__toString
-		dibi::getConnection()->connect();
+		if(!dibi::getConnection()->isConnected()) dibi::getConnection()->connect();
 		$stmt = dibi::select("*")->from($metadata->getTableName());
 		
 		

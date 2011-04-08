@@ -73,10 +73,10 @@ dibi::insert('TestEntityTableList2', array('id' => 2, 'a' => 'foo', 'b' => 'bar'
 /**
  * @Table(name="TestEntityTable")
  *
- * @Column(id, name="id", type="integer", generatedValue)
- * @Column(name="name", type="string")
- * @Column(name="roles", type="OneToMany", table="TestEntityTableList", joinUsing="id")
- * @Column(name="complex", type="OneToMany", table="TestEntityTableList2", joinUsing="id")
+ * @Column(id, id, type="integer", generatedValue)
+ * @Column(name, type="string")
+ * @Column(roles, type="OneToMany", table="TestEntityTableList", joinUsing="id")
+ * @Column(complex, type="OneToMany", table="TestEntityTableList2", joinUsing="id")
  */
 class TestEntity extends ActiveEntity { }
 

@@ -44,7 +44,16 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	/** @var array of event listeners for post load event */
 	public $onPostLoad = array();
 	
-	/** @var array of event listeners for event, when existing entity is saved to DB */
+	/** @var array of event listeners for pre save event
+	 *  you can use it for exampl for locking table and calculating auto-fields.
+	 */
+	public $onPreSave = array();
+	
+	/** @var array of event listeners for post save event (it is called AFTER onUpdate/onCreate event)
+	 * you can use it for example for unlocking table and cleanup po pres-save */
+	public $onPostSave = array();
+	
+	/** @var array of event listeners for event, when existing entity is updated to DB */
 	public $onUpdate = array();
 	
 	/** @var array of event listeners for event, when new entity is saved to DB */
@@ -84,7 +93,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		
 		// Delam zvlast, protoze jinak by se mohla vyhazovat
 		// vyjimka pri DibiFluent::__toString
-		dibi::getConnection()->connect();
+		if(!dibi::getConnection()->isConnected()) dibi::getConnection()->connect();
 		
 		$query = dibi::select('*')->from($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();
@@ -191,35 +200,35 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		$idFields = $this->metadata->getIdFields();
 		$autoField = null;
 		
-		// Checks mandatory fields
-		foreach($idFields as $name) {
-			if(!$this->metadata->isFieldGenerated($name)) {
-				if(!isset($this->data->$name))
-					throw new EntityException("Cannot save with missing value for field '$name' which is mandatory because of ID index", EntityException::ID_NOT_DEFINED);
-			} elseif($autoField === null) {
-				$autoField = $name;
-			} else
-				throw new \LogicException('More than one generated ID field is not supported');
-		}
-		
-		// Vytridim polozky, ktere nejsou primo v tyhle tabulce (relace)
-		$externalFields = array();
-		foreach($this->metadata->getFields() as $curr) {
-			if($this->metadata->getFieldType($curr) == "OneToMany") {
-				$externalFields[] = $curr;
-			}
-		}
-		
-
-		$allChangedFieldsData = $this->data->getChangedData();
-		$changedFieldsData = array_diff_key($allChangedFieldsData, array_flip($externalFields));		
-		if(count($allChangedFieldsData) == 0) return ;		
-		$allFieldsData = array_diff_key($this->data->getAllData(), array_flip($externalFields));
-		
-		
 		dibi::begin();	
 		
 		try {
+			$this->onPreSave($this);
+
+			// Checks mandatory fields
+			foreach($idFields as $name) {
+				if(!$this->metadata->isFieldGenerated($name)) {
+					if(!isset($this->data->$name))
+						throw new EntityException("Cannot save with missing value for field '$name' which is mandatory because of ID index", EntityException::ID_NOT_DEFINED);
+				} elseif($autoField === null) {
+					$autoField = $name;
+				} else
+					throw new \LogicException('More than one generated ID field is not supported');
+			}
+
+			// Vytridim polozky, ktere nejsou primo v tyhle tabulce (relace)
+			$externalFields = array();
+			foreach($this->metadata->getFields() as $curr) {
+				if($this->metadata->getFieldType($curr) == "OneToMany") {
+					$externalFields[] = $curr;
+				}
+			}
+
+			$allChangedFieldsData = $this->data->getChangedData();
+			$changedFieldsData = array_diff_key($allChangedFieldsData, array_flip($externalFields));		
+			if(count($allChangedFieldsData) == 0) return ;		
+			$allFieldsData = array_diff_key($this->data->getAllData(), array_flip($externalFields));		
+			
 			// Pokud jsou k ulozeni nejaka TABULKOVA data musim je ulozid driv nez zacnu resit
 			// relace, protoze by jinak nemuselo byt k dispozici IDcko
 			if(count($changedFieldsData) > 0) {
@@ -297,7 +306,8 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					}
 				}
 			}
-						
+			
+			$this->onPostSave($this);
 			
 			dibi::commit();
 			$this->data->performSaveMerge();

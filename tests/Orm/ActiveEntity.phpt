@@ -50,8 +50,8 @@ dibi::query(
 /**
  * @Table(name="TestEntityTable")
  *
- * @Column(id, name="id", type="integer", generatedValue)
- * @Column(name="name", type="string")
+ * @Column(id, id, type="integer", generatedValue)
+ * @Column(name, type="string")
  */
 class TestEntity extends ActiveEntity { }
 

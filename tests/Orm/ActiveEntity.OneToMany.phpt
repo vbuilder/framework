@@ -62,17 +62,17 @@ dibi::insert('TestEntityTableList', array('id' => 1, 'name' => 'bar'))->execute(
 /**
  * @Table(name="TestEntityTableList")
  *
- * @Column(id, name="id", type="integer")
- * @Column(id, name="name", type="string")
+ * @Column(id, id, type="integer")
+ * @Column(name, id, type="string")
  */
 class OneToManyEntity extends ActiveEntity { }
 
 /**
  * @Table(name="TestEntityTable")
  *
- * @Column(id, name="id", type="integer", generatedValue)
- * @Column(name="name", type="string")
- * @Column(name="roles", type="OneToMany", entity="vBuilder\Orm\EntityTest\OneToManyEntity", joinUsing="id")
+ * @Column(id, id, type="integer", generatedValue)
+ * @Column(name, type="string")
+ * @Column(roles, type="OneToMany", entity="vBuilder\Orm\EntityTest\OneToManyEntity", joinUsing="id")
  */
 class TestEntity extends ActiveEntity { }
 

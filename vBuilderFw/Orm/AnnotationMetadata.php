@@ -61,29 +61,39 @@ class AnnotationMetadata implements IEntityMetadata {
 		
 		// Entitni chovani
 		if(isset($annotations['Behavior'])) {
-			foreach($annotations['Behavior'] as $curr) {
-				if(!is_array($curr)) {
-					$this->behaviors[] = $curr;
+			foreach($annotations['Behavior'] as $curr) {				
+				if(!is_array($curr) && !($curr instanceof \Traversable)) {
+					$this->behaviors[$curr] = array();
 					continue;
 				}
 				
-				foreach($curr as $curr2)
-					$this->behaviors[] = $curr2;
+				$curr = (array) $curr;
+				$this->behaviors[array_shift($curr)] = $curr;
 			}
 		}
-		
+				
 		// Sloupecky
 		if(isset($annotations['Column'])) {
 			foreach($annotations['Column'] as $curr) {
-				$fieldMetadata = $curr->getMetadata();
-				if(!isset($fieldMetadata['name']))
-					throw new vBuilder\InvalidAnnotationException('Missing name attribute in @Column(...) declaration in class ' . $reflection->getName());
+				// Prazdne definice
+				if($curr === true) continue;
 				
-				$this->fields[$fieldMetadata['name']] = $fieldMetadata;
-				if(isset($fieldMetadata['id'])) $this->idFields[] = $fieldMetadata['name'];
+				if(!is_array($curr) && !($curr instanceof \Traversable)) {
+					$this->fields[$curr] = array();
+					continue;
+				}
+				
+				$curr = (array) $curr;
+				$name = array_shift($curr);
+				$this->fields[$name] = array();
+				foreach($curr as $k => $v) {
+					if(is_numeric($k)) $this->fields[$name][$v] = true;
+					else $this->fields[$name][$k] = $v;
+				}
+								
+				if(isset($this->fields[$name]['id']) || isset($this->fields[$name]['pk'])) $this->idFields[] = $name;
 			}
-		}
-		
+		}		
 	}
 	
 	/**
@@ -97,8 +107,18 @@ class AnnotationMetadata implements IEntityMetadata {
 	 * {@inheritdoc} 
 	 */
 	public function getBehaviors() {
-		return $this->behaviors;
+		return array_keys($this->behaviors);
 	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
+	public function getBehaviorArgs($behaviorName) {
+		if(!isset($this->behaviors[$behaviorName])) throw new \InvalidArgumentException("Behavior '$name' is not applied to this entity");
+		
+		return $this->behaviors[$behaviorName];
+	}
+	
 	
 	/**
 	 * {@inheritdoc} 
