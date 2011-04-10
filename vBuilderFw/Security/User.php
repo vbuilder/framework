@@ -43,7 +43,7 @@ use vBuilder, Nette, dibi;
  * @author Adam Staněk (V3lbloud)
  * @since Mar 4, 2011
  */
-class User extends vBuilder\Orm\SecureActiveEntity implements Nette\Security\IIdentity {
+class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity {
 
 	public function __construct() {
 		$this->onCreate[] = \callback('vBuilder\Security', 'onUserCreated');
