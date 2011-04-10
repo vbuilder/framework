@@ -185,7 +185,10 @@ class AnnotationMetadata implements IEntityMetadata {
 		$pairs = array();
 		
 		if(isset($this->fields[$name]["joinUsing"]))
-				  $pairs[] = array($this->fields[$name]["joinUsing"], $this->fields[$name]["joinUsing"]);
+			$pairs[] = array($this->fields[$name]["joinUsing"], $this->fields[$name]["joinUsing"]);
+		
+		if(isset($this->fields[$name]["joinOn"])) 
+			$pairs[] = explode("=", $this->fields[$name]["joinOn"]);
 		
 		return $pairs;
 	}

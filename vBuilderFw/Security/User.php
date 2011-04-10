@@ -38,7 +38,7 @@ use vBuilder, Nette, dibi;
  * @Column(password, type="string")
  * @Column(email, type="string")
  * @Column(registrationTime, type="DateTime")
- * @Column(roles, type="OneToMany", table="security_user_roles")
+ * @Column(roles, type="OneToMany", table="security_user_roles", joinOn="id=user")
  *
  * @author Adam Staněk (V3lbloud)
  * @since Mar 4, 2011
@@ -111,12 +111,15 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 				if(!$skip) {
 					$violation = true;
 					foreach(Nette\Environment::getUser()->getRoles() as $curr2) {
+						// roleInheritsFrom($role, $inherits)
+						// Bacha na to, ze Administrator musi opravdu dedit z tech roli
+						// alow('Administrator', ALL, ALL) samozrejme neni reseni
 						if($curr2 == $curr || $acl->roleInheritsFrom($curr2, $curr)) {
 							$violation = false;
 							break;
 						}
 					}
-
+					
 					if($violation) {
 						throw new SecurityException("Cannot raise user '".$this->getId()."' rights to '".$curr."', which is more than I have (".implode(",", Nette\Environment::getUser()->getRoles()).")", SecurityException::OPERATION_NOT_PERMITTED);
 					}

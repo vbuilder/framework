@@ -120,7 +120,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					foreach($this->metadata->getFieldJoinPairs($curr) as $join) 
 						$ds->where("[".$join[1]."] = %s", $this->{$join[0]});
 					
-					
+										
 					// Stahnu data a pokud se jedna o jednoduche spojeni (bez entity)
 					// Rozparsuju to do pole
 					$joinedData = $ds->fetchAll();
@@ -135,7 +135,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 							
 							$d[] = $cd;
 						}
-
+						
 						$loadedData[$curr] = $d;
 					} else						 
 						$loadedData[$curr] = $joinedData;
