@@ -63,6 +63,10 @@ class TestEntityMetadata implements IEntityMetadata {
 		return in_array($name, $this->getFields());
 	}
 	
+	public function getFieldColumn($name) {
+		return $name;
+	}
+	
 	public function getFieldType($name) {
 		if($name == "id") return "integer";
 		elseif($name == "name") return "string";

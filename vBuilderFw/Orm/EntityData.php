@@ -91,10 +91,18 @@ class EntityData extends vBuilder\Object {
 	/**
 	 * Returns array of changed fields
 	 * 
+	 * @param bool true if keys of array should be real column names instead of field names
+	 * 
 	 * @return array of data (associative)
 	 */
-	public function getChangedData() {
-		return (array) $this->newData;
+	public function getChangedData($realColumnNames = false) {
+		if(!$realColumnNames || $this->newData === null) return (array) $this->newData;
+		
+		$data = array();
+		foreach($this->newData as $field=>$value)
+			$data[$this->metadata->getFieldColumn($field)] = $value;
+		
+		return $data;
 	}
 	
 	/**
@@ -102,15 +110,19 @@ class EntityData extends vBuilder\Object {
 	 * This function does NOT call onNeedToFetch event,
 	 * not set fields will be set to null.
 	 * 
+	 * @param bool true if keys of array should be real column names instead of field names
+	 * 
 	 * @return array of field values (associative)
 	 */
-	public function getAllData() {
+	public function getAllData($realColumnNames = false) {
 		$data = array();
 		$fields = $this->metadata->getFields();
 		foreach($fields as $name) { 
-			if(isset($this->newData[$name])) $data[$name] = $this->newData[$name];
-			elseif(isset($this->data[$name])) $data[$name] =  $this->data[$name];
-			else $data[$name] = null;
+			$key = $realColumnNames ? $this->metadata->getFieldColumn($name) : $name;
+			
+			if(isset($this->newData[$name])) $data[$key] = $this->newData[$name];
+			elseif(isset($this->data[$name])) $data[$key] =  $this->data[$name];
+			else $data[$key] = null;
 		}
 		
 		return $data;
@@ -143,7 +155,7 @@ class EntityData extends vBuilder\Object {
 	 * ids which wasn't known before save.
 	 */
 	public function performSaveMerge() {
-		$this->mergeToRepository($this->newData);
+		$this->mergeToRepository((array) $this->newData);
 		$this->newData = null;
 	}
 	

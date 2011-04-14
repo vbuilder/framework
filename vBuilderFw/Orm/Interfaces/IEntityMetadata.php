@@ -76,10 +76,18 @@ interface IEntityMetadata {
 	public function hasField($name);
 	
 	/**
+	 * Returns real column name
+	 * 
+	 * @param string field name
+	 * @return string column name
+	 */
+	public function getFieldColumn($name);
+	
+	/**
 	 * Returns data type for field
 	 * 
 	 * @param string field name
-	 * @return field type name
+	 * @return string field type name
 	 */
 	public function getFieldType($name);
 	
@@ -87,7 +95,7 @@ interface IEntityMetadata {
 	 * Returns entity name for field (OneToMany, etc)
 	 * 
 	 * @param string field name
-	 * @return field type name
+	 * @return string entity name
 	 */
 	public function getFieldEntityName($name);
 	
@@ -95,13 +103,13 @@ interface IEntityMetadata {
 	 * Returns table name for field (OneToMany, etc)
 	 * 
 	 * @param string field name
-	 * @return field type name
+	 * @return string field table name
 	 */
 	public function getFieldTableName($name);
 	
 	/**
 	 * Returns array of pairs which use as join keys in relations such as OneToMany.
-	 * First of the pair is always from "One" side.
+	 * The first item of pair is always from current entity side.
 	 * 
 	 * @param string field name
 	 * @return array of column pairs

@@ -198,14 +198,16 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	 */
 	public function save() {
 		$idFields = $this->metadata->getIdFields();
+		$fields = $this->metadata->getFields();
 		$autoField = null;
 		
 		dibi::begin();	
 		
 		try {
+			// Provedu upravy pred ulozenim (zaregistrovane Behaviors, etc.)
 			$this->onPreSave($this);
 
-			// Checks mandatory fields
+			// Kontrola, jestli mam definovane sloupce s PK indexem
 			foreach($idFields as $name) {
 				if(!$this->metadata->isFieldGenerated($name)) {
 					if(!isset($this->data->$name))
@@ -213,26 +215,57 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 				} elseif($autoField === null) {
 					$autoField = $name;
 				} else
-					throw new \LogicException('More than one generated ID field is not supported');
+					throw new \LogicException('More than one generated ID field are not supported');
 			}
 
-			// Vytridim polozky, ktere nejsou primo v tyhle tabulce (relace)
+			// Nactu si vsechny zmenene polozky do pole: sloupec => hodnota
+			$updateData = $this->data->getChangedData(true);
+			
+			// Pole se vsemi virtualnimi sloupci, ktere jsou ve skutecnosti vazany v jine tabulce
+			// Musime je na konci odebrat z tech, co se ukladaji do teto entity
 			$externalFields = array();
-			foreach($this->metadata->getFields() as $curr) {
-				if($this->metadata->getFieldType($curr) == "OneToMany") {
+			
+			
+			// Projdu vsechny registrovane polozky a overim pripadne externi vazby
+			foreach($fields as $curr) {
+				$type = $this->metadata->getFieldType($curr);
+				
+				// Pokud je polozka OneToOne relaci, musim ji ulozit PRED samotnou entitou (aby si mohla ulozit jeji ID)
+				// Po ulozeni svazane entity si musim vzit jeji ID a pridat ho do dat k ulozeni.
+				if($type == 'OneToOne') {
+					if(isset($this->data->{$curr})) {
+						$targetEntity = $this->data->{$curr};
+						if(!($targetEntity instanceof ActiveEntity))
+							throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
+						
+						$targetEntity->save();
+						$joinPairs = $this->metadata->getFieldJoinPairs($curr);
+						if(count($joinPairs) != 1) throw new \LogicException("Joining entity on more keys is currently not supported");
+						list($localIdField, $targetIdField) = reset($joinPairs);
+						if($this->data->{$localIdField} !== $targetEntity->{$targetIdField})
+							$updateData[$this->metadata->getFieldColumn($localIdField)] = $targetEntity->{$targetIdField};
+					}
+				}
+				
+				// Pokud je polozka OneToMany relaci, sloupec v teto entite neexistuje,
+				// vazba probiha na druhem konci, proto data vyloucim z updatu.
+				// Entity se musi ulozi az POTOM, co se ulozi tato entita (aby znaly jeji ID).
+				elseif($type == 'OneToMany') {
 					$externalFields[] = $curr;
+					unset($updateData[$curr]);
 				}
 			}
-
-			$allChangedFieldsData = $this->data->getChangedData();
-			$changedFieldsData = array_diff_key($allChangedFieldsData, array_flip($externalFields));		
-			if(count($allChangedFieldsData) == 0) return ;		
-			$allFieldsData = array_diff_key($this->data->getAllData(), array_flip($externalFields));		
+						
+			// Vsechny data k ulozeni do tabulky (vcetne tech nezmenenych, ale bez virtualnich sloupcu - vazeb)
+			$allTableFields = array_diff_key(array_merge($this->data->getAllData(true), $updateData), array_flip($externalFields));	
 			
-			// Pokud jsou k ulozeni nejaka TABULKOVA data musim je ulozid driv nez zacnu resit
-			// relace, protoze by jinak nemuselo byt k dispozici IDcko
-			if(count($changedFieldsData) > 0) {
-				dibi::query('INSERT IGNORE ', $this->metadata->getTableName(), $allFieldsData, ' ON DUPLICATE KEY UPDATE %a', $changedFieldsData);
+			
+			// ULOZENI SAMOTNE ENTITY ---------------------------------------------
+			// Pokud jsou k ulozeni nejaka TABULKOVA data, ulozim je
+			$addtionalDataToMerge = array();
+			$action = null;
+			if(count($updateData) > 0) {
+				dibi::query('INSERT IGNORE ', $this->metadata->getTableName(), $allTableFields, ' ON DUPLICATE KEY UPDATE %a', $updateData);
 
 				// Provedl se INSERT
 				if(dibi::affectedRows() == 1) {
@@ -241,12 +274,12 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					$addtionalDataToMerge = $autoField === null ? array() : array($autoField => dibi::insertId());
 					$this->data->mergeData($addtionalDataToMerge);
 
-					$this->onCreate($this);
+					$action = 'create';
 				}
 
 				// Provedl se UPDATE
 				elseif(dibi::affectedRows() == 2) {
-					$this->onUpdate($this);
+					$action = 'update';
 				}
 
 				// Data se nezmenila
@@ -266,10 +299,14 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 				}
 			}
 			
-			// Relace (OneToMany, ...) -> ulozeni extenrich sloupcu
+			// KONEC ULOZENI ENTITY -----------------------------------------------
+			
+			// Relace (OneToMany) -> ulozeni externich sloupcu
 			foreach($externalFields as $curr) {
+				if($this->metadata->getFieldType($curr) != 'OneToMany') continue;
+				
 				// Pokud se data zmenila
-				if(isset($allChangedFieldsData[$curr])) {
+				if(array_key_exists($curr, $this->data->getChangedData())) {
 					
 					// Momentalne nepodporuju relace s plnou entitou
 					if($this->metadata->getFieldEntityName($curr) !== null)
@@ -284,9 +321,11 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					}
 					$query2->execute();
 					
-					if(count($allChangedFieldsData[$curr]) > 0) {
+					$ch = $this->data->getChangedData();
+					$dataToSave = (array) $ch[$curr];
+					if(count($dataToSave) > 0) {
 						// Pokud se jedna o neassociativni pole, musim zjistit nazvy sloupcu
-						if(!is_array(reset($allChangedFieldsData[$curr]))) {
+						if(!is_array(reset($dataToSave))) {
 							$columnNames = dibi::query("SHOW COLUMNS FROM [".$this->metadata->getFieldTableName($curr)."]")->fetchAll();
 							
 							$singleColumnKey = null;
@@ -299,7 +338,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 						}
 						
 						// Nahazim tam nove
-						foreach($allChangedFieldsData[$curr] as $joinFields) {
+						foreach($dataToSave as $joinFields) {
 							$iData = array_merge(!is_array($joinFields) ? array($singleColumnKey => $joinFields) : $joinFields, $joinIdFields);
 							dibi::insert($this->metadata->getFieldTableName($curr), $iData)->execute();
 						}
@@ -307,8 +346,13 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 				}
 			}
 			
+			
+			// Zavolani eventu
+			if($action == 'create')	$this->onCreate($this);
+			elseif($action == 'update') $this->onUpdate($this);
 			$this->onPostSave($this);
 			
+			// Commitnuti dat a provedeni merge automaticky generovanech polozek do entity
 			dibi::commit();
 			$this->data->performSaveMerge();
 		} catch(\Exception $e) {

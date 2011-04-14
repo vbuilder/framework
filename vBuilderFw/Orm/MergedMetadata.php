@@ -60,14 +60,21 @@ class MergedMetadata implements IEntityMetadata {
 		foreach($this->metadata as $curr)
 			$merged = array_merge($merged, $curr->getBehaviors());
 		
-		return $merged;
+		return array_unique($merged);
 	}
 	
 	/**
 	 * {@inheritdoc} 
 	 */
 	public function getBehaviorArgs($behaviorName) {
-		return array();
+		for($i = count($this->metadata) - 1; $i >= 0; $i--) {
+			if(in_array($behaviorName, $this->metadata[$i]->getBehaviors())) {
+				return $this->metadata[$i]->getBehaviorArgs($behaviorName);
+			}
+		}
+
+		throw new \InvalidArgumentException("Behavior '$behaviorName' is not applied to this entity");
+		return array();		
 	}
 	
 	/**
@@ -79,7 +86,7 @@ class MergedMetadata implements IEntityMetadata {
 		foreach($this->metadata as $curr)
 			$merged = array_merge($merged, $curr->getIdFields());
 		
-		return $merged;
+		return array_unique($merged);
 	}
 	
 	/**
@@ -91,7 +98,7 @@ class MergedMetadata implements IEntityMetadata {
 		foreach($this->metadata as $curr)
 			$merged = array_merge($merged, $curr->getFields());
 		
-		return $merged;
+		return array_unique($merged);
 	}
 	
 	/**
@@ -103,6 +110,18 @@ class MergedMetadata implements IEntityMetadata {
 				return true;
 				  
 		return false;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
+	public function getFieldColumn($name) {
+		for($i = count($this->metadata) - 1; $i >= 0; $i--)
+			if($this->metadata[$i]->hasField($name))
+				return $this->metadata[$i]->getFieldColumn($name);
+		
+		throw new \InvalidArgumentException("Field '$name' is not defined");
+		return null;
 	}
 	
 	/**

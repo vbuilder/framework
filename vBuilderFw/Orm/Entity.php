@@ -582,7 +582,7 @@ class Entity extends vBuilder\Object {
 			return $data;
 		
 		// OneToMany
-		} elseif(Nette\String::compare($type, "OneToMany")) {
+		} elseif(Nette\String::compare($type, "OneToMany") || Nette\String::compare($type, "OneToOne")) {
 			return $data;
 		}
 

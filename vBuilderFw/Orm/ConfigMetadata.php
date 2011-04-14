@@ -87,6 +87,16 @@ class ConfigMetadata implements IEntityMetadata {
 	/**
 	 * {@inheritdoc} 
 	 */
+	public function getFieldColumn($name) {
+		if(!isset($this->config["fields"][$name])) throw new \InvalidArgumentException("Field '$name' is not defined");
+		
+		return isset($this->config["fields"][$name]["column"])
+				  ? $this->config["fields"][$name]["column"] : $name;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
 	public function getFieldType($name) {
 		if(!isset($this->config["fields"][$name])) throw new \InvalidArgumentException("Field '$name' is not defined");
 		

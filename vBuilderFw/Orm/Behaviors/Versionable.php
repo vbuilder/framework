@@ -49,12 +49,18 @@ class Versionable implements vBuilder\Orm\IBehavior {
 	/** @var reference to entity */
 	private $entity;
 	
-	/** @var name of ID column (it should be NOT auto-increment integer
+	/** @var name of ID field (it should be NOT auto-increment integer
 	 *		- incrementation is taken care of internally) */
-	private $idCol;
+	private $idField;
+	
+	/** @var name of ID column */
+	private $idColumn;
+	
+	/** @var name of revision field */
+	private $revisionField;
 	
 	/** @var name of revision column */
-	private $revisionCol;
+	private $revisionColumn;
 	
 	/**
 	 * Register behavior to entity
@@ -62,9 +68,17 @@ class Versionable implements vBuilder\Orm\IBehavior {
 	 * @param ActiveEntity entity reference
 	 */
 	public function __construct(Entity &$entity, array $args = array()) {
-		$this->idCol = isset($args['idCol']) ? $args['idCol'] : 'id';
-		$this->revisionCol = isset($args['revisionCol']) ? $args['revisionCol'] : 'revision';
 		$this->entity = &$entity;
+		
+		// Zjisitm ID, Revision column a field name, pripadne hodim default
+		foreach(array('id', 'revision') as $curr) {
+			if(isset($args[$curr . 'Field'])) {
+				
+				$this->{$curr . 'Field'} = $args[$curr . 'Field'];
+				$this->{$curr . 'Column'} = isset($args[$curr . 'Col']) ? $args[$curr . 'Col'] : $entity->getMetadata()->getFieldColumn($args[$curr . 'Field']);
+			} else
+				$this->{$curr . 'Field'} = $this->{$curr . 'Column'} = isset($args[$curr . 'Col']) ? $args[$curr . 'Col'] : $curr;
+		}
 		
 		$entity->onPreSave[] = \callback($this, 'preSave');
 		$entity->onPostSave[] = \callback($this, 'postSave');
@@ -82,28 +96,28 @@ class Versionable implements vBuilder\Orm\IBehavior {
 		if(!$this->entity->hasChanged()) return ;
 		
 		// Zjistim cislo posledni revize
-		$revision = isset($this->entity->{$this->idCol}) ? dibi::query("SELECT [". $this->revisionCol ."] FROM [". $table
-				  ."] WHERE [". $this->revisionCol ."] > 0"
-				  ." AND [". $this->idCol ."] = %i", $this->entity->{$this->idCol})
-				  ->setType($this->revisionCol, dibi::INTEGER)->fetchSingle() : false;
+		$revision = isset($this->entity->{$this->idField}) ? dibi::query("SELECT [". $this->revisionColumn ."] FROM [". $table
+				  ."] WHERE [". $this->revisionColumn ."] > 0"
+				  ." AND [". $this->idColumn ."] = %i", $this->entity->{$this->idField})
+				  ->setType($this->revisionColumn, dibi::INTEGER)->fetchSingle() : false;
 				  
 		// Pokud neexistuje vubec zadna revize tyhle instance, vytvorim auto-id
 		if($revision === false) {
-			$id = dibi::query("SELECT COALESCE(MAX([". $this->idCol ."]), 0) + 1  FROM [". $table ."]")
-					  ->setType($this->revisionCol, dibi::INTEGER)->fetchSingle();
+			$id = dibi::query("SELECT COALESCE(MAX([". $this->idColumn ."]), 0) + 1 AS [maxid]  FROM [". $table ."]")
+					  ->setType('maxid', dibi::INTEGER)->fetchSingle();
 			
-			$this->entity->{$this->idCol} = $id;
-			$this->entity->{$this->revisionCol} = 1;
+			$this->entity->{$this->idField} = $id;
+			$this->entity->{$this->revisionField} = 1;
 			
 		// Pokud existuje nejaka verze, prevratim jeji ID
 		} else {
 			$revision = dibi::query("UPDATE [". $table . "]"
-				  ." SET [". $this->revisionCol ."] = 0 - [". $this->revisionCol ."]"
-				  ." WHERE [". $this->revisionCol ."] > 0"
-				  ." AND [". $this->idCol ."] = %i", $this->entity->{$this->idCol}
+				  ." SET [". $this->revisionColumn ."] = 0 - [". $this->revisionColumn ."]"
+				  ." WHERE [". $this->revisionColumn ."] > 0"
+				  ." AND [". $this->idColumn ."] = %i", $this->entity->{$this->idField}
 			);
 			
-			$this->entity->{$this->revisionCol} = $revision + 1;
+			$this->entity->{$this->revisionField} = $revision + 1;
 		}
 		
 	}

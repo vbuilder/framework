@@ -74,7 +74,7 @@ class AnnotationMetadata implements IEntityMetadata {
 				
 		// Sloupecky
 		if(isset($annotations['Column'])) {
-			foreach($annotations['Column'] as $curr) {
+			foreach($annotations['Column'] as $curr) {		
 				// Prazdne definice
 				if($curr === true) continue;
 				
@@ -114,7 +114,7 @@ class AnnotationMetadata implements IEntityMetadata {
 	 * {@inheritdoc} 
 	 */
 	public function getBehaviorArgs($behaviorName) {
-		if(!isset($this->behaviors[$behaviorName])) throw new \InvalidArgumentException("Behavior '$name' is not applied to this entity");
+		if(!isset($this->behaviors[$behaviorName])) throw new \InvalidArgumentException("Behavior '$behaviorName' is not applied to this entity");
 		
 		return $this->behaviors[$behaviorName];
 	}
@@ -139,6 +139,15 @@ class AnnotationMetadata implements IEntityMetadata {
 	 */
 	public function hasField($name) {
 		return isset($this->fields[$name]);
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
+	public function getFieldColumn($name) {
+		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
+		
+		return isset($this->fields[$name]['realName']) ? $this->fields[$name]['realName'] : $name;
 	}
 	
 	/**
