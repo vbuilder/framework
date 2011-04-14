@@ -34,7 +34,8 @@ require __DIR__ . '/../bootstrap.php';
 
 use vBuilder, Nette, dibi,
 	 vBuilder\Orm\ActiveEntity,
-	 vBuilder\Test\Assert; 
+	 vBuilder\Orm\Repository,
+	 vBuilder\Test\Assert;
 
 dibi::query(
 	"CREATE TEMPORARY TABLE [TestEntity_profile] (".
@@ -150,3 +151,8 @@ Assert::arrayEqual(array(array(
 	 'street' => 'Spodní 14',
 	 'city' => 'Domazlice'
 )), dibi::query("SELECT * FROM [TestEntity_address]")->fetchAll());
+
+// Nacteni OneToOne entity skrze hlavni entitu *********************************
+$e1_r = Repository::get(__NAMESPACE__ . '\\TestEntity', 1);
+Assert::same('Spodní 14', $e1_r->address->street);
+Assert::same('Domazlice', $e1_r->address->city);
