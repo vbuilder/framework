@@ -57,7 +57,7 @@ class Repository extends vBuilder\Object {
 	 * Creates DataSource for finding all entities
 	 * 
 	 * @param string entity name
-	 * @return DataSource 
+	 * @return Fluent
 	 */
 	public static function findAll($entity) {
 		$class = self::getEntityClass($entity);
@@ -69,11 +69,10 @@ class Repository extends vBuilder\Object {
 		// Delam zvlast, protoze jinak by se mohla vyhazovat
 		// vyjimka pri DibiFluent::__toString
 		if(!dibi::getConnection()->isConnected()) dibi::getConnection()->connect();
-		$stmt = dibi::select("*")->from($metadata->getTableName());
+		$fluent = new Fluent($class);
+		$fluent->select('*')->from($metadata->getTableName());
 		
-		
-		$ds = new DataSource((String) $stmt, $class);
-		return $ds;
+		return $fluent;
 	}
 	
 	/**

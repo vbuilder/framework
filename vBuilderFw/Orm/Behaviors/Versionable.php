@@ -84,6 +84,11 @@ class Versionable implements vBuilder\Orm\IBehavior {
 		$entity->onPostSave[] = \callback($this, 'postSave');
 	}
 	
+	/**
+	 * Pre-save actions
+	 * 
+	 * @return void 
+	 */
 	function preSave() {
 		// Cele je to uzavrene v transakci diky internimu zpracovani save,
 		// takze se nemusim starat o reseni problemu, protoze v pripade jakekoliv
@@ -122,8 +127,31 @@ class Versionable implements vBuilder\Orm\IBehavior {
 		
 	}
 	
+	/**
+	 * Post-save actions
+	 * 
+	 * @return void 
+	 */
 	function postSave() {
 		dibi::query("UNLOCK TABLES");
+	}
+	
+	/**
+	 * Returns real revision number
+	 * 
+	 * @return int 
+	 */
+	function getRevision() {
+		return abs($this->entity->defaultGetter($this->revisionField));
+	}
+	
+	/**
+	 * Returns true if this revision is last in DB
+	 * 
+	 * @return bool
+	 */
+	function isLastRevision() {
+		return $this->entity->defaultGetter($this->revisionField) > 0;
 	}
 	
 }

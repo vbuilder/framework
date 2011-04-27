@@ -345,7 +345,7 @@ class Entity extends vBuilder\Object {
 	 * @param string field name
 	 * @return mixed 
 	 */
-	final protected function & defaultGetter($fieldName) {
+	final public function & defaultGetter($fieldName) {
 		// Mrknu, jeslti uz to nemam nacachovany
 		if(($cached = $this->fieldCache($fieldName)) !== null) return $cached;
 
