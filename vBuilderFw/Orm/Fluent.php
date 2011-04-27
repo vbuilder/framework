@@ -23,6 +23,8 @@
 
 namespace vBuilder\Orm;
 
+use dibi;
+
 /**
  * Modified DibiFluent for getting results
  * associated in some row class.

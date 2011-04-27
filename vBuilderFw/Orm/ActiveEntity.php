@@ -113,8 +113,8 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					// Vytvorim DS
 					if($this->metadata->getFieldEntityName($curr) !== null)
 						$ds = Repository::findAll($this->metadata->getFieldEntityName($curr));
-					else
-						$ds = new DataSource((String) dibi::select("*")->from($this->metadata->getFieldTableName($curr)), $class);
+					else 
+						$ds = dibi::select("*")->from($this->metadata->getFieldTableName($curr));						
 					
 					// Podminky spojeni
 					foreach($this->metadata->getFieldJoinPairs($curr) as $join) 
