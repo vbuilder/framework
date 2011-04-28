@@ -308,11 +308,15 @@ class Entity extends vBuilder\Object {
 		
 		self::$_metadata[$className] = static::getMetadataInternal();
 		
+		// VALIDACE METADAT ------------------------------------------------------
+		
 		if(self::$_metadata[$className]->getTableName() == "")
 			  throw new \LogicException("Entity '$className' does not have table name defined");
 		
 		if(count(self::$_metadata[$className]->getFields()) == 0)
 			throw new \LogicException("Entity '$className' does not have defined any fields");
+		
+		// KONEC VALIDACE METADAT ------------------------------------------------
 		
 		return self::$_metadata[$className];
 	}
@@ -341,6 +345,9 @@ class Entity extends vBuilder\Object {
 	
 	/**
 	 * Default getter implementation. Looks up cache and runs data type mapping.
+	 * 
+	 * Note: This function has to be public because of possible calls
+	 * from Behavior classes.
 	 * 
 	 * @param string field name
 	 * @return mixed 
@@ -557,7 +564,7 @@ class Entity extends vBuilder\Object {
 	 * @return mixed resolved data
 	 */
 	final private function & __dataTypeMapper($name, &$data) {
-
+		
 		// Nactu vsechny implementace datovych typu, pokud je potreba
 		if(self::$_dataTypesImplementations === null)
 			self::searchForOrmClasses();
@@ -568,7 +575,7 @@ class Entity extends vBuilder\Object {
 			return $class;
 			
 		// Zachovavani NULL hodnoty
-		} elseif($data === null) {
+		} elseif($data === null && !Nette\String::compare($type, "OneToMany")) {
 			return $data;
 			
 		// Integer
@@ -581,9 +588,32 @@ class Entity extends vBuilder\Object {
 			$data = (String) $data;
 			return $data;
 		
+		// OneToOne
+		} elseif(Nette\String::compare($type, "OneToOne")) {
+			if($this->metadata->getFieldEntityName($name) !== null) {
+				$targetEntityData = array();
+				
+				$joinPairs = $this->metadata->getFieldJoinPairs($name);
+				foreach($joinPairs as $curr) {
+					list($local, $target) = $curr;
+					$targetEntityData[$target] = $this->data->$local;
+				}
+				
+				$class = $this->metadata->getFieldEntityName($name);
+				$instance = new $class($targetEntityData);
+				return $instance;
+			}
+			
+			return null;
+			
 		// OneToMany
-		} elseif(Nette\String::compare($type, "OneToMany") || Nette\String::compare($type, "OneToOne")) {
-			return $data;
+		} elseif(Nette\String::compare($type, "OneToMany")) {
+			if($this->metadata->getFieldEntityName($name) !== null)
+				$instance = new EntityCollection($this, $name, $this->metadata->getFieldEntityName($name));
+			else
+				$instance = new Collection($this, $name);
+			
+			return $instance;
 		}
 
 		throw new EntityException("Data type '$type' is not defined", EntityException::DATATYPE_NOT_DEFINED);
@@ -611,6 +641,11 @@ class Entity extends vBuilder\Object {
 	 * Searches for all data type and behavior implementations
 	 */
 	private static function searchForOrmClasses() {
+		// TODO: Cachovat to. Kontrolovat, jestli se
+		// kdy se Environment::getCache('Nette.RobotLoader') zmenil a na zaklade toho
+		// invalidovat vlastni cache. Nebo jeste lepe pretizit RobotLoader,
+		// aby pri refreshi emittoval nejakej event.
+		
 		self::$_dataTypesImplementations = array();
 		self::$_behaviorImplementations = array();
 

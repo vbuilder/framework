@@ -102,46 +102,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		
 		$result = $query->fetch();
 		if($result !== false) {
-			$loadedData = (array) $result;
-			
-			// Relace (OneToMany, ...)
-			// TODO: Bylo by hezky to udelat lazy
-			// imho by slo zrusit na zacatku $this->state != self::STATE_NEW
-			// a volat load s nazvem sloupce
-			foreach($this->metadata->getFields() as $curr) {
-				if($this->metadata->getFieldType($curr) == "OneToMany") {
-					// Vytvorim DS
-					if($this->metadata->getFieldEntityName($curr) !== null)
-						$ds = Repository::findAll($this->metadata->getFieldEntityName($curr));
-					else 
-						$ds = dibi::select("*")->from($this->metadata->getFieldTableName($curr));						
-					
-					// Podminky spojeni
-					foreach($this->metadata->getFieldJoinPairs($curr) as $join) 
-						$ds->where("[".$join[1]."] = %s", $this->{$join[0]});
-					
-										
-					// Stahnu data a pokud se jedna o jednoduche spojeni (bez entity)
-					// Rozparsuju to do pole
-					$joinedData = $ds->fetchAll();
-					if($this->metadata->getFieldEntityName($curr) === null) {
-						$joinKeys = array();
-						foreach($this->metadata->getFieldJoinPairs($curr) as $join) $joinKeys[$join[1]] = null;
-						
-						$d = array();
-						foreach($joinedData as $c) {
-							$cd = array_diff_key((array) $c, $joinKeys);
-							if(count($cd) == 1) $cd = current($cd);
-							
-							$d[] = $cd;
-						}
-						
-						$loadedData[$curr] = $d;
-					} else						 
-						$loadedData[$curr] = $joinedData;
-				}
-			}
-			
+			$loadedData = (array) $result;			
 			$this->data->loadData($loadedData);
 			
 		} else {
