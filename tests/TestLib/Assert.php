@@ -74,12 +74,13 @@ class Assert extends \Assert {
 	 * 
 	 * @param array|Traversable $expected
 	 * @param array|Traversable $actual 
+	 * @param int maximum depth for chekcing of nested arrays
 	 */
-	public static function arrayEqual($expected, $actual) {
+	public static function arrayEqual($expected, $actual, $maxDepth = 5) {
 		if(!is_array($actual) && !($actual instanceof \Traversable)) 
 			self::fail("Failed asserting that $actual is array equal to $expected");
 		
-		if(!self::arrayEqualHelper($expected, $actual)) {			
+		if(!self::arrayEqualHelper($expected, $actual, $maxDepth)) {			
 			echo "EXPECTED: \n";
 			dump($expected);
 			
@@ -97,10 +98,14 @@ class Assert extends \Assert {
 	 * 
 	 * @param array|Traversable $expected
 	 * @param array|Traversable $actual
+	 * @param int maximum depth for chekcing of nested arrays
 	 * 
 	 * @return bool true if equal
 	 */
-	private static function arrayEqualHelper($expected, $actual) {
+	private static function arrayEqualHelper($expected, $actual, $maxDepth) {
+		// Pokud jsem prekrocil maximalni hloubku
+		if($maxDepth < 0) return true;
+		
 		// Predpoklada se, ze kdyz je Traversable, tak je i Countable
 		if(count($expected) != count($actual)) return false;
 		
@@ -110,9 +115,9 @@ class Assert extends \Assert {
 			foreach($expected as $key => $value) {
 				if(!isset($actual[$key]))
 					return false;
-				
+								
 				if(is_array($value) || $value instanceof \Traversable) {
-					if(!self::arrayEqualHelper($value, $actual[$key]))
+					if(!self::arrayEqualHelper($value, $actual[$key], $maxDepth - 1))
 						return false;
 				} else if($value != $actual[$key])
 					return false;
@@ -120,11 +125,11 @@ class Assert extends \Assert {
 			
 		// Pole neni asociativni
 		} else {
-			foreach($expected as $value) {
+			foreach($expected as $value) {				
 				$found = false;
-				foreach($actual as $value2) {
+				foreach($actual as $value2) {				
 					if(is_array($value) || $value instanceof \Traversable) {
-						if(self::arrayEqualHelper($value, $value2)) {
+						if(self::arrayEqualHelper($value, $value2, $maxDepth - 1)) {
 							$found = true;
 							break;
 						}
