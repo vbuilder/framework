@@ -132,13 +132,26 @@ class EntityData extends vBuilder\Object {
 	 * Loads data into record
 	 * 
 	 * @param array of field values (associative)
+	 * @param bool true if keys are column names, false if they are field names
 	 */
-	public function loadData(array $newData) {		
+	public function loadData(array $newData, $trColumnNames = true) {
+		if($trColumnNames) {
+			$trData = array();
+			foreach($this->metadata->getFields() as $name) {
+				$colName = $this->metadata->getFieldColumn($name);
+				if(isset($newData[$colName])) $trData[$name] = $newData[$colName];
+			} 
+			
+			$this->mergeToRepository($trData);
+			return ;
+		}
+		
 		$this->mergeToRepository($newData);
 	}
-	
 	/**
 	 * Merge data from array to this entity.  All fields in this array overwrite existing ones.
+	 * 
+	 * Warning: array is supposed to be indexed by FIELD names (not column names)
 	 * 
 	 * @param array of data to merge
 	 */
