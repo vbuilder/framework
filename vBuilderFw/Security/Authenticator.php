@@ -46,7 +46,12 @@ class Authenticator implements Nette\Security\IAuthenticator {
 	 * @throws AuthenticationException
 	 */
 	public function authenticate(array $credentials) {
-		$user = Repository::findAll('vBuilder\Security\User')->where('[username] = %s', $credentials[self::USERNAME])->fetch();
+		$securityConfig = Nette\Environment::getConfig('security');
+		$entity = isset($securityConfig['user']['entity'])
+				? $securityConfig['user']['entity']
+				: 'vBuilder\Security\User';
+		
+		$user = Repository::findAll($entity)->where('[username] = %s', $credentials[self::USERNAME])->fetch();
 
 		if($user !== false) {
 			if($user->checkPassword($credentials[self::PASSWORD]))
