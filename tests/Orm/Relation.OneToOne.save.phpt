@@ -1,9 +1,9 @@
 <?php
 /**
- * Test: Test of ORM ActiveEntity OneToOne relation
+ * Test: Test of saving OneToOne related entities
  *
  * @author Adam Staněk (V3lbloud)
- * @since Apr 14, 2011
+ * @since Apr 27, 2011
  *
  * @package    vBuilder\Orm
  * @subpackage UnitTests
@@ -30,56 +30,17 @@
 
 namespace vBuilder\Orm\EntityTest;
 
-require __DIR__ . '/../bootstrap.php';
-
 use vBuilder, Nette, dibi,
-	 vBuilder\Orm\ActiveEntity,
 	 vBuilder\Orm\Repository,
 	 vBuilder\Test\Assert;
 
-dibi::query(
-	"CREATE TEMPORARY TABLE [TestEntity_profile] (".
-	"	[id] int(11) NOT NULL AUTO_INCREMENT,".
-   "	[name] varchar(255),".
-	"	[surname] varchar(255),".
-	"	[address] int(11),".
-		  
-	"	PRIMARY KEY([id])".
-	");"
-);
+require __DIR__ . '/Relation.OneToOne.inc.php';
 
-dibi::query(
-	"CREATE TEMPORARY TABLE [TestEntity_address] (".
-	"	[id] int(11) NOT NULL AUTO_INCREMENT,".
-   "	[street] varchar(255),".
-	"	[city] varchar(255),".
-		  
-	"	PRIMARY KEY ([id])".
-	");"
-);
-
-/**
- * @Table(name="TestEntity_address")
- *
- * @Column(id, pk, type="integer", generatedValue)
- * @Column(street, type="string")
- * @Column(city, type="string")
- */
-class OneToOneEntity extends ActiveEntity { }
-
-/**
- * @Table(name="TestEntity_profile")
- *
- * @Column(id, pk, type="integer", generatedValue)
- * @Column(name, type="string")
- * @Column(surname, type="string")
- * @Column(address, type="OneToOne", entity="vBuilder\Orm\EntityTest\OneToOneEntity", joinOn="address=id")
- */
-class TestEntity extends ActiveEntity { }
+dibi::query('TRUNCATE TABLE [TestEntity_profile]');
+dibi::query('TRUNCATE TABLE [TestEntity_address]');
 
 // =============================================================================
 
-// Ukladani OneToOne entity ****************************************************
 $e1 = new TestEntity;
 $e1->name = 'Jan';
 $e1->surname = 'Noha';
@@ -133,7 +94,8 @@ Assert::arrayEqual(array(array(
 // Ulozeni OneToOne entity skrze hlavni entitu *********************************
 
 $e1->address->street = 'Spodní 14';
-$e1->save();
+$e1->address->save();
+//$e1->save();
 
 Assert::arrayEqual(array(array(
 	 'id' => 1,
@@ -151,8 +113,3 @@ Assert::arrayEqual(array(array(
 	 'street' => 'Spodní 14',
 	 'city' => 'Domazlice'
 )), dibi::query("SELECT * FROM [TestEntity_address]")->fetchAll());
-
-// Nacteni OneToOne entity skrze hlavni entitu *********************************
-$e1_r = Repository::get(__NAMESPACE__ . '\\TestEntity', 1);
-Assert::same('Spodní 14', $e1_r->address->street);
-Assert::same('Domazlice', $e1_r->address->city);

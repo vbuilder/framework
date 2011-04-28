@@ -590,6 +590,10 @@ class Entity extends vBuilder\Object {
 		
 		// OneToOne
 		} elseif(Nette\String::compare($type, "OneToOne")) {
+			// Pro pripady, kdy byl prirazen primo objekt (setterem)
+			if(is_object($data)) return $data;
+			
+			// Pro pripady, ze je tady z DB pouze IDcko entity, musim ji vytvorit
 			if($this->metadata->getFieldEntityName($name) !== null) {
 				$targetEntityData = array();
 				
@@ -601,6 +605,7 @@ class Entity extends vBuilder\Object {
 				
 				$class = $this->metadata->getFieldEntityName($name);
 				$instance = new $class($targetEntityData);
+
 				return $instance;
 			}
 			
@@ -608,6 +613,9 @@ class Entity extends vBuilder\Object {
 			
 		// OneToMany
 		} elseif(Nette\String::compare($type, "OneToMany")) {
+			// Pro pripady, kdy byl prirazen primo objekt (setterem)
+			if(is_object($data)) return $data;
+			
 			if($this->metadata->getFieldEntityName($name) !== null)
 				$instance = new EntityCollection($this, $name, $this->metadata->getFieldEntityName($name));
 			else

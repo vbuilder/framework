@@ -30,52 +30,11 @@
 
 namespace vBuilder\Orm\EntityTest;
 
-require __DIR__ . '/../bootstrap.php';
+require __DIR__ . '/Relation.OneToMany.inc.php';
 
 use vBuilder, Nette, dibi,
-	 vBuilder\Orm\ActiveEntity,
 	 vBuilder\Orm\Repository,
 	 vBuilder\Test\Assert; 
-
-dibi::query(
-	"CREATE TEMPORARY TABLE [TestEntityTable] (".
-	"	[id] int(11) NOT NULL AUTO_INCREMENT,".
-   "	[name] varchar(255),".
-		  
-	"	PRIMARY KEY([id])".
-	");"
-);
-
-dibi::query(
-	"CREATE TEMPORARY TABLE [TestEntityTableList] (".
-	"	[id] int(11) NOT NULL,".
-   "	[name] varchar(255),".
-		  
-	"	KEY (`id`)".
-	");"
-);
-
-dibi::insert('TestEntityTable', array('id' => 1, 'name' => 'A'))->execute();
-dibi::insert('TestEntityTable', array('id' => 2, 'name' => 'B'))->execute();
-dibi::insert('TestEntityTableList', array('id' => 1, 'name' => 'foo'))->execute();
-dibi::insert('TestEntityTableList', array('id' => 1, 'name' => 'bar'))->execute();
-
-/**
- * @Table(name="TestEntityTableList")
- *
- * @Column(id, id, type="integer")
- * @Column(name, id, type="string")
- */
-class OneToManyEntity extends ActiveEntity { }
-
-/**
- * @Table(name="TestEntityTable")
- *
- * @Column(id, id, type="integer", generatedValue)
- * @Column(name, type="string")
- * @Column(roles, type="OneToMany", entity="vBuilder\Orm\EntityTest\OneToManyEntity", joinUsing="id")
- */
-class TestEntity extends ActiveEntity { }
 
 // =============================================================================
 

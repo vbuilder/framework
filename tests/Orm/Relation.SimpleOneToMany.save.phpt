@@ -1,6 +1,6 @@
 <?php
 /**
- * Test: Test of load in OneToOne relation
+ * Test: Test of saving OneToMany related records (table based OneToMany)
  *
  * @author Adam Staněk (V3lbloud)
  * @since Apr 27, 2011
@@ -30,22 +30,34 @@
 
 namespace vBuilder\Orm\EntityTest;
 
+require __DIR__ . '/Relation.SimpleOneToMany.inc.php';
+
 use vBuilder, Nette, dibi,
 	 vBuilder\Orm\Repository,
-	 vBuilder\Test\Assert;
+	 vBuilder\Test\Assert; 
 
-require __DIR__ . '/Relation.OneToOne.inc.php';
+dibi::query('TRUNCATE TABLE [TestEntityTable]');
+dibi::query('TRUNCATE TABLE [TestEntityTableList]');
+dibi::query('TRUNCATE TABLE [TestEntityTableList2]');
 
 // =============================================================================
 
-// Test pri listingu
-$e1 = Repository::findAll(__NAMESPACE__ . '\\TestEntity')->fetch();
-Assert::equal('Jan', $e1->name);
-Assert::equal(__NAMESPACE__ . '\\OneToOneEntity', get_class($e1->address));
-Assert::equal('Dolní', $e1->address->street);
+$e1 = new TestEntity();
+$e1->name = 'A';
+$e1->roles = array("foo", "bar");
+$e1->complex = array(array('a' => 'foo2', 'b' => 'bar2'), array('a' => 'foo3', 'b' => 'bar3'));
+$e1->save();
 
-// Test pri primem nacteni
-$e2 = Repository::get(__NAMESPACE__ . '\\TestEntity', 2);
-Assert::equal('Iveta', $e2->name);
-Assert::equal(__NAMESPACE__ . '\\OneToOneEntity', get_class($e2->address));
-Assert::equal('Horní', $e2->address->street);
+Assert::arrayEqual(array(
+	array('id' => 1, 'name' => 'A') 
+), dibi::select('*')->from('TestEntityTable')->fetchAll());
+
+Assert::arrayEqual(array(
+	array('id' => 1, 'name' => 'foo'),
+	array('id' => 1, 'name' => 'bar') 
+), dibi::select('*')->from('TestEntityTableList')->fetchAll());
+
+Assert::arrayEqual(array(
+	array('id' => 1, 'a' => 'foo2', 'b' => 'bar2'),
+	array('id' => 1, 'a' => 'foo3', 'b' => 'bar3') 
+), dibi::select('*')->from('TestEntityTableList2')->fetchAll());

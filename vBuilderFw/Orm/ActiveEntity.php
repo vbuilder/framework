@@ -157,7 +157,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	 * @throws EntityException if any of ID fields is not defined (except of auto-generated fields)
 	 * @throws \LogicException if there is more than one auto-generated fields
 	 */
-	public function save() {
+	public function save() {		
 		$idFields = $this->metadata->getIdFields();
 		$fields = $this->metadata->getFields();
 		$autoField = null;
@@ -194,8 +194,11 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 				// Pokud je polozka OneToOne relaci, musim ji ulozit PRED samotnou entitou (aby si mohla ulozit jeji ID)
 				// Po ulozeni svazane entity si musim vzit jeji ID a pridat ho do dat k ulozeni.
 				if($type == 'OneToOne') {
-					if(isset($this->data->{$curr})) {
-						$targetEntity = $this->data->{$curr};
+					
+					// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
+					// pri nacteni z DB pouze ID)
+					if(isset($this->{$curr})) {
+						$targetEntity = $this->{$curr};
 						if(!($targetEntity instanceof ActiveEntity))
 							throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
 						
@@ -219,7 +222,6 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 						
 			// Vsechny data k ulozeni do tabulky (vcetne tech nezmenenych, ale bez virtualnich sloupcu - vazeb)
 			$allTableFields = array_diff_key(array_merge($this->data->getAllData(true), $updateData), array_flip($externalFields));	
-			
 			
 			// ULOZENI SAMOTNE ENTITY ---------------------------------------------
 			// Pokud jsou k ulozeni nejaka TABULKOVA data, ulozim je

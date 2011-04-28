@@ -30,56 +30,11 @@
 
 namespace vBuilder\Orm\EntityTest;
 
-require __DIR__ . '/../bootstrap.php';
+require __DIR__ . '/Relation.SimpleOneToMany.inc.php';
 
 use vBuilder, Nette, dibi,
-	 vBuilder\Orm\ActiveEntity,
 	 vBuilder\Orm\Repository,
 	 vBuilder\Test\Assert; 
-
-dibi::query(
-	"CREATE TEMPORARY TABLE [TestEntityTable] (".
-	"	[id] int(11) NOT NULL AUTO_INCREMENT,".
-   "	[name] varchar(255),".
-		  
-	"	PRIMARY KEY([id])".
-	");"
-);
-
-dibi::query(
-	"CREATE TEMPORARY TABLE [TestEntityTableList] (".
-	"	[id] int(11) NOT NULL,".
-   "	[name] varchar(255),".
-		  
-	"	KEY (`id`)".
-	");"
-);
-
-dibi::query(
-	"CREATE TEMPORARY TABLE [TestEntityTableList2] (".
-	"	[id] int(11) NOT NULL,".
-   "	[a] varchar(255),".
-	"	[b] varchar(255),".
-		  
-	"	KEY (`id`)".
-	");"
-);
-
-dibi::insert('TestEntityTable', array('id' => 1, 'name' => 'A'))->execute();
-dibi::insert('TestEntityTable', array('id' => 2, 'name' => 'B'))->execute();
-dibi::insert('TestEntityTableList', array('id' => 1, 'name' => 'foo'))->execute();
-dibi::insert('TestEntityTableList', array('id' => 1, 'name' => 'bar'))->execute();
-dibi::insert('TestEntityTableList2', array('id' => 2, 'a' => 'foo', 'b' => 'bar'))->execute();
-
-/**
- * @Table(name="TestEntityTable")
- *
- * @Column(id, id, type="integer", generatedValue)
- * @Column(name, type="string")
- * @Column(roles, type="OneToMany", table="TestEntityTableList", joinUsing="id")
- * @Column(complex, type="OneToMany", table="TestEntityTableList2", joinUsing="id")
- */
-class TestEntity extends ActiveEntity { }
 
 // =============================================================================
 

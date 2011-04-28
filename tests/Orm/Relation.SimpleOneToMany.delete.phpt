@@ -1,6 +1,6 @@
 <?php
 /**
- * Test: Test of load in OneToOne relation
+ * Test: Test of deletion of OneToMany related record (table based)
  *
  * @author Adam Staněk (V3lbloud)
  * @since Apr 27, 2011
@@ -30,22 +30,15 @@
 
 namespace vBuilder\Orm\EntityTest;
 
+require __DIR__ . '/Relation.SimpleOneToMany.inc.php';
+
 use vBuilder, Nette, dibi,
 	 vBuilder\Orm\Repository,
-	 vBuilder\Test\Assert;
-
-require __DIR__ . '/Relation.OneToOne.inc.php';
+	 vBuilder\Test\Assert; 
 
 // =============================================================================
-
-// Test pri listingu
-$e1 = Repository::findAll(__NAMESPACE__ . '\\TestEntity')->fetch();
-Assert::equal('Jan', $e1->name);
-Assert::equal(__NAMESPACE__ . '\\OneToOneEntity', get_class($e1->address));
-Assert::equal('Dolní', $e1->address->street);
-
-// Test pri primem nacteni
-$e2 = Repository::get(__NAMESPACE__ . '\\TestEntity', 2);
-Assert::equal('Iveta', $e2->name);
-Assert::equal(__NAMESPACE__ . '\\OneToOneEntity', get_class($e2->address));
-Assert::equal('Horní', $e2->address->street);
+// 
+// Kontrola mazani spolu s entitou --------------------
+$e1 = new TestEntity(1);
+$e1->delete();
+Assert::same(0, count(dibi::select('*')->from('TestEntityTableList')->fetchAll()));

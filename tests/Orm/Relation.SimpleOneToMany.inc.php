@@ -1,13 +1,6 @@
 <?php
+
 /**
- * Test: Test of ORM ActiveEntity OneToMany relation (entity based)
- *
- * @author Adam Staněk (V3lbloud)
- * @since Feb 18, 2011
- *
- * @package    vBuilder\Orm
- * @subpackage UnitTests
- *
  * This file is part of vBuilder Framework (vBuilder FW).
  * 
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
@@ -32,9 +25,9 @@ namespace vBuilder\Orm\EntityTest;
 
 require __DIR__ . '/../bootstrap.php';
 
-use vBuilder, Nette, dibi,
-	 vBuilder\Orm\ActiveEntity,
-	 vBuilder\Test\Assert; 
+
+use dibi,
+	 vBuilder\Orm\ActiveEntity;
 
 dibi::query(
 	"CREATE TEMPORARY TABLE [TestEntityTable] (".
@@ -54,46 +47,28 @@ dibi::query(
 	");"
 );
 
+dibi::query(
+	"CREATE TEMPORARY TABLE [TestEntityTableList2] (".
+	"	[id] int(11) NOT NULL,".
+   "	[a] varchar(255),".
+	"	[b] varchar(255),".
+		  
+	"	KEY (`id`)".
+	");"
+);
+
 dibi::insert('TestEntityTable', array('id' => 1, 'name' => 'A'))->execute();
 dibi::insert('TestEntityTable', array('id' => 2, 'name' => 'B'))->execute();
 dibi::insert('TestEntityTableList', array('id' => 1, 'name' => 'foo'))->execute();
 dibi::insert('TestEntityTableList', array('id' => 1, 'name' => 'bar'))->execute();
-
-/**
- * @Table(name="TestEntityTableList")
- *
- * @Column(id, id, type="integer")
- * @Column(name, id, type="string")
- */
-class OneToManyEntity extends ActiveEntity { }
+dibi::insert('TestEntityTableList2', array('id' => 2, 'a' => 'foo', 'b' => 'bar'))->execute();
 
 /**
  * @Table(name="TestEntityTable")
  *
  * @Column(id, id, type="integer", generatedValue)
  * @Column(name, type="string")
- * @Column(roles, type="OneToMany", entity="vBuilder\Orm\EntityTest\OneToManyEntity", joinUsing="id")
+ * @Column(roles, type="OneToMany", table="TestEntityTableList", joinUsing="id")
+ * @Column(complex, type="OneToMany", table="TestEntityTableList2", joinUsing="id")
  */
 class TestEntity extends ActiveEntity { }
-
-// =============================================================================
-
-$e1 = new TestEntity(1);
-$expectedRoles = array("foo", "bar");
-foreach($e1->getRoles() as $curr) {	
-	if(in_array($curr->name, $expectedRoles))
-		$expectedRoles = array_diff($expectedRoles, array($curr->name));
-	else
-		Assert::fail("Unexpected joined entity '".$curr->name."' found");
-}
-
-Assert::same(0, count($expectedRoles));
-
-
-// Prazdny join ---------------------------------------
-$e2 = new TestEntity(2);
-Assert::same(array(), $e2->getRoles()); 
-
-// Kontrola mazani spolu s entitou --------------------
-$e1->delete();
-Assert::same(0, count(dibi::select('*')->from('TestEntityTableList')->fetchAll()));
