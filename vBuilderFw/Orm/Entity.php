@@ -280,7 +280,7 @@ class Entity extends vBuilder\Object {
 			}
 				
 			for($i = 0; $i < $numargs; $i++) 
-				$data[$idFields[$i]] = \func_get_arg($i);
+				$data[$this->metadata->getFieldColumn($idFields[$i])] = \func_get_arg($i);
 		}
 		
 		// Vytvorim data container
@@ -596,11 +596,13 @@ class Entity extends vBuilder\Object {
 			// Pro pripady, ze je tady z DB pouze IDcko entity, musim ji vytvorit
 			if($this->metadata->getFieldEntityName($name) !== null) {
 				$targetEntityData = array();
+				$targetClass = $this->metadata->getFieldEntityName($name);
+				$targetMetadata = $targetClass::getMetadata();
 				
 				$joinPairs = $this->metadata->getFieldJoinPairs($name);
 				foreach($joinPairs as $curr) {
 					list($local, $target) = $curr;
-					$targetEntityData[$target] = $this->data->$local;
+					$targetEntityData[$targetMetadata->getFieldColumn($target)] = $this->data->$local;
 				}
 				
 				$class = $this->metadata->getFieldEntityName($name);

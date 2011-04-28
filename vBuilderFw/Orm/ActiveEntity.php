@@ -98,7 +98,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		$query = dibi::select('*')->from($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();
 		foreach($idFields as $name) 
-			$query = $query->where("[$name] = %s", $this->data->$name);
+			$query = $query->where("[".$this->metadata->getFieldColumn($name)."] = %s", $this->data->$name);
 		
 		$result = $query->fetch();
 		if($result !== false) {
@@ -354,7 +354,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		$query = dibi::delete($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();
 		foreach($idFields as $name) 
-			$query = $query->where("[$name] = %s", $this->data->$name);
+			$query = $query->where("[".$this->metadata->getFieldColumn($name)."] = %s", $this->data->$name);
 		
 		$query = $query->limit("1");
 		
@@ -362,6 +362,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		if(dibi::affectedRows() == 0) $this->throwNoRecordFound();
 		
 		// Relace (OneToMany, ...)
+		// TODO: Prekontrolovat preklad nazvu sloupcu, nejak se mi to nelibi
 		foreach($this->metadata->getFields() as $curr) {
 			if($this->metadata->getFieldType($curr) == "OneToMany") {
 				$query2 = dibi::delete($this->metadata->getFieldTableName($curr));
