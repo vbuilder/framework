@@ -79,7 +79,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	 * @return array roles
 	 */
 	public function getRoles() {
-		return array_merge((Array) $this->defaultGetter('roles'), array("User"));
+		return array_merge($this->defaultGetter('roles')->toArray(), array("User"));
 	}
 
 	/**
