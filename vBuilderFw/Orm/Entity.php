@@ -331,11 +331,11 @@ class Entity extends vBuilder\Object {
 	 */
 	protected static function & getMetadataInternal() {
 		// Reflection teto tridy
-		$thisReflection = new Nette\Reflection\ClassReflection(__CLASS__);
+		$thisReflection = new Nette\Reflection\ClassType(__CLASS__);
 		
 		// Nalezeni primeho potomka
-		$reflection = new Nette\Reflection\ClassReflection(\get_called_class());
-		while($reflection !== null && ($parentReflection = $reflection->getParentClass()) != $thisReflection && !Nette\String::startsWith($parentReflection->getName(), 'vBuilder\Orm'))
+		$reflection = new Nette\Reflection\ClassType(\get_called_class());
+		while($reflection !== null && ($parentReflection = $reflection->getParentClass()) != $thisReflection && !Nette\Utils\Strings::startsWith($parentReflection->getName(), 'vBuilder\Orm'))
 			$reflection = $parentReflection;
 		
 		$metadata = new AnnotationMetadata($reflection);
@@ -492,7 +492,7 @@ class Entity extends vBuilder\Object {
 			}
 		}
 		
-		if((Nette\String::startsWith($name, "get") || Nette\String::startsWith($name, "set")) && mb_strlen($name) > 3) {
+		if((Nette\Utils\Strings::startsWith($name, "get") || Nette\Utils\Strings::startsWith($name, "set")) && mb_strlen($name) > 3) {
 			// Musim data bacha na MB kodovani
 			$fieldName = \mb_substr($name, 3);
 			$fieldName = \mb_strtolower(\mb_substr($fieldName, 0, 1), 'UTF-8') . \mb_substr($fieldName, 1);
@@ -501,7 +501,7 @@ class Entity extends vBuilder\Object {
 			if($this->metadata->hasField($fieldName)) {
 
 				// IMPLICITNI GET
-				if(Nette\String::startsWith($name, "get")) {
+				if(Nette\Utils\Strings::startsWith($name, "get")) {
 					return $this->defaultGetter($fieldName);
 				}
 
@@ -575,21 +575,21 @@ class Entity extends vBuilder\Object {
 			return $class;
 			
 		// Zachovavani NULL hodnoty
-		} elseif($data === null && !Nette\String::compare($type, "OneToMany")) {
+		} elseif($data === null && !Nette\Utils\Strings::compare($type, "OneToMany")) {
 			return $data;
 			
 		// Integer
-		} elseif(Nette\String::compare($type, "Integer")) {
+		} elseif(Nette\Utils\Strings::compare($type, "Integer")) {
 			$data = (int) $data;
 			return $data;
 			
 		// String
-		} elseif(Nette\String::compare($type, "String")) {
+		} elseif(Nette\Utils\Strings::compare($type, "String")) {
 			$data = (String) $data;
 			return $data;
 		
 		// OneToOne
-		} elseif(Nette\String::compare($type, "OneToOne")) {
+		} elseif(Nette\Utils\Strings::compare($type, "OneToOne")) {
 			// Pro pripady, kdy byl prirazen primo objekt (setterem)
 			if(is_object($data)) return $data;
 			
@@ -614,7 +614,7 @@ class Entity extends vBuilder\Object {
 			return null;
 			
 		// OneToMany
-		} elseif(Nette\String::compare($type, "OneToMany")) {
+		} elseif(Nette\Utils\Strings::compare($type, "OneToMany")) {
 			// Pro pripady, kdy byl prirazen primo objekt (setterem)
 			if(is_object($data)) return $data;
 			
@@ -675,15 +675,15 @@ class Entity extends vBuilder\Object {
 
 		foreach($classes as $className) {
 			// Protoze je to vyrazne rychlejsi nez overovat interface pro vsechny
-			if(Nette\String::startsWith($className, 'vBuilder\\Orm\\DataTypes')) {
-				$class = new Nette\Reflection\ClassReflection($className);
+			if(Nette\Utils\Strings::startsWith($className, 'vBuilder\\Orm\\DataTypes')) {
+				$class = new Nette\Reflection\ClassType($className);
 
 				if($class->implementsInterface('vBuilder\\Orm\\IDataType'))
 					self::$_dataTypesImplementations = \array_merge((array) self::$_dataTypesImplementations, \array_fill_keys($className::acceptedDataTypes(), $className));
 			}
 			
-			elseif(Nette\String::startsWith($className, 'vBuilder\\Orm\\Behaviors')) {
-				$class = new Nette\Reflection\ClassReflection($className);
+			elseif(Nette\Utils\Strings::startsWith($className, 'vBuilder\\Orm\\Behaviors')) {
+				$class = new Nette\Reflection\ClassType($className);
 				
 				if($class->implementsInterface('vBuilder\\Orm\\IBehavior'))
 					self::$_behaviorImplementations[mb_substr($className, 23)] = $className;

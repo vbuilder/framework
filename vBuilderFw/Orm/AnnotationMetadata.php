@@ -48,10 +48,10 @@ class AnnotationMetadata implements IEntityMetadata {
 	/**
 	 * Parses class annotation and build metadata object
 	 * 
-	 * @param Nette\Reflection\ClassReflection $reflection 
+	 * @param Nette\Reflection\ClassType $reflection 
 	 * @throws vBuilder\InvalidAnnotationException if any annotation is missing or bad formed
 	 */
-	public function __construct(Nette\Reflection\ClassReflection $reflection) {			
+	public function __construct(Nette\Reflection\ClassType $reflection) {			
 		
 		// Nazev tabulky
 		$annotations = $reflection->getAnnotations();
