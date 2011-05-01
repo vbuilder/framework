@@ -31,7 +31,7 @@ use vBuilder;
  * @author Adam Staněk (V3lbloud)
  * @since Jan 18, 2011
  */
-class DateTime extends \DateTime53 implements vBuilder\Orm\IDataType {
+class DateTime extends \DibiDateTime implements vBuilder\Orm\IDataType {
 
 	public function __construct(&$data, $fieldName, &$entity) {
 		parent::__construct($data);
