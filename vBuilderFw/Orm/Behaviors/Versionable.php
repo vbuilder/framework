@@ -116,13 +116,13 @@ class Versionable implements vBuilder\Orm\IBehavior {
 			
 		// Pokud existuje nejaka verze, prevratim jeji ID
 		} else {
+			$this->entity->{$this->revisionField} = $revision + 1;
+			
 			$revision = dibi::query("UPDATE [". $table . "]"
 				  ." SET [". $this->revisionColumn ."] = 0 - [". $this->revisionColumn ."]"
 				  ." WHERE [". $this->revisionColumn ."] > 0"
 				  ." AND [". $this->idColumn ."] = %i", $this->entity->{$this->idField}
 			);
-			
-			$this->entity->{$this->revisionField} = $revision + 1;
 		}
 		
 	}
