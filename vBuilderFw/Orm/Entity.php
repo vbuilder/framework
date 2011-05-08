@@ -23,7 +23,9 @@
 
 namespace vBuilder\Orm;
 
-use vBuilder, Nette;
+use vBuilder,
+	 Nette,
+	 Nette\MemberAccessException;
 
 /**
  * Basic Entity class for providing data access to DB row by default getters/setters.
@@ -407,12 +409,12 @@ class Entity extends vBuilder\Object {
 	 *
 	 * @param string variable name
 	 * @return mixed data
-	 * @throws \MemberAccessException if field doesn't exists or name is empty
+	 * @throws Nette\MemberAccessException if field doesn't exists or name is empty
 	 */
 	public function & __get($name) {
 		$class = get_called_class();
 
-		if($name === '') throw new \MemberAccessException("Cannot read a class '$class' property without name.");
+		if($name === '') throw new MemberAccessException("Cannot read a class '$class' property without name.");
 
 		// property getter support
 		$getterName = $name;
@@ -433,7 +435,7 @@ class Entity extends vBuilder\Object {
 			}
 		}
 
-		throw new \MemberAccessException("Cannot read an undeclared property $class::\$$name.");
+		throw new MemberAccessException("Cannot read an undeclared property $class::\$$name.");
 	}
 	
 	/**
@@ -445,11 +447,11 @@ class Entity extends vBuilder\Object {
 	 * @param  mixed   property value
 	 * @return void
 	 *
-	 * @throws \MemberAccessException if field doesn't exists or name is empty
+	 * @throws Nette\MemberAccessException if field doesn't exists or name is empty
 	 */
 	final public function __set($name, $value) {
 		$class = get_class($this);
-		if($name === '') throw new \MemberAccessException("Cannot read a class '$class' property without name.");
+		if($name === '') throw new MemberAccessException("Cannot read a class '$class' property without name.");
 		
 		// property setter support
 		$setterName = $name;
@@ -470,7 +472,7 @@ class Entity extends vBuilder\Object {
 			}
 		}
 
-		throw new \MemberAccessException("Cannot set non-existing property $class::\$$name.");
+		throw new MemberAccessException("Cannot set non-existing property $class::\$$name.");
 	}
 	
 	/**
@@ -482,7 +484,7 @@ class Entity extends vBuilder\Object {
 	 * @param string variable name
 	 * @return mixed data
 	 *
-	 * @throws \MemberAccessException if field doesn't exists or name is empty
+	 * @throws Nette\MemberAccessException if field doesn't exists or name is empty
 	 */
 	final public function __call($name, $args) {
 		// Volani metod entitniho chovani
@@ -535,11 +537,11 @@ class Entity extends vBuilder\Object {
 	 * @param  string  property name
 	 * @return void
 	 *
-	 * @throws \MemberAccessException
+	 * @throws Nette\MemberAccessException
 	 */
 	final public function __unset($name) {
 		$class = get_class($this);
-		throw new \MemberAccessException("Cannot unset property {$class}::\$$name because it is not supported by class");
+		throw new MemberAccessException("Cannot unset property {$class}::\$$name because it is not supported by class");
 	}
 	
 	/**

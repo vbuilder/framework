@@ -34,7 +34,7 @@ require __DIR__ . '/../bootstrap.php';
 
 use vBuilder, Nette,
 	 vBuilder\Orm\Entity,
-	 vBuilder\Test\Assert; 
+	 vBuilder\Test\Assert;
 
 /**
  * @Table(name="some_table")
@@ -86,7 +86,7 @@ try {
 	$e->foobar = uniqid();
 	Assert::fail('Expected exception');
 } catch(\Exception $exception) {
-	Assert::exception('MemberAccessException', null, null, $exception);
+	Assert::exception('Nette\\MemberAccessException', null, null, $exception);
 }
 
 // Test na neexistujici field pres metodu
@@ -95,7 +95,7 @@ try {
 	// $e->setFoobar(uniqid());
 	Assert::fail('Expected exception');
 } catch(\Exception $exception) {
-	Assert::exception('MemberAccessException', null, null, $exception);
+	Assert::exception('Nette\\MemberAccessException', null, null, $exception);
 } 
 
 // Test issetu
@@ -117,7 +117,7 @@ try {
 	
 	Assert::fail('Expected exception');
 } catch(\Exception $exception) {
-	Assert::exception('MemberAccessException', null, null, $exception);
+	Assert::exception('Nette\\MemberAccessException', null, null, $exception);
 }
 
 // Test setteru u cachovany polozky

@@ -32,10 +32,8 @@ if(!defined('LIBS_DIR')) define('LIBS_DIR', TEST_DIR . '/../..');
 // absolute filesystem path to the app
 if(!defined('APP_DIR')) define('APP_DIR', TEST_DIR . '/../../../app');
 
-// absolute filesystem path to the temporary files
-if(!defined('TEMP_DIR')) define('TEMP_DIR', TEST_DIR . '/../../../temp');
 
-require LIBS_DIR . '/nette/tests/bootstrap.php';
+require LIBS_DIR . '/nette/tests/Nette/bootstrap.php';
 require __DIR__ . '/TestLib/Assert.php';
 
 // Load configuration from config.neon file

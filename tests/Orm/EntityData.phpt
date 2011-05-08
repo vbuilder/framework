@@ -114,7 +114,7 @@ try {
 	
 	Assert::fail('Expected exception');
 } catch(\Exception $exception) {
-	Assert::exception('MemberAccessException', null, null, $exception);
+	Assert::exception('Nette\\MemberAccessException', null, null, $exception);
 } 
 
 // Test na neexistuji field (setter) ---------------------
@@ -123,7 +123,7 @@ try {
 	
 	Assert::fail('Expected exception');
 } catch(\Exception $exception) {
-	Assert::exception('MemberAccessException', null, null, $exception);
+	Assert::exception('Nette\\MemberAccessException', null, null, $exception);
 }
 
 // Kontrola onFieldChanged eventu ------------------------
