@@ -120,7 +120,7 @@ class EntityData extends vBuilder\Object {
 		foreach($fields as $name) { 
 			$key = $realColumnNames ? $this->metadata->getFieldColumn($name) : $name;
 			
-			if(array_key_exists($name, $this->newData)) $data[$key] = $this->newData[$name];
+			if(isset($this->newData) && array_key_exists($name, $this->newData)) $data[$key] = $this->newData[$name];
 			elseif(array_key_exists($name, $this->data)) $data[$key] =  $this->data[$name];
 			else $data[$key] = null;
 		}
@@ -168,6 +168,8 @@ class EntityData extends vBuilder\Object {
 	 * ids which wasn't known before save.
 	 */
 	public function performSaveMerge() {
+		if(!isset($this->newData)) return ;
+		
 		$this->mergeToRepository((array) $this->newData);
 		$this->newData = null;
 	}
@@ -177,6 +179,8 @@ class EntityData extends vBuilder\Object {
 	 * changed since it will be changed and call onFieldChanged on it.
 	 */
 	public function performRollback() {
+		if(!isset($this->newData)) return ;
+		
 		$changedFields = array_keys($this->newData);
 		$this->newData = null;
 		
@@ -198,7 +202,7 @@ class EntityData extends vBuilder\Object {
 			}
 			
 			for($i = 0; $i < 2; $i++) {
-				if(array_key_exists($name, $this->newData)) return $this->newData[$name];
+				if(isset($this->newData) && array_key_exists($name, $this->newData)) return $this->newData[$name];
 				elseif(array_key_exists($name, $this->data)) return $this->data[$name];
 				
 				if($i != 1) $this->onNeedToFetch();
