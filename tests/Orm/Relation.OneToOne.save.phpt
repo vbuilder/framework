@@ -113,3 +113,15 @@ Assert::arrayEqual(array(array(
 	 'street' => 'Spodní 14',
 	 'city' => 'Domazlice'
 )), dibi::query("SELECT * FROM [TestEntity_address]")->fetchAll());
+
+// Akceptace a ulozeni NULL hodnoty ********************************************
+
+$e1->address = null;
+$e1->save();
+
+Assert::arrayEqual(array(array(
+	 'id' => 1,
+	 'name' => 'Jan',
+	 'surname' => 'Noha',
+	 'address' => null
+)), dibi::query("SELECT * FROM [TestEntity_profile]")->fetchAll());

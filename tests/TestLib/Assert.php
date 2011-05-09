@@ -77,8 +77,8 @@ class Assert extends \Assert {
 	 * @param int maximum depth for chekcing of nested arrays
 	 */
 	public static function arrayEqual($expected, $actual, $maxDepth = 5) {
-		if(!is_array($actual) && !($actual instanceof \Traversable)) 
-			self::fail("Failed asserting that $actual is array equal to $expected");
+		if(!is_array($actual) && !($actual instanceof \Traversable))
+			self::fail("Failed asserting that $actual is array equal to $expected: Data given are not even an array");
 		
 		if(!self::arrayEqualHelper($expected, $actual, $maxDepth)) {			
 			echo "EXPECTED: \n";
@@ -113,14 +113,18 @@ class Assert extends \Assert {
 		// Bacha na to, ze to nezohlednuje diry apod, ale nemelo by to vadit
 		if(array_keys($expected) !== range(0, count($expected) - 1)) {
 			foreach($expected as $key => $value) {
-				if(!isset($actual[$key]))
+				if(!array_key_exists($key, $actual)) {
+					//echo "Missing key $key\n";
 					return false;
+				}
 								
 				if(is_array($value) || $value instanceof \Traversable) {
 					if(!self::arrayEqualHelper($value, $actual[$key], $maxDepth - 1))
 						return false;
-				} else if($value != $actual[$key])
+				} else if($value != $actual[$key]) {
+					//echo var_export($value, true) . ' != ' . var_export($actual[$key], true) . "\n";
 					return false;
+				}
 			}			
 			
 		// Pole neni asociativni

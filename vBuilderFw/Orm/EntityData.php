@@ -120,8 +120,8 @@ class EntityData extends vBuilder\Object {
 		foreach($fields as $name) { 
 			$key = $realColumnNames ? $this->metadata->getFieldColumn($name) : $name;
 			
-			if(isset($this->newData[$name])) $data[$key] = $this->newData[$name];
-			elseif(isset($this->data[$name])) $data[$key] =  $this->data[$name];
+			if(array_key_exists($name, $this->newData)) $data[$key] = $this->newData[$name];
+			elseif(array_key_exists($name, $this->data)) $data[$key] =  $this->data[$name];
 			else $data[$key] = null;
 		}
 		
@@ -198,8 +198,8 @@ class EntityData extends vBuilder\Object {
 			}
 			
 			for($i = 0; $i < 2; $i++) {
-				if(isset($this->newData[$name])) return $this->newData[$name];
-				elseif(isset($this->data[$name])) return $this->data[$name];
+				if(array_key_exists($name, $this->newData)) return $this->newData[$name];
+				elseif(array_key_exists($name, $this->data)) return $this->data[$name];
 				
 				if($i != 1) $this->onNeedToFetch();
 			}
@@ -221,8 +221,8 @@ class EntityData extends vBuilder\Object {
 	 */
 	public function __set($name, $value) {
 		if($this->metadata->hasField($name)) {
-			if( (!isset($this->newData[$name]) && (!isset($this->data[$name]) || $this->data[$name] !== $value))
-					  || (!isset($this->newData[$name]) || $this->newData[$name] !== $value) ) {
+			if( (!isset($this->newData) || !array_key_exists($name, $this->newData) && (!array_key_exists($name, $this->data) || $this->data[$name] !== $value))
+					  || (!isset($this->newData) || !array_key_exists($name, $this->newData) || $this->newData[$name] !== $value) ) {
 				
 				$this->newData[$name] = $value;
 				$this->onFieldChanged($name);

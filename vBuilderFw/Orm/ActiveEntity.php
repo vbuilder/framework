@@ -200,15 +200,17 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 						// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
 						// pri nacteni z DB pouze ID)
 						$targetEntity = $this->{$curr};
-						if(!($targetEntity instanceof ActiveEntity))
-							throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
-						
-						$targetEntity->save();
-						$joinPairs = $this->metadata->getFieldJoinPairs($curr);
-						if(count($joinPairs) != 1) throw new \LogicException("Joining entity on more keys is currently not supported");
-						list($localIdField, $targetIdField) = reset($joinPairs);
-						if($this->data->{$localIdField} !== $targetEntity->{$targetIdField})
-							$updateData[$this->metadata->getFieldColumn($localIdField)] = $targetEntity->{$targetIdField};
+						if($targetEntity !== null) {
+							if(!($targetEntity instanceof ActiveEntity))
+								throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
+
+							$targetEntity->save();
+							$joinPairs = $this->metadata->getFieldJoinPairs($curr);
+							if(count($joinPairs) != 1) throw new \LogicException("Joining entity on more keys is currently not supported");
+							list($localIdField, $targetIdField) = reset($joinPairs);
+							if($this->data->{$localIdField} !== $targetEntity->{$targetIdField})
+								$updateData[$this->metadata->getFieldColumn($localIdField)] = $targetEntity->{$targetIdField};
+						}
 					}
 				}
 				
