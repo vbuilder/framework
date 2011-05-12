@@ -572,14 +572,16 @@ class Entity extends vBuilder\Object {
 			self::searchForOrmClasses();
 
 		$type = $this->metadata->getFieldType($name);
-		if(isset(self::$_dataTypesImplementations[$type])) {
-			$class = new self::$_dataTypesImplementations[$type]($data, $name, $this);
-			return $class;
-			
+		
 		// Zachovavani NULL hodnoty
-		} elseif($data === null && !Nette\Utils\Strings::compare($type, "OneToMany")) {
+		if($data === null && !Nette\Utils\Strings::compare($type, "OneToMany")) {
 			return $data;
-			
+		
+		// Datove typy
+		} elseif(isset(self::$_dataTypesImplementations[$type])) {
+			$class = new self::$_dataTypesImplementations[$type]($data, $name, $this);
+			return $class;			
+		
 		// Integer
 		} elseif(Nette\Utils\Strings::compare($type, "Integer")) {
 			$data = (int) $data;
