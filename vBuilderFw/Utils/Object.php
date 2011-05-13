@@ -41,7 +41,7 @@ class Object extends Nette\Object {
 	 * @return mixed 
 	 */
 	public static function __callStatic($name, $args) {
-		$class = new Nette\Reflection\ClassReflection(get_called_class());
+		$class = new Nette\Reflection\ClassType(get_called_class());
 		$properties = $class->getStaticProperties();
 
 		if(isset($properties[$name])) {
