@@ -24,7 +24,7 @@
 
 namespace vBuilder\Security;
 
-use vBuilder, Nette, dibi;
+use vBuilder, Nette, dibi, Nette\Security\Permission;
 
 /**
  * User data class

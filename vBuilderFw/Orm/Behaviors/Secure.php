@@ -56,10 +56,10 @@ class Secure implements vBuilder\Orm\IBehavior {
 	public function __construct(Entity &$entity, array $args = array()) {
 		$this->entity = &$entity;
 		
-		$this->data->onFirstRead[] = \callback($this, 'readSecurityCheck');
-		$this->onCreate[] = \callback($this, 'createSecurityCheck');
-		$this->onUpdate[] = \callback($this, 'updateSecurityCheck');
-		$this->onDelete[] = \callback($this, 'deleteSecurityCheck');
+		$this->entity->onFirstRead[] = \callback($this, 'readSecurityCheck');
+		$this->entity->onCreate[] = \callback($this, 'createSecurityCheck');
+		$this->entity->onUpdate[] = \callback($this, 'updateSecurityCheck');
+		$this->entity->onDelete[] = \callback($this, 'deleteSecurityCheck');
 	}
 	
 	/**
@@ -68,7 +68,7 @@ class Secure implements vBuilder\Orm\IBehavior {
 	 * 
 	 * @throws SecurityException if user does not have permission to read this entity
 	 */
-	public function readSecurityCheck() {
+	public function readSecurityCheck() {		
 		$this->checkPermission(self::ACL_PERMISSION_READ);
 	}
 	

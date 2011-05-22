@@ -196,21 +196,26 @@ class EntityData extends vBuilder\Object {
 	 */
 	public function & __get($name) {
 		if($this->metadata->hasField($name)) {
-			if($this->firstRead && !in_array($name, $this->metadata->getIdFields())) {
-				$this->onFirstRead();
-				$this->firstRead = false;
-			}
+						
+			$result = null;
 			
 			for($i = 0; $i < 2; $i++) {
-				if(isset($this->newData) && array_key_exists($name, $this->newData)) return $this->newData[$name];
-				elseif(array_key_exists($name, $this->data)) return $this->data[$name];
+				if(isset($this->newData) && array_key_exists($name, $this->newData)) { 
+					$result = $this->newData[$name]; break;
+				} elseif(array_key_exists($name, $this->data)) { 
+					$result = $this->data[$name]; break;
+				}
 				
 				if($i != 1) $this->onNeedToFetch();
 			}
 			
-			//throw new \LogicException("Fetch failed for column '$name', no listeners?");
-			$v = null;
-			return $v;
+			// Musi byt az za samotnym nactenim, kvuli overovacim funkcim
+			if($this->firstRead && !in_array($name, $this->metadata->getIdFields()) && $this->checkIfIdIsDefined()) {
+				$this->firstRead = false; // Musi byt pred samotnym volanim, aby se zabranilo pripadnym cyklickym zavislostem
+				$this->onFirstRead();
+			}
+			
+			return $result;
 		}
 		
 		return parent::__get($name);
@@ -285,15 +290,36 @@ class EntityData extends vBuilder\Object {
 				$this->data = &$this->data[$curr];
 			}
 			
+			$this->firstRead = true;
+			
 		// Pokud mam neuplne ID vytvorim data mimo repozitar
 		} elseif(count($newId) != count($idFields)) {
 			$newVar = array();
 			$this->data = &$newVar;
+			
+			$this->firstRead = true;
 		}
 		
 		// Merge dat
 		foreach($oldData as $k => $v) $this->data[$k] = $v;
 		foreach($newData as $k => $v) $this->data[$k] = $v;
+	}
+	
+	/**
+	 * Checks if all ID fields are defined. 
+	 * 
+	 * Warning: Not checking in $newData
+	 * 
+	 * @return bool
+	 */
+	protected function checkIfIdIsDefined() {
+		foreach($this->metadata->getIdFields() as $name) {
+			//if(!isset($this->$name))
+			if(!isset($this->data[$name]))
+				return false;
+		}
+		
+		return true;
 	}
 	
 }

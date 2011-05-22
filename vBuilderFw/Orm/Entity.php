@@ -256,6 +256,9 @@ class Entity extends vBuilder\Object {
 	/** @var array for caching IBehavior implementation classes */
 	private static $_behaviorImplementations;
 	
+	/** @var array of event listeners for first read (pass-through of this event to EntityData) */
+	public $onFirstRead = array();
+	
 	/**
 	 * Constructor of Entity.
 	 * 
@@ -288,6 +291,7 @@ class Entity extends vBuilder\Object {
 		// Vytvorim data container
 		$this->data = new EntityData($this->metadata, $data);		
 		$this->data->onFieldChanged[] = callback($this, 'clearCache');
+		$this->data->onFirstRead[] = callback($this, 'onFirstRead');
 		
 		// Chovani
 		foreach($this->metadata->getBehaviors() as $behaviorName)
@@ -618,7 +622,7 @@ class Entity extends vBuilder\Object {
 			return null;
 			
 		// OneToMany
-		} elseif(Nette\Utils\Strings::compare($type, "OneToMany")) {
+		} elseif(Nette\Utils\Strings::compare($type, "OneToMany")) {	
 			// Pro pripady, kdy byl prirazen primo objekt (setterem)
 			if(is_object($data)) return $data;
 			
