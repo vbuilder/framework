@@ -21,10 +21,12 @@
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 namespace vBuilder\Security;
 
-use vBuilder, Nette, dibi, Nette\Security\Permission;
+use vBuilder,
+	 Nette,
+	 dibi,
+	 Nette\Security\Permission;
 
 /**
  * User data class
@@ -55,22 +57,50 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	protected static function & getMetadataInternal() {
 		$m1 = parent::getMetadataInternal();
 		$config = Nette\Environment::getConfig();
-		if(isset($config["security"]["user"])) {	
+		if(isset($config["security"]["user"])) {
 			$m2 = new vBuilder\Orm\ConfigMetadata((array) $config["security"]["user"]);
-		
+
 			$metadata = new vBuilder\Orm\MergedMetadata($m1, $m2);
 			return $metadata;
 		} else
 			return $m1;
 	}
-	
+
 	/**
-	 * Return user id. Required implementation because of IIdentity.
+	 * Returns user id. Required implementation because of IIdentity.
 	 * 
 	 * @return int UID
 	 */
 	public function getId() {
 		return $this->defaultGetter('id');
+	}
+
+	/**
+	 * Returns true, if user is in effective role. In difference from 
+	 * Nette\Http\User::isInRole it can make a deep look (even inheriented roles
+	 * will be tolerated)
+	 * 
+	 * @param string role
+	 * @param bool true, if allow deep look
+	 * @return bool
+	 */
+	public function isInRole($role, $deepLook = true) {
+		$roles = $this->getRoles();
+		if(in_array($role, $roles))
+			return true;
+
+		if(!$deepLook)
+			return false;
+
+		$acl = Nette\Environment::getUser()->getAuthorizationHandler();
+		if($acl instanceof Nette\Security\Permission) {
+			foreach($roles as $childRole) {
+				if($acl->roleInheritsFrom($childRole, $role))
+					return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -113,13 +143,13 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 					foreach(Nette\Environment::getUser()->getRoles() as $curr2) {
 						// roleInheritsFrom($role, $inherits)
 						// Bacha na to, ze Administrator musi opravdu dedit z tech roli
-						// alow('Administrator', ALL, ALL) samozrejme neni reseni
+						// allow('Administrator', ALL, ALL) samozrejme neni reseni
 						if($curr2 == $curr || $acl->roleInheritsFrom($curr2, $curr)) {
 							$violation = false;
 							break;
 						}
 					}
-					
+
 					if($violation) {
 						throw new SecurityException("Cannot raise user '".$this->getId()."' rights to '".$curr."', which is more than I have (".implode(",", Nette\Environment::getUser()->getRoles()).")", SecurityException::OPERATION_NOT_PERMITTED);
 					}
@@ -169,7 +199,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 			return false;
 		$user = $acl->getQueriedResource();
 
-// Pokud edituju sam sebe, je vse v poradku
+		// Pokud edituju sam sebe, je vse v poradku
 		if($user->getId() == Nette\Environment::getUser()->getId())
 			return true;
 	}
