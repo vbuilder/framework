@@ -578,7 +578,7 @@ class Entity extends vBuilder\Object {
 		$type = $this->metadata->getFieldType($name);
 		
 		// Zachovavani NULL hodnoty
-		if($data === null && !Nette\Utils\Strings::compare($type, "OneToMany")) {
+		if($data === null && !Nette\Utils\Strings::compare($type, "OneToMany") && !Nette\Utils\Strings::compare($type, "OneToOne")) {
 			return $data;
 		
 		// Datove typy
