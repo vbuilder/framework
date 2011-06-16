@@ -23,7 +23,7 @@
 
 namespace vBuilder\Security;
 
-use Nette,
+use Nette, dibi,
  Nette\Security\Identity,
  Nette\Security\AuthenticationException,
  vBuilder\Orm\Repository;
@@ -54,9 +54,15 @@ class Authenticator implements Nette\Security\IAuthenticator {
 		$user = Repository::findAll($entity)->where('[username] = %s', $credentials[self::USERNAME])->fetch();
 
 		if($user !== false) {
-			if($user->checkPassword($credentials[self::PASSWORD]))
+			if($user->checkPassword($credentials[self::PASSWORD])) {
+				dibi::query(
+					'INSERT INTO ['.LastLoginInfo::getMetadata()->getTableName().'] ([userId], [time], [ip], [time2], [ip2]) VALUES(' .
+					'%i', $user->getId(), ', NOW(), %s', Nette\Environment::getHttpRequest()->getRemoteAddress(), ', NULL, NULL) ' .
+					'ON DUPLICATE KEY UPDATE [time2] = [time], [ip2] = [ip], [time] = NOW(), [ip] = %s', Nette\Environment::getHttpRequest()->getRemoteAddress()
+				);					  
+					  
 				return $user;
-			else
+			} else
 				throw new AuthenticationException("Invalid password.", self::INVALID_CREDENTIAL);
 		} else
 			throw new AuthenticationException("User '".$credentials[self::USERNAME]."' not found.", self::IDENTITY_NOT_FOUND);

@@ -40,7 +40,8 @@ use vBuilder,
  * @Column(password, type="string")
  * @Column(email, type="string")
  * @Column(registrationTime, type="DateTime")
- * @Column(roles, type="OneToMany", table="security_user_roles", joinOn="id=user")
+ * @Column(roles, type="OneToMany", table="security_userRoles", joinOn="id=user")
+ * @Column(lastLoginInfo, type="OneToOne", entity="vBuilder\Security\LastLoginInfo", joinOn="id=userId")
  *
  * @author Adam Staněk (V3lbloud)
  * @since Mar 4, 2011
