@@ -80,7 +80,7 @@ class Cron extends vBuilder\Object {
 		}
 		
 		try {
-			$cache = Nette\Environment::getCache(get_called_class());
+			$cache = Nette\Environment::getCache(str_replace('\\', '.', get_called_class()));
 			if($now === null) $now = new \DateTime('now');
 
 			// Hodinova volani =======================================================
