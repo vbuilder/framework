@@ -1,0 +1,73 @@
+<?php
+
+/**
+ * This file is part of vBuilder Framework (vBuilder FW).
+ * 
+ * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
+ * 
+ * For more information visit http://www.vbuilder.cz
+ * 
+ * vBuilder FW is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * vBuilder FW is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+namespace vBuilder\Config;
+
+use Nette;
+
+/**
+ * Configuration scope
+ *
+ * @author Adam Staněk (velbloud)
+ * @since Jun 17, 2011
+ */
+abstract class ConfigScope extends ConfigDAO {
+	
+	protected $data = array();
+	protected $isLoaded = false;
+	
+	/**
+	 * Load function. It needs to be overloaded when subclassing.
+	 * See $isLoaded and $data properties.
+	 */
+	abstract function load();
+	
+	/**
+	 * Constructor
+	 */
+	function __construct() {
+		parent::__construct($this, null, null, $this->data);
+	}
+	
+	/**
+	 * Returns reference to fallback scope. If there isn't any, null is returned.
+	 * 
+	 * @return ConfigScope|null
+	 */
+	public function getFallbackScope() {
+		return null;
+	}	
+	
+	/**
+	 * Overloaded getter for load triggering
+	 * 
+	 * @param string $key
+	 * @param mixed $default
+	 * @return mixed 
+	 */
+	public function & get($key, $default = null) {
+		if(!$this->isLoaded) $this->load();
+		return parent::get($key, $default);
+	}
+	
+}
