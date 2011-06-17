@@ -26,7 +26,8 @@ namespace vBuilder\Security;
 use Nette, dibi,
  Nette\Security\Identity,
  Nette\Security\AuthenticationException,
- vBuilder\Orm\Repository;
+ vBuilder\Orm\Repository,
+ vBuilder\Security;
 
 /**
  * Simple authenticator against vBuilder user model
@@ -46,10 +47,7 @@ class Authenticator implements Nette\Security\IAuthenticator {
 	 * @throws AuthenticationException
 	 */
 	public function authenticate(array $credentials) {
-		$securityConfig = Nette\Environment::getConfig('security');
-		$entity = isset($securityConfig['user']['entity'])
-				? $securityConfig['user']['entity']
-				: 'vBuilder\Security\User';
+		$entity = Security::getUserClassName();
 		
 		$user = Repository::findAll($entity)->where('[username] = %s', $credentials[self::USERNAME])->fetch();
 

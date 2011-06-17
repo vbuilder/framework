@@ -23,6 +23,8 @@
 
 namespace vBuilder;
 
+use Nette;
+
 /**
  * Security static class for global access
  *
@@ -33,5 +35,17 @@ class Security extends Object {
 	
 	public static $onUserCreated = array();
 	public static $onUserDeleted = array();
+	
+	/**
+	 * Returns class name of effective User data class
+	 * 
+	 * @return string 
+	 */
+	static function getUserClassName() {
+		$securityConfig = Nette\Environment::getConfig('security');
+		return isset($securityConfig['user']['entity'])
+				? $securityConfig['user']['entity']
+				: 'vBuilder\Security\User';
+	}
 	
 }
