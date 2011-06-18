@@ -580,7 +580,7 @@ class Entity extends vBuilder\Object {
 		$type = $this->metadata->getFieldType($name);
 		
 		// Zachovavani NULL hodnoty
-		if($data === null && !Nette\Utils\Strings::compare($type, "OneToMany")) {
+		if($data === null && !Nette\Utils\Strings::compare($type, "OneToMany") && !(Nette\Utils\Strings::compare($type, "OneToOne") && $this->metadata->getFieldMappedBy($name) !== null && (get_called_class() == $this->metadata->getFieldMappedBy($name) || is_subclass_of(get_called_class(), $this->metadata->getFieldMappedBy($name)) )) ) {
 			return $data;
 		
 		// Datove typy
