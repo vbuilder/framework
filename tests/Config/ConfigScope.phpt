@@ -54,6 +54,8 @@ class ConfigTestScope2 extends ConfigScope {
 		$this->isLoaded = true;
 	}
 
+	function save() { }
+	
 	function getInternalData() {
 		if(!$this->isLoaded) $this->load();
 		return $this->data;
@@ -78,9 +80,7 @@ class ConfigTestScope extends ConfigScope {
 		$this->isLoaded = true;
 	}
 	
-	function getFallbackScope() {
-		return new ConfigTestScope2;
-	}
+	function save() { }
 	
 	function getInternalData() {
 		if(!$this->isLoaded) $this->load();
@@ -89,7 +89,7 @@ class ConfigTestScope extends ConfigScope {
 
 }
 
-$dao = new ConfigTestScope;
+$dao = new ConfigTestScope(new ConfigTestScope2);
 
 // Jednoduche gettery
 Assert::same(123, $dao->get(1));

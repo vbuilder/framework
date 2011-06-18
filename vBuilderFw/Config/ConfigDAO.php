@@ -71,7 +71,7 @@ class ConfigDAO implements \ArrayAccess {
 	 * 
 	 * @return mixed 
 	 */
-	public function & get($key, $default) {
+	public function & get($key, $default = null) {
 		if(!is_scalar($key))
 			throw new \InvalidArgumentException("Key must be either a string or an integer.");
 		
@@ -186,6 +186,7 @@ class ConfigDAO implements \ArrayAccess {
 		
 		$ptr[end($tokens)] = $value;
 		if($ptrDao && $ptrDao->data !== $ptr) $ptrDao->data = &$ptr;
+		$this->scope->hasChanged = true;
 	}
 	
 	/**
@@ -234,6 +235,8 @@ class ConfigDAO implements \ArrayAccess {
 			
 			$this->scope->remove(implode(array_intersect_key($tokens, range(0, count($tokens) - 2)), '.'));
 		}
+		
+		$this->scope->hasChanged = true;
 	}
 	
 	// ==========================================================================
@@ -241,12 +244,14 @@ class ConfigDAO implements \ArrayAccess {
 	public function &__get($key) {
 		$this->checkKey($key);
 
-		$this->get($key);
+		$val = $this->get($key);
 
 		// Non-secure getter, it will produce notice, if index does not exist
 		// It is meant to behave same as regular array access
 		if(!$this->lastFound)
 			trigger_error("Trying to read unset property '$key'", E_USER_NOTICE);
+		
+		return $val;
 	}
 
 	/**

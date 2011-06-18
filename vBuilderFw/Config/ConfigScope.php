@@ -35,17 +35,28 @@ abstract class ConfigScope extends ConfigDAO {
 	
 	protected $data = array();
 	protected $isLoaded = false;
+	protected $hasChanged = false;
+	
+	protected $fallback = null;
 	
 	/**
 	 * Load function. It needs to be overloaded when subclassing.
 	 * See $isLoaded and $data properties.
 	 */
-	abstract function load();
+	abstract protected function load();
+	
+	/**
+	 * Save function. It needs to be overloaded when subclassing.
+	 * See $hasChanged and $data properties.
+	 */
+	abstract public function save();
 	
 	/**
 	 * Constructor
 	 */
-	function __construct() {
+	function __construct($fallback = null) {
+		$this->fallback = $fallback;
+		
 		parent::__construct($this, null, null, $this->data);
 	}
 	
@@ -54,8 +65,8 @@ abstract class ConfigScope extends ConfigDAO {
 	 * 
 	 * @return ConfigScope|null
 	 */
-	public function getFallbackScope() {
-		return null;
+	final public function getFallbackScope() {
+		return $this->fallback;
 	}	
 	
 	/**
@@ -68,6 +79,31 @@ abstract class ConfigScope extends ConfigDAO {
 	public function & get($key, $default = null) {
 		if(!$this->isLoaded) $this->load();
 		return parent::get($key, $default);
+	}
+	
+	/**
+	 * Overloaded setter for load triggering.
+	 * Data have to be loaded be loaded before setting any variables
+	 * or it should be overwritten later.
+	 * 
+	 * @param string $key
+	 * @param mixed $default
+	 * @return mixed 
+	 */
+	public function set($key, $value) {
+		//if(!$this->isLoaded) $this->load();
+		return parent::set($key, $value);
+	} 
+	
+	/**
+	 * Overloaded key unsetter for load triggering.
+	 * Data has to be loaded, or it won't unset any key during the key non-existence.
+	 * 
+	 * @param string $key
+	 */
+	public function remove($key) {
+		if(!$this->isLoaded) $this->load();
+		return parent::remove($key);
 	}
 	
 }
