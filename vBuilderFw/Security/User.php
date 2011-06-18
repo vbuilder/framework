@@ -41,7 +41,7 @@ use vBuilder,
  * @Column(email, type="string")
  * @Column(registrationTime, type="DateTime")
  * @Column(roles, type="OneToMany", table="security_userRoles", joinOn="id=user")
- * @Column(lastLoginInfo, type="OneToOne", entity="vBuilder\Security\LastLoginInfo", joinOn="id=userId")
+ * @Column(lastLoginInfo, type="OneToOne", entity="vBuilder\Security\LastLoginInfo", mappedBy="vBuilder\Security\User", joinOn="id=userId")
  *
  * @author Adam Staněk (V3lbloud)
  * @since Mar 4, 2011
@@ -63,7 +63,6 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 
 			$metadata = new vBuilder\Orm\MergedMetadata($m1, $m2);
 			return $metadata;
-		} else
 			return $m1;
 	}
 
