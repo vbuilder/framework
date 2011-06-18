@@ -63,7 +63,9 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 
 			$metadata = new vBuilder\Orm\MergedMetadata($m1, $m2);
 			return $metadata;
-			return $m1;
+		}
+		
+		return $m1;
 	}
 
 	/**
