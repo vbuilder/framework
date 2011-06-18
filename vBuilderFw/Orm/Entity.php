@@ -322,6 +322,8 @@ class Entity extends vBuilder\Object {
 		if(count(self::$_metadata[$className]->getFields()) == 0)
 			throw new \LogicException("Entity '$className' does not have defined any fields");
 		
+		// TODO: validace existuence entit u joinu, mappedBy, atd.
+		
 		// KONEC VALIDACE METADAT ------------------------------------------------
 		
 		return self::$_metadata[$className];

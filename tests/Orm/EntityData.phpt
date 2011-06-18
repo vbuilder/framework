@@ -83,6 +83,7 @@ class TestEntityMetadata implements IEntityMetadata {
 	public function getFieldJoinPairs($name) { return null; }
 	public function getFieldTableName($name) { return null; }
 	public function getFieldEntityName($name) { return null; }
+	public function getFieldMappedBy($name) { return null; }
 	
 }
 

@@ -151,6 +151,18 @@ class MergedMetadata implements IEntityMetadata {
 	/**
 	 * {@inheritdoc} 
 	 */
+	public function getFieldMappedBy($name) {
+		for($i = count($this->metadata) - 1; $i >= 0; $i--)
+			if($this->metadata[$i]->hasField($name))
+				return $this->metadata[$i]->getFieldMappedBy($name);
+			
+		throw new \InvalidArgumentException("Field '$name' is not defined");
+		return null;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
 	public function getFieldTableName($name) {
 		for($i = count($this->metadata) - 1; $i >= 0; $i--)
 			if($this->metadata[$i]->hasField($name))

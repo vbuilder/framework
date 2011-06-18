@@ -205,6 +205,15 @@ class AnnotationMetadata implements IEntityMetadata {
 	/**
 	 * {@inheritdoc} 
 	 */
+	public function getFieldMappedBy($name) {
+		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
+		
+		return isset($this->fields[$name]['mappedBy']) ? $this->fields[$name]['mappedBy'] : null;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
 	public function isFieldGenerated($name) {
 		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
 		

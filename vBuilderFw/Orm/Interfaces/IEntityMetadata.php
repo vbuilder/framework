@@ -117,6 +117,15 @@ interface IEntityMetadata {
 	public function getFieldJoinPairs($name);
 	
 	/**
+	 * Returns name of entity to which it is mapped (the other side has a joining column)
+	 * or null if field is not in relation.
+	 * 
+	 * @param string field name
+	 * @return string entity name
+	 */
+	public function getFieldMappedBy($name);
+	
+	/**
 	 * Is field auto-generated (auto-increment, etc)?
 	 * 
 	 * @param string field name

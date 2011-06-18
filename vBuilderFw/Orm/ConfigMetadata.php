@@ -114,6 +114,13 @@ class ConfigMetadata implements IEntityMetadata {
 	/**
 	 * {@inheritdoc} 
 	 */
+	public function getFieldMappedBy($name) {
+		return null;
+	}
+	
+	/**
+	 * {@inheritdoc} 
+	 */
 	public function getFieldTableName($name) {
 		return null;
 	}
