@@ -191,26 +191,35 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 			foreach($fields as $curr) {
 				$type = $this->metadata->getFieldType($curr);
 				
-				// Pokud je polozka OneToOne relaci, musim ji ulozit PRED samotnou entitou (aby si mohla ulozit jeji ID)
+				// Pokud je polozka OneToOne relaci (z moji strany -> mappedBy moje entita)
+				// musim ji ulozit PRED samotnou entitou (potrebuje jeji ID)
 				// Po ulozeni svazane entity si musim vzit jeji ID a pridat ho do dat k ulozeni.
 				if($type == 'OneToOne') {
-					
-					// Ukladam jen non-NULL sloupce
-					if(isset($this->data->{$curr})) {
-						// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
-						// pri nacteni z DB pouze ID)
-						$targetEntity = $this->{$curr};
-						if($targetEntity !== null) {
-							if(!($targetEntity instanceof ActiveEntity))
-								throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
+					if($this->metadata->getFieldMappedBy($curr) === null || (get_called_class() != $this->metadata->getFieldMappedBy($curr) && !is_subclass_of(get_called_class(), $this->metadata->getFieldMappedBy($curr)) )) {						
+						
+						// Ukladam jen non-NULL sloupce
+						if(isset($this->data->{$curr})) {
+							// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
+							// pri nacteni z DB pouze ID)
+							$targetEntity = $this->{$curr};
+							if($targetEntity !== null) {
+								if(!($targetEntity instanceof ActiveEntity))
+									throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
 
-							$targetEntity->save();
-							$joinPairs = $this->metadata->getFieldJoinPairs($curr);
-							if(count($joinPairs) != 1) throw new \LogicException("Joining entity on more keys is currently not supported");
-							list($localIdField, $targetIdField) = reset($joinPairs);
-							if($this->data->{$localIdField} !== $targetEntity->{$targetIdField})
-								$updateData[$this->metadata->getFieldColumn($localIdField)] = $targetEntity->{$targetIdField};
+								$targetEntity->save();
+								$joinPairs = $this->metadata->getFieldJoinPairs($curr);
+								if(count($joinPairs) != 1) throw new \LogicException("Joining entity on more keys is currently not supported");
+								list($localIdField, $targetIdField) = reset($joinPairs);
+								if($this->data->{$localIdField} !== $targetEntity->{$targetIdField})
+									$updateData[$this->metadata->getFieldColumn($localIdField)] = $targetEntity->{$targetIdField};
+							}
 						}
+					
+					// Pokud polozka je pouze mapovana na nasi entitu, klic je na druhe strane
+					// => Ukladam ji az po ulozeni sama sebe
+					} else {
+						$externalFields[] = $curr;
+						unset($updateData[$curr]);
 					}
 				}
 				
@@ -269,6 +278,26 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 			
 			// Relace (OneToMany) -> ulozeni externich sloupcu
 			foreach($externalFields as $curr) {
+				
+				// Reverzni OneToOne relace
+				if($this->metadata->getFieldType($curr) == 'OneToOne') {
+					if($this->metadata->getFieldMappedBy($curr) !== null && (get_called_class() == $this->metadata->getFieldMappedBy($curr) || is_subclass_of(get_called_class(), $this->metadata->getFieldMappedBy($curr)) ) ) {
+						
+						// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
+						// pri nacteni z DB pouze ID)
+						$targetEntity = $this->{$curr};
+						if($targetEntity !== null) {
+							if($targetEntity->hasChanged())
+								throw new Nette\NotImplementedException("Saving of reversed OneToOne entities is currently not implemented");
+						}
+						
+					}
+					
+					continue;
+				}
+				
+	
+				// Dale resim pouze OneToMany
 				if($this->metadata->getFieldType($curr) != 'OneToMany') continue;
 				
 				// Pokud se data zmenila
@@ -276,7 +305,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					
 					// Momentalne nepodporuju relace s plnou entitou
 					if($this->metadata->getFieldEntityName($curr) !== null)
-						throw new \NotImplementedException("Entity based OneToMany save is currently not implemented");
+						throw new Nette\NotImplementedException("Entity based OneToMany save is currently not implemented");
 					
 					// Smazu soucasny zaznamy a vytvorim si ID data pro nove
 					$joinIdFields = array();
