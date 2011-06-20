@@ -73,4 +73,31 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 		} 
 	}
 	
+	/**
+	 * For service purposes we also need to register handlers
+	 * when current user is changed (log in / log out have to reload config).
+	 * 
+	 * @internal
+	 */
+	public static function createUserConfig() {
+		$config = new static();
+
+		Nette\Environment::getUser()->onLoggedIn[] = callback(get_called_class(), 'onUserChanged');
+		Nette\Environment::getUser()->onLoggedOut[] = callback(get_called_class(), 'onUserChanged');
+		
+		return $config;
+	}
+	
+	/**
+	 * When new user logs in or out, we have to refresh config
+	 * 
+	 * @internal
+	 * 
+	 * @param Nette\Http\User $user 
+	 */
+	public static function onUserChanged(Nette\Http\User $user) {
+		Nette\Environment::getContext()->removeService('vBuilder\Config\IConfig');
+		Nette\Environment::getContext()->addService('vBuilder\Config\IConfig', get_called_class());
+	}
+	
 }

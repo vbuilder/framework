@@ -1,4 +1,4 @@
 <?php
 
 Nette\Environment::getConfigurator()->defaultServices['vBuilder\Config\IConfig']
-		  = 'vBuilder\Config\DbUserConfig';
+		  = array('vBuilder\Config\DbUserConfig', 'createUserConfig');
