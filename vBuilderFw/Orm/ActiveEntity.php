@@ -162,6 +162,9 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		$fields = $this->metadata->getFields();
 		$autoField = null;
 		
+		// Pokud jsou na zaznam vazany relace, ktere je treba ulozit
+		$needToSaveEvenWithoutData = false;
+		
 		dibi::begin();	
 		
 		try {
@@ -227,11 +230,14 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 				// vazba probiha na druhem konci, proto data vyloucim z updatu.
 				// Entity se musi ulozi az POTOM, co se ulozi tato entita (aby znaly jeji ID).
 				elseif($type == 'OneToMany') {
+					if($this->{$curr} instanceOf Collection && $this->{$curr}->count())
+						$needToSaveEvenWithoutData = true;
+					
 					$externalFields[] = $curr;
 					unset($updateData[$curr]);
 				}
 			}
-						
+			
 			// Vsechny data k ulozeni do tabulky (vcetne tech nezmenenych, ale bez virtualnich sloupcu - vazeb)
 			$allTableFields = array_diff_key(array_merge($this->data->getAllData(true), $updateData), array_flip($externalFields));	
 			
@@ -239,8 +245,8 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 			// Pokud jsou k ulozeni nejaka TABULKOVA data, ulozim je
 			$addtionalDataToMerge = array();
 			$action = null;
-			if(count($updateData) > 0) {
-				dibi::query('INSERT IGNORE ', $this->metadata->getTableName(), $allTableFields, ' ON DUPLICATE KEY UPDATE %a', $updateData);
+			if(count($updateData) > 0 || $needToSaveEvenWithoutData) {
+				dibi::query('INSERT IGNORE ', $this->metadata->getTableName(), $allTableFields, '%if', $updateData, ' ON DUPLICATE KEY UPDATE %a', $updateData);
 
 				// Provedl se INSERT
 				if(dibi::affectedRows() == 1) {
@@ -300,6 +306,13 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 				// Dale resim pouze OneToMany
 				if($this->metadata->getFieldType($curr) != 'OneToMany') continue;
 				
+				// OneToMany zalozene na kolekcich
+				if($this->{$curr} instanceOf EntityCollection) {
+					$this->{$curr}->save();
+					continue;
+				}
+				
+				// Puvodni save pro OneToMany (TODO: prepsat taky na kolekce)
 				// Pokud se data zmenila
 				if(array_key_exists($curr, $this->data->getChangedData())) {
 					
@@ -380,8 +393,6 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		$this->checkIfIdIsDefined(true);
 		
 		dibi::begin();
-		
-		
 		
 		$query = dibi::delete($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();

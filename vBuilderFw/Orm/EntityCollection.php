@@ -55,8 +55,26 @@ class EntityCollection extends Collection {
 		$this->loaded = true;
 	}
 	
-	public function save() {
-		throw new \NotImplementedException('Not implemented yet');
+	public function save() {		
+		$joinPairs = $this->parent->getMetadata()->getFieldJoinPairs($this->field);
+		
+		foreach($this->data as &$member) {
+			foreach($joinPairs as $join) 
+				$member->{$join[1]} = $this->parent->{$join[0]};
+				
+			$member->save();
+		}
+	}
+	
+	public function add($relatedEntity) {
+		if(!($relatedEntity instanceOf $this->targetEntity))
+			  throw new \InvalidArgumentException("Added entity has to be instance of '$relatedEntity'");
+		
+		foreach($this->data as $curr) 
+			if($curr === $relatedEntity)
+				throw new \InvalidArgumentException('This entity is already contained in collection');
+		
+		$this->data[] = $relatedEntity;
 	}
 	
 }

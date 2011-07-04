@@ -64,7 +64,7 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 		$parentMetadata = $this->parent->getMetadata();
 
 		if($parentMetadata->getFieldTableName($this->field) == null)
-			throw new \InvalidArgumentException("Table name for field '$this->field' in entity '{$this->parent->getName()}' has to be specified");
+			throw new \InvalidArgumentException("Table name for field '$this->field' in entity '".get_class($this->parent)."' has to be specified");
 
 		$ds = dibi::select("*")->from($parentMetadata->getFieldTableName($this->field));
 
@@ -95,7 +95,7 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 	 * Saves joined data
 	 */
 	public function save() {
-		throw new \NotImplementedException('Not implemented yet');
+		throw new Nette\NotImplementedException('Not implemented yet');
 	}
 
 	// General access functions =================================================
