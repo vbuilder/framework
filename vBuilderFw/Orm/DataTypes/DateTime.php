@@ -34,6 +34,8 @@ use vBuilder;
 class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 
 	public function __construct(&$data, $fieldName, &$entity) {
+		if(is_numeric($data)) $data = date('Y-m-d H:i:s', $data);
+		
 		parent::__construct($data);
 	}
 
