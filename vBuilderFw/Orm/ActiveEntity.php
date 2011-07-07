@@ -272,7 +272,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					$query = dibi::select('1')->from($this->metadata->getTableName());
 					$idFields = $this->metadata->getIdFields();
 					foreach($idFields as $name)
-						$query = $query->where("[$name] = %s", $this->data->$name);
+						$query = $query->where("[".$this->metadata->getFieldColumn($name)."] = %s", $this->data->$name);
 
 					$result = $query->fetch();
 					if($result === false)
