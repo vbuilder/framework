@@ -88,3 +88,23 @@ Assert::arrayEqual(array(
 				array("id" => 1, "revision" => 2, "name" => "Lorem ipsum 2"),
 				array("id" => 2, "revision" => 1, "name" => "Some other record")
 		  ), dibi::query('SELECT * FROM [TestEntityTable] ORDER BY [revision]')->fetchAll());
+
+// Test, ze se zmena revize neprovede v pripade, ze je vyvolana chyba pri ukladani
+// (napr. vztaznou entitou, nebo nejakym eventem)
+$te2->name = 'Changed title';
+$te2->onPostSave[] = function ($entity) {
+	throw new TestException('Pre save called');
+};
+
+try {
+	$te2->save();
+	
+	Assert::fail('Pre save event not emitted (expected exception)');
+} catch(\Exception $e) {
+	Assert::exception(__NAMESPACE__ . '\\TestException', null, $e);
+}
+
+// Nesmi se zmenit ani data, ale hlavne ani revize
+Assert::arrayEqual(array(
+	 array("id" => 2, "revision" => 1, "name" => "Some other record")
+), dibi::query('SELECT * FROM [TestEntityTable] WHERE [id] = %i', $te2->id, 'ORDER BY [revision]')->fetchAll());

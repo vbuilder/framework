@@ -96,6 +96,7 @@ class Versionable implements vBuilder\Orm\IBehavior {
 		
 		$table = $this->entity->getMetadata()->getTableName();
 		dibi::query("LOCK TABLES [" . $table . "] WRITE");
+		dibi::begin();
 		
 		// Pokud se zadna data nezmenila, nema to smysl
 		if(!$this->entity->hasChanged()) return ;
@@ -133,6 +134,9 @@ class Versionable implements vBuilder\Orm\IBehavior {
 	 * @return void 
 	 */
 	function postSave() {
+		// Nesmim tu davat commit, o commit se mi postara uz samotna active entity.
+		// Kdybych tu dal commit, nedal by se udelat pripadny rollback z handleru
+		// zavolanych po me (behavior se registruje jako prvni).
 		dibi::query("UNLOCK TABLES");
 	}
 	

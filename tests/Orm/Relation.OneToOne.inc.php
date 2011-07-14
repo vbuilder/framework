@@ -73,3 +73,5 @@ class OneToOneEntity extends ActiveEntity { }
  * @Column(address, type="OneToOne", entity="vBuilder\Orm\EntityTest\OneToOneEntity", joinOn="address=id")
  */
 class TestEntity extends ActiveEntity { }
+
+class TestException extends \LogicException { }

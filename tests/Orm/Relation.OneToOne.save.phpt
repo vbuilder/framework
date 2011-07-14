@@ -125,3 +125,30 @@ Assert::arrayEqual(array(array(
 	 'surname' => 'Noha',
 	 'address' => null
 )), dibi::query("SELECT * FROM [TestEntity_profile]")->fetchAll());
+
+// Kaskadovani ulozeni enity - storno cele transakce ***************************
+
+$e2 = new TestEntity;
+$e2->name = 'Béďa';
+$e2->surname = 'Zelený';
+
+$o3 = new OneToOneEntity;
+$o3->street = 'Za dubem';
+$o3->city = 'Malý nora u Domažlic';
+$o3->onPreSave[] = function ($entity) {
+	throw new TestException('Pre save called');
+};
+
+$e2->address = $o3;
+
+try {
+	$e2->save();
+	
+	Assert::fail('Pre save not called (expected exception)');
+} catch(\Exception $e) {
+	Assert::exception(__NAMESPACE__ . '\\TestException', null, $e);
+}
+
+// Žádná data nesmí být uložena
+Assert::false(dibi::query("SELECT * FROM [TestEntity_profile] WHERE [name] = %s", $e2->name)->fetch());
+Assert::false(dibi::query("SELECT * FROM [TestEntity_address] WHERE [city] = %s", $o3->city)->fetch());
