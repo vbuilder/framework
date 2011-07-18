@@ -20,25 +20,34 @@
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
+use Nette\Diagnostics\Debugger as Debug,
+	 Nette\Utils\Html,
+	 Nette\Environment;
 
-/** THIS FILE IS CALLED AT BEGINING OF EVERY TEST *****************************/
-
-// absolute filesystem path to test dir
-if(!defined('TEST_DIR')) define('TEST_DIR', __DIR__);
-
-// absolute filesystem path to the libraries
-if(!defined('LIBS_DIR')) define('LIBS_DIR', TEST_DIR . '/../..');
-
-// absolute filesystem path to the app
-if(!defined('APP_DIR')) define('APP_DIR', TEST_DIR . '/../../../app');
-
-
-require LIBS_DIR . '/nette/tests/Nette/bootstrap.php';
-require __DIR__ . '/../vBuilderFw/bootstrap.php';
-require __DIR__ . '/TestLib/Assert.php';
-
-// Load configuration from config.neon file
-Nette\Environment::loadConfig();
-
-// Dibi
-dibi::connect(Nette\Environment::getConfig('database'));
+/**
+ * Prints out debug message to standard output
+ * 
+ * @param string message
+ * @param mixed|null optional variable to dump along with message
+ */
+function debug($msg, $var = null) {
+	if(Debug::$productionMode == Debug::PRODUCTION)
+		return;
+	
+	if(Environment::isConsole()) {
+		echo $msg . "\n";
+		
+		for($i = 1; $i < func_num_args(); $i++) Debug::dump(func_get_arg($i));
+	} else {
+		if(!headers_sent()) header('Content-type: text/html; charset=utf-8');
+		
+		$msgEl = Html::el('div', array('class' => 'vBuilderDebugMsg'))->setText($msg);
+		
+		echo $msgEl->startTag();
+		echo $msgEl[0];
+		
+		for($i = 1; $i < func_num_args(); $i++) Debug::dump(func_get_arg($i));
+		
+		echo $msgEl->endTag();
+	}
+}
