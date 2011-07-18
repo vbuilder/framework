@@ -139,7 +139,7 @@ class EntityData extends vBuilder\Object {
 			$trData = array();
 			foreach($this->metadata->getFields() as $name) {
 				$colName = $this->metadata->getFieldColumn($name);
-				if(isset($newData[$colName])) $trData[$name] = $newData[$colName];
+				if(array_key_exists($colName, $newData)) $trData[$name] = $newData[$colName];
 			} 
 			
 			$this->mergeToRepository($trData);
@@ -206,7 +206,14 @@ class EntityData extends vBuilder\Object {
 					$result = $this->data[$name]; break;
 				}
 				
-				if($i != 1) $this->onNeedToFetch();
+				if($i != 1) {
+					// Nacitani pro me nema smysl, pokud policko nepatri moji entite
+					if($this->metadata->getFieldType($name) == 'OneToMany') return $result;
+
+					// debug("On need to fetch called for field", $name, $this->metadata->getTableName(), $this->data);
+					
+					$this->onNeedToFetch();
+				}
 			}
 			
 			// Musi byt az za samotnym nactenim, kvuli overovacim funkcim

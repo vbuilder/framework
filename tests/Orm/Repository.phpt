@@ -83,3 +83,11 @@ Assert::equal(2, count($all));
 Assert::equal('A', $all[0]->name);
 Assert::equal('B', $all[1]->name);
 Assert::equal(1, dibi::$numOfQueries - $num); // Pocet dotazu (kontrola, ze se vse nacetlo jednim selectem)
+
+// Test, ze se zaznamy z listingu ulozi a nejsou nacitany znova pri getu
+$num = dibi::$numOfQueries;
+$e2 = Repository::get('vBuilder\Orm\EntityTest\TestEntity', 2);
+Assert::equal('B', $e2->name);
+Assert::equal($num, dibi::$numOfQueries);
+
+debug('My var', $all);
