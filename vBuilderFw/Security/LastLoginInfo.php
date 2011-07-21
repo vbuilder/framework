@@ -23,10 +23,7 @@
 
 namespace vBuilder\Security;
 
-use vBuilder,
-	 Nette,
-	 dibi,
-	 Nette\Security\Permission;
+use vBuilder;
 
 /**
  * Last login info entity
