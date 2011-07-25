@@ -1,0 +1,7 @@
+anotherScope:
+	bar: ":-)"
+	moo: true
+	foo: 1
+
+	dummiestScope:
+		bar: "baz"
