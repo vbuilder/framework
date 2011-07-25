@@ -291,7 +291,8 @@ class ConfigDAO implements \ArrayAccess {
 	public function __set($key, $value) {
 		$this->checkKey($key);
 		
-		$this->set($key, $value);
+		
+		$this->set($key, $this->parseBools($value));
 	}
 
 	/**
@@ -307,6 +308,18 @@ class ConfigDAO implements \ArrayAccess {
 		$this->__set($key, $value);
 	}
 
+	
+	protected function parseBools($value) {
+		$consts = array(
+			'true' => TRUE, 'True' => TRUE, 'TRUE' => TRUE, 'yes' => TRUE, 'Yes' => TRUE, 'YES' => TRUE, 'on' => TRUE, 'On' => TRUE, 'ON' => TRUE,
+			'false' => FALSE, 'False' => FALSE, 'FALSE' => FALSE, 'no' => FALSE, 'No' => FALSE, 'NO' => FALSE, 'off' => FALSE, 'Off' => FALSE, 'OFF' => FALSE, 
+		);
+		if (isset($consts[$value])) {
+			$value = $consts[$value];
+		}
+		return $value;
+	}
+	
 	/**
 	 * Implementation of \ArrayAccess::offsetUnset
 	 * 
