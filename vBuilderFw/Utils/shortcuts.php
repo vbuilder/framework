@@ -51,3 +51,14 @@ function debug($msg, $var = null) {
 		echo $msgEl->endTag();
 	}
 }
+
+function d() {
+	Debug::$maxDepth = 10;
+	foreach (func_get_args() as $m) {
+		Debug::dump($m);
+	}
+}
+function dd() {
+	call_user_func_array('d', func_get_args());
+	die;
+}
