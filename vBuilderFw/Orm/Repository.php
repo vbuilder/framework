@@ -33,7 +33,11 @@ use vBuilder, Nette, dibi;
  */
 class Repository extends vBuilder\Object {
 	
-	/**
+	/** @var Nette\DI\Container */
+	protected $container;
+
+
+	 /**
 	 * Returns one entity
 	 * 
 	 * @param string entity name
@@ -99,4 +103,15 @@ class Repository extends vBuilder\Object {
 		return false;
 	}
 	
+	
+	public function getContainer() {
+		if (!$this->container) {
+			$this->container = new Nette\DI\Container();
+			
+			$this->container->addService('connection', function ($cont) {
+				return dibi::getConnection();
+			});
+		}
+		return $this->container;
+	}
 }

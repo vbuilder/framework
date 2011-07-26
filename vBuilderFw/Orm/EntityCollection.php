@@ -36,9 +36,9 @@ class EntityCollection extends Collection {
 	/** @var string name of target entity */
 	protected $targetEntity;
 	
-	function __construct(Entity &$parent, $fieldName, $targetEntityName) {
+	function __construct(Entity &$parent, $fieldName, $targetEntityName, Nette\DI\Container $container = null) {
 		$this->targetEntity = $targetEntityName;
-		parent::__construct($parent, $fieldName);
+		parent::__construct($parent, $fieldName, $container);
 	}
 	
 	public function load() {
