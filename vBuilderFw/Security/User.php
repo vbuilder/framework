@@ -25,8 +25,7 @@ namespace vBuilder\Security;
 
 use vBuilder,
 	 Nette,
-	 dibi,
-	 Nette\Security\Permission;
+	 dibi;
 
 /**
  * User data class
@@ -190,13 +189,13 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	/**
 	 * ACL permission assertion for allowing editing own user profile
 	 * 
-	 * @param Permission $acl
+	 * @param Nette\Security\Permission $acl
 	 * @param string $role
 	 * @param string $resource
 	 * @param string $privilege
 	 * @return bool 
 	 */
-	public static function permissionOwnProfileAssert(Permission $acl, $role, $resource, $privilege) {
+	public static function permissionOwnProfileAssert(Nette\Security\Permission $acl, $role, $resource, $privilege) {
 		if(!is_object($acl->getQueriedResource()) || !$acl->getQueriedResource() instanceof self)
 			return false;
 		$user = $acl->getQueriedResource();
@@ -210,13 +209,13 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	 * ACL permission assertion for checking if user manager is not trying to update user with 
 	 *  higher privileges.
 	 * 
-	 * @param Permission $acl
+	 * @param Nette\Security\Permission $acl
 	 * @param string $role
 	 * @param string $resource
 	 * @param string $privilege
 	 * @return bool 
 	 */
-	public static function permissionNoHigherUserAssert(Permission $acl, $role, $resource, $privilege) {
+	public static function permissionNoHigherUserAssert(Nette\Security\Permission $acl, $role, $resource, $privilege) {
 		if(!is_object($acl->getQueriedResource()) || !$acl->getQueriedResource() instanceof self)
 			return false;
 		$user = $acl->getQueriedResource();
