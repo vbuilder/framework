@@ -36,7 +36,7 @@ use Nette\Environment;
 Environment::getContext()->addService('vBuilder\Config\IConfig',
 		  array('vBuilder\Config\DbUserConfig', 'createUserConfig'));
 
-Environment::getUser()->setAuthenticationHandler(new Nette\Security\SimpleAuthenticator(array('user' => 'password')));
+Environment::getUser()->setAuthenticator(new Nette\Security\SimpleAuthenticator(array('user' => 'password')));
 
 // Singleton
 $config = Environment::getService('vBuilder\Config\IConfig');
