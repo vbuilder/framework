@@ -259,6 +259,9 @@ class Entity extends vBuilder\Object {
 	/** @var array of event listeners for first read (pass-through of this event to EntityData) */
 	public $onFirstRead = array();
 	
+	/** @var Nette\DI\Container */
+	private $container;
+	
 	/**
 	 * Constructor of Entity.
 	 * 
@@ -271,6 +274,18 @@ class Entity extends vBuilder\Object {
 		// Nactu metadata
 		$this->metadata = static::getMetadata();
 				
+		$numargs = \func_num_args();
+		
+		if($numargs > 0) {
+			$cont = \func_get_arg($numargs-1); // last one
+			if($cont instanceof Nette\DI\Container) {
+				$this->container = $cont;
+				$numargs--;
+			}
+		}
+		
+		if(!isset($this->container)) $this->container = Repository::getContainer();
+		
 		// Prebirani primary id
 		if(!is_array($data)) {
 			$data = array();
@@ -298,6 +313,11 @@ class Entity extends vBuilder\Object {
 			$this->addBehavior($behaviorName, $this->metadata->getBehaviorArgs($behaviorName));
 	}
 	
+	
+	protected function getContainer() {
+		return $this->container;
+	}
+
 	/** 
 	 * Returns metadata object. This function is for public calling.
 	 * It has to be final, because it takes care about metadata caching.
@@ -616,7 +636,7 @@ class Entity extends vBuilder\Object {
 				}
 				
 				$class = $this->metadata->getFieldEntityName($name);
-				$instance = new $class($targetEntityData);
+				$instance = new $class($targetEntityData, $this->getContainer());
 
 				return $instance;
 			}

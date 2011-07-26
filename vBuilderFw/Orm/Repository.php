@@ -99,4 +99,14 @@ class Repository extends vBuilder\Object {
 		return false;
 	}
 	
+	public static function getContainer() {
+		$container = new Nette\DI\Container();
+			
+		$container->addService('connection', function ($cont) {
+			return dibi::getConnection();
+		});
+		
+		return $container;
+	}
+
 }
