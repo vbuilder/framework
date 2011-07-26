@@ -33,7 +33,11 @@ use vBuilder, Nette, dibi;
  */
 class Repository extends vBuilder\Object {
 	
-	/**
+	/** @var Nette\DI\Container */
+	protected $container;
+
+
+	 /**
 	 * Returns one entity
 	 * 
 	 * @param string entity name

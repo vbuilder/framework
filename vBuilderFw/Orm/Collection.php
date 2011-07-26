@@ -43,6 +43,9 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 	protected $data;
 	/** @var bool true if data has been loaded already */
 	protected $loaded = false;
+	
+	/** @var Nette\DI\Container */ 
+	protected $container;
 
 	/**
 	 * Conctructs collection
@@ -50,7 +53,8 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 	 * @param Entity reference to parent entity
 	 * @param string name of virtual field in parent entity
 	 */
-	function __construct(Entity &$parent, $fieldName) {
+	function __construct(Entity &$parent, $fieldName, Nette\DI\Container $container) {
+		$this->container = $container;
 		$this->parent = &$parent;
 		$this->field = $fieldName;
 

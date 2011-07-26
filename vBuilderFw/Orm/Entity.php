@@ -288,12 +288,19 @@ class Entity extends vBuilder\Object {
 		
 		// Prebirani primary id
 		if(!is_array($data)) {
+			$numargs = \func_num_args();
+			
+			$cont = \func_get_arg($numargs-1); // last one
+			if ($cont instanceof Nette\DI\Container) {
+				$this->container = $cont;
+				$numargs--;
+			}
+			
 			$data = array();
 			
-			$numargs = \func_num_args();
 			$idFields = $this->metadata->getIdFields();
 						
-			if(count($idFields) < count($numargs)) {
+			if(count($idFields) < $numargs) {
 				$class = \get_called_class();
 				$realNum = count($idFields);
 				throw new \InvalidArgumentException("Invalid arguments for inicialization of '$class'. $numargs arguments given but only $realNum expected.");
@@ -317,7 +324,7 @@ class Entity extends vBuilder\Object {
 	protected function getContainer() {
 		return $this->container;
 	}
-
+	
 	/** 
 	 * Returns metadata object. This function is for public calling.
 	 * It has to be final, because it takes care about metadata caching.
@@ -649,9 +656,9 @@ class Entity extends vBuilder\Object {
 			if(is_object($data)) return $data;
 			
 			if($this->metadata->getFieldEntityName($name) !== null)
-				$instance = new EntityCollection($this, $name, $this->metadata->getFieldEntityName($name));
+				$instance = new EntityCollection($this, $name, $this->metadata->getFieldEntityName($name), $this->getContainer());
 			else
-				$instance = new Collection($this, $name);
+				$instance = new Collection($this, $name, $this->getContainer());
 			
 			return $instance;
 		}
