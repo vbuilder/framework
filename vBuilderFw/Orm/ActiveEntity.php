@@ -93,9 +93,9 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		
 		// Delam zvlast, protoze jinak by se mohla vyhazovat
 		// vyjimka pri DibiFluent::__toString
-		if(!dibi::getConnection()->isConnected()) dibi::getConnection()->connect();
+		if(!$this->getDb()->isConnected()) $this->getDb()->connect();
 		
-		$query = dibi::select('*')->from($this->metadata->getTableName());
+		$query = $this->getDb()->select('*')->from($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();
 		foreach($idFields as $name) 
 			$query = $query->where("[".$this->metadata->getFieldColumn($name)."] = %s", $this->data->$name);
@@ -269,7 +269,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					// setri zamykani tabulky, ale zese je treba overovat, jestli se neco neposralo
 					// a pokud jo, tak nemam zadny chybovy report
 					// Zkontroluju, jeslti byl zaznam opravdu ulozen do DB
-					$query = dibi::select('1')->from($this->metadata->getTableName());
+					$query = $this->getDb()->select('1')->from($this->metadata->getTableName());
 					$idFields = $this->metadata->getIdFields();
 					foreach($idFields as $name)
 						$query = $query->where("[".$this->metadata->getFieldColumn($name)."] = %s", $this->data->$name);
@@ -322,7 +322,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					
 					// Smazu soucasny zaznamy a vytvorim si ID data pro nove
 					$joinIdFields = array();
-					$query2 = dibi::delete($this->metadata->getFieldTableName($curr));
+					$query2 = $this->getDb()->delete($this->metadata->getFieldTableName($curr));
 					foreach($this->metadata->getFieldJoinPairs($curr) as $join)  {
 						$query2->where("[".$join[1]."] = %s", $this->{$join[0]});	
 						$joinIdFields[$join[1]] = $this->{$join[0]};
@@ -334,7 +334,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 					if(count($dataToSave) > 0) {
 						// Pokud se jedna o neassociativni pole, musim zjistit nazvy sloupcu
 						if(!is_array(reset($dataToSave))) {
-							$columnNames = dibi::query("SHOW COLUMNS FROM [".$this->metadata->getFieldTableName($curr)."]")->fetchAll();
+							$columnNames = $this->getDb()->query("SHOW COLUMNS FROM [".$this->metadata->getFieldTableName($curr)."]")->fetchAll();
 							
 							$singleColumnKey = null;
 							foreach($columnNames as $column) {								
@@ -394,7 +394,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		
 		dibi::begin();
 		
-		$query = dibi::delete($this->metadata->getTableName());
+		$query = $this->getDb()->delete($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();
 		foreach($idFields as $name) 
 			$query = $query->where("[".$this->metadata->getFieldColumn($name)."] = %s", $this->data->$name);
@@ -408,7 +408,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		// TODO: Prekontrolovat preklad nazvu sloupcu, nejak se mi to nelibi
 		foreach($this->metadata->getFields() as $curr) {
 			if($this->metadata->getFieldType($curr) == "OneToMany") {
-				$query2 = dibi::delete($this->metadata->getFieldTableName($curr));
+				$query2 = $this->getDb()->delete($this->metadata->getFieldTableName($curr));
 				foreach($this->metadata->getFieldJoinPairs($curr) as $join) {
 					$query2->where("[".$join[1]."] = %s", $this->{$join[0]});
 				}
@@ -430,6 +430,15 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		}
 		
 		return $this;
+	}
+	
+	/**
+	 * Returns connection to DB
+	 * 
+	 * @return dibi\DibiConnection
+	 */
+	protected function getDb() {
+		return $this->container->connection;
 	}
 	
 	/**

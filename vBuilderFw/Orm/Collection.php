@@ -70,7 +70,7 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 		if($parentMetadata->getFieldTableName($this->field) == null)
 			throw new \InvalidArgumentException("Table name for field '$this->field' in entity '".get_class($this->parent)."' has to be specified");
 
-		$ds = dibi::select("*")->from($parentMetadata->getFieldTableName($this->field));
+		$ds = $this->container->connection->select("*")->from($parentMetadata->getFieldTableName($this->field));
 
 		// Podminky spojeni a separace joinKeys
 		$joinKeys = array();

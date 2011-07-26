@@ -320,7 +320,11 @@ class Entity extends vBuilder\Object {
 			$this->addBehavior($behaviorName, $this->metadata->getBehaviorArgs($behaviorName));
 	}
 	
-	
+	/**
+	 * Returns dependency container
+	 * 
+	 * @return Nette\DI\Container
+	 */
 	protected function getContainer() {
 		return $this->container;
 	}
