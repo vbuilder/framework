@@ -91,6 +91,9 @@ class ConfigTestScope extends ConfigScope {
 
 $dao = new ConfigTestScope(new ConfigTestScope2);
 
+Assert::arrayEqual(array(1, 'nested', 'foo', 'somedefault'), $dao->getKeys());
+Assert::arrayEqual(array('a', 'b', 'c', 'd'), $dao->nested->getKeys());
+
 // Jednoduche gettery
 Assert::same(123, $dao->get(1));
 Assert::same('bar', $dao->get('foo'));

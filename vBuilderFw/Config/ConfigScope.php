@@ -82,6 +82,16 @@ abstract class ConfigScope extends ConfigDAO {
 	}
 	
 	/**
+	 * Returns array of all keys
+	 * 
+	 * @return array of keys
+	 */
+	public function getKeys() {
+		if(!$this->isLoaded) $this->load();
+		return parent::getKeys();
+	}
+	
+	/**
 	 * Overloaded setter for load triggering.
 	 * Data have to be loaded be loaded before setting any variables
 	 * or it should be overwritten later.

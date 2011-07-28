@@ -97,7 +97,7 @@ class ConfigDAO implements \ArrayAccess {
 				if(is_array($ptr->data[$key])) {						
 					$ptr = $ptr->dao[$key] = new self(
 							  $this->scope, $ptr,
-							  implode(array_intersect_key($tokens, range(0, $i)), '.') . ".$key",
+							  $i > 0 ? implode(array_intersect_key($tokens, range(0, $i - 1)), '.') . ".$key" : $key,
 							  $ptr->data[$key]
 					);
 					
@@ -127,7 +127,7 @@ class ConfigDAO implements \ArrayAccess {
 							if(is_array($ptr2[$key])) {
 								$ptr = $ptr->dao[$key] = new self(
 									$this->scope, $ptr,
-									implode(array_intersect_key($tokens, range(0, $i)), '.') . ".$key",
+									$i > 0 ? implode(array_intersect_key($tokens, range(0, $i - 1)), '.') . ".$key" : $key,
 									$ptr2[$key]
 								);
 							
@@ -237,6 +237,25 @@ class ConfigDAO implements \ArrayAccess {
 		}
 		
 		$this->scope->hasChanged = true;
+	}
+	
+	/**
+	 * Returns array of all keys
+	 * 
+	 * @return array of keys
+	 */
+	public function getKeys() {
+		
+		$keys = array_keys($this->data);
+		$scope = $this->fallbackScope;
+		while($scope) {
+			$node = $this->key ? $scope->get($this->key) : $scope;
+			$keys = array_merge($keys, $node->getKeys());
+			
+			$scope = $scope->fallbackScope;
+		}
+		
+		return array_unique($keys);
 	}
 	
 	// ==========================================================================
