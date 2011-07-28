@@ -258,6 +258,23 @@ class ConfigDAO implements \ArrayAccess {
 		return array_unique($keys);
 	}
 	
+	public function toArray() {
+		$keys = $this->getKeys();
+		$items = array();
+		
+		foreach($keys as $key) {
+			$absKey = $this->key != "" ? $this->key.".".$key : $key;
+			$value = $this->scope->get($absKey);
+			
+			if($value instanceof self)
+				$items[$key] = $value->toArray();
+			else
+				$items[$key] = $value;
+		}
+		
+		return $items;
+	}
+	
 	// ==========================================================================
 	
 	public function &__get($key) {
