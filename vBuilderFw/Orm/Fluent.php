@@ -56,7 +56,7 @@ class Fluent extends \DibiFluent {
 	 * @param  array|mixed      one or more arguments
 	 * @return DibiResult|int
 	 */
-	private function query($args) {
+	protected function query($args) {
 		$result = call_user_func_array(array($this->connection, 'query'), func_get_args());
 		if($result instanceOf \DibiResult)
 			$result->setRowClass($this->rowClass);
