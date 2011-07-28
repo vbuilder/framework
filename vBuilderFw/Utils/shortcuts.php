@@ -34,7 +34,7 @@ function debug($msg, $var = null) {
 	if(Debug::$productionMode == Debug::PRODUCTION)
 		return;
 	
-	if(Environment::isConsole()) {
+	if(!isset($_SERVER['HTTP_USER_AGENT'])) {
 		echo $msg . "\n";
 		
 		for($i = 1; $i < func_num_args(); $i++) Debug::dump(func_get_arg($i));
