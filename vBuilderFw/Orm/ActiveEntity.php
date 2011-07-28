@@ -165,7 +165,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		// Pokud jsou na zaznam vazany relace, ktere je treba ulozit
 		$needToSaveEvenWithoutData = false;
 		
-		dibi::begin();	
+		$this->getDb()->begin();	
 		
 		try {
 			// Provedu upravy pred ulozenim (zaregistrovane Behaviors, etc.)
@@ -246,20 +246,20 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 			$addtionalDataToMerge = array();
 			$action = null;
 			if(count($updateData) > 0 || $needToSaveEvenWithoutData) {
-				dibi::query('INSERT IGNORE ', $this->metadata->getTableName(), $allTableFields, '%if', $updateData, ' ON DUPLICATE KEY UPDATE %a', $updateData);
+				$this->getDb()->query('INSERT IGNORE ', $this->metadata->getTableName(), $allTableFields, '%if', $updateData, ' ON DUPLICATE KEY UPDATE %a', $updateData);
 
 				// Provedl se INSERT
-				if(dibi::affectedRows() == 1) {
+				if($this->getDb()->affectedRows() == 1) {
 
 					// Zjistim ID pro generovane sloupce
-					$addtionalDataToMerge = $autoField === null ? array() : array($autoField => dibi::insertId());
+					$addtionalDataToMerge = $autoField === null ? array() : array($autoField => $this->getDb()->insertId());
 					$this->data->mergeData($addtionalDataToMerge);
 
 					$action = 'create';
 				}
 
 				// Provedl se UPDATE
-				elseif(dibi::affectedRows() == 2) {
+				elseif($this->getDb()->affectedRows() == 2) {
 					$action = 'update';
 				}
 
@@ -348,7 +348,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 						// Nahazim tam nove
 						foreach($dataToSave as $joinFields) {
 							$iData = array_merge(!is_array($joinFields) ? array($singleColumnKey => $joinFields) : $joinFields, $joinIdFields);
-							dibi::insert($this->metadata->getFieldTableName($curr), $iData)->execute();
+							$this->getDb()->insert($this->metadata->getFieldTableName($curr), $iData)->execute();
 						}
 					}
 				}
@@ -361,10 +361,10 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 			$this->onPostSave($this);
 			
 			// Commitnuti dat a provedeni merge automaticky generovanech polozek do entity
-			dibi::commit();
+			$this->getDb()->commit();
 			$this->data->performSaveMerge();
 		} catch(\Exception $e) {
-			dibi::rollback();
+			$this->getDb()->rollback();
 			throw $e;
 		}
 		
@@ -392,7 +392,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		if($this->state == self::STATE_DELETED) return ;
 		$this->checkIfIdIsDefined(true);
 		
-		dibi::begin();
+		$this->getDb()->begin();
 		
 		$query = $this->getDb()->delete($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();
@@ -402,7 +402,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		$query = $query->limit("1");
 		
 		$query->execute();
-		if(dibi::affectedRows() == 0) $this->throwNoRecordFound();
+		if($this->getDb()->affectedRows() == 0) $this->throwNoRecordFound();
 		
 		// Relace (OneToMany, ...)
 		// TODO: Prekontrolovat preklad nazvu sloupcu, nejak se mi to nelibi
@@ -422,9 +422,9 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		
 		try {
 			$this->onDelete($this);
-			dibi::commit();
+			$this->getDb()->commit();
 		} catch(Exception $e) {
-			dibi::rollback();
+			$this->getDb()->rollback();
 			$this->state = $tmpState;
 			throw $e;
 		}
