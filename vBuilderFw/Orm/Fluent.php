@@ -42,7 +42,7 @@ class Fluent extends \DibiFluent {
 	 * @param string $rowClass row class
 	 * @param DibiConnection $connection connection link
 	 */
-	public function __construct($rowClass, DibiConnection $connection = null) {
+	public function __construct($rowClass, \DibiConnection $connection = null) {
 		$this->rowClass = $rowClass;
 		if($connection === null)
 			$connection = \dibi::getConnection();

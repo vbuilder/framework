@@ -36,6 +36,7 @@ if(!defined('APP_DIR')) define('APP_DIR', TEST_DIR . '/../../../app');
 require LIBS_DIR . '/nette/tests/Nette/bootstrap.php';
 require __DIR__ . '/../vBuilderFw/bootstrap.php';
 require __DIR__ . '/TestLib/Assert.php';
+require __DIR__ . '/TestLib/TestException.php';
 
 // Load configuration from config.neon file
 Nette\Environment::loadConfig();
