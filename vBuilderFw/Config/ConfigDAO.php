@@ -50,7 +50,7 @@ class ConfigDAO implements \ArrayAccess {
 	 * @param string absolute key
 	 * @param array reference to data
 	 */
-	protected function __construct(ConfigScope $scope, $parent, $key, &$dataPtr) {
+	protected function __construct(ConfigScope $scope, $parent, $key, &$dataPtr) {		
 		$this->data = &$dataPtr;
 		$this->scope = $scope;
 		$this->fallbackScope = $scope->getFallbackScope();
@@ -75,7 +75,7 @@ class ConfigDAO implements \ArrayAccess {
 		if(!is_scalar($key))
 			throw new \InvalidArgumentException("Key must be either a string or an integer.");
 		
-		if(empty($key))
+		if(empty($key) && $key !== 0) 
 			throw new \InvalidArgumentException("Key can't be empty");
 		
 		$this->lastFound = true;
@@ -245,26 +245,26 @@ class ConfigDAO implements \ArrayAccess {
 	 * @return array of keys
 	 */
 	public function getKeys() {
-		
 		$keys = array_keys($this->data);
-		$scope = $this->fallbackScope;
-		while($scope) {
-			$node = $this->key ? $scope->get($this->key) : $scope;
-			$keys = array_merge($keys, $node->getKeys());
-			
-			$scope = $scope->fallbackScope;
+		if($this->fallbackScope) {
+			$node = $this->key ? $this->fallbackScope->get($this->key) : $this->fallbackScope;
+			return array_unique(array_merge($keys, $node->getKeys()));
 		}
 		
-		return array_unique($keys);
+		return $keys;
 	}
 	
+	/**
+	 * Returns array representation of object
+	 * 
+	 * @return array
+	 */
 	public function toArray() {
 		$keys = $this->getKeys();
 		$items = array();
 		
 		foreach($keys as $key) {
-			$absKey = $this->key != "" ? $this->key.".".$key : $key;
-			$value = $this->scope->get($absKey);
+			$value = $this->get($key);
 			
 			if($value instanceof self)
 				$items[$key] = $value->toArray();
