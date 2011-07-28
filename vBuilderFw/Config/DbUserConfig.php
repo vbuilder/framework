@@ -26,7 +26,8 @@ namespace vBuilder\Config;
 use Nette;
 
 /**
- * Database based config with global / user settings
+ * Database based config with global / user settings with file defaults
+ * in /app/defaults.neon
  *
  * @author Adam Staněk (velbloud)
  * @since Jun 18, 2011
@@ -38,17 +39,21 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 	/**
 	 * Constructor
 	 */
-	function __construct($user = null) {
+	function __construct($user = null) {		
+		$defaults = file_exists(static::getDefaultsFilepath())
+				  ? new FileConfigScope(array(static::getDefaultsFilepath()))
+				  : null;
+		
 		if($user === null) {
 			if(Nette\Environment::getUser()->isLoggedIn()) $this->userId = Nette\Environment::getUser()->getId();
 		} elseif(is_object($user))
 			$this->userId = $user->getId();
 		
 		if($this->userId !== null) {
-			$global = new DbConfigScope('global');
+			$global = new DbConfigScope('global', $defaults);
 			parent::__construct('user('.$this->userId.')', $global);
 		} else {
-			parent::__construct('global');
+			parent::__construct('global', $defaults);
 		}
 	}
 	
@@ -98,6 +103,10 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 	public static function onUserChanged(Nette\Http\User $user) {
 		Nette\Environment::getContext()->removeService('vBuilder\Config\IConfig');
 		Nette\Environment::getContext()->addService('vBuilder\Config\IConfig', get_called_class());
+	}
+	
+	public static function getDefaultsFilepath() {
+		return APP_DIR . '/defaults.neon';
 	}
 	
 }
