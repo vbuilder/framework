@@ -614,7 +614,7 @@ class Entity extends vBuilder\Object {
 		
 		// Nactu vsechny implementace datovych typu, pokud je potreba
 		if(self::$_dataTypesImplementations === null)
-			self::searchForOrmClasses();
+			self::searchForOrmClasses($this->container);
 
 		$type = $this->metadata->getFieldType($name);
 		
@@ -688,7 +688,7 @@ class Entity extends vBuilder\Object {
 		
 		// Nactu implementace chovani entit
 		if(self::$_behaviorImplementations === null)
-			self::searchForOrmClasses();  
+			self::searchForOrmClasses($this->container);  
 		
 		if(!isset(self::$_behaviorImplementations[$behaviorName]))
 			throw new EntityException("Entity behavior '$behaviorName' was not defined", EntityException::ENTITY_BEHAVIOR_NOT_DEFINED);
@@ -698,16 +698,33 @@ class Entity extends vBuilder\Object {
 	
 	/**
 	 * Searches for all data type and behavior implementations
+	 * 
+	 * @param Nette\DI\Container DI
 	 */
-	private static function searchForOrmClasses() {
-		// TODO: Cachovat to. Kontrolovat, jestli se
-		// kdy se Environment::getCache('Nette.RobotLoader') zmenil a na zaklade toho
-		// invalidovat vlastni cache. Nebo jeste lepe pretizit RobotLoader,
-		// aby pri refreshi emittoval nejakej event.
-		
+	private static function searchForOrmClasses(Nette\DI\Container $container) {
 		self::$_dataTypesImplementations = array();
 		self::$_behaviorImplementations = array();
+		
+		if($container->hasService('robotLoader') && $container->robotLoader instanceOf vBuilder\Loaders\RobotLoader) {
+			$dataTypeClasses = $container->robotLoader->getAllClassesImplementing('vBuilder\\Orm\\IDataType');
+			$behaviorClasses = $container->robotLoader->getAllClassesImplementing('vBuilder\\Orm\\IBehavior');
+			
+			foreach($dataTypeClasses as $className) 
+				self::$_dataTypesImplementations = \array_merge((array) self::$_dataTypesImplementations, \array_fill_keys($className::acceptedDataTypes(), $className));
+			
+			
+			foreach($behaviorClasses as $className) {
+				if(Nette\Utils\Strings::startsWith($className, 'vBuilder\\Orm\\Behaviors'))
+					self::$_behaviorImplementations[mb_substr($className, 23)] = $className;
+				else
+					self::$_behaviorImplementations[$className] = $className;
+			}
 
+			return ;
+		} 
+
+		// Pouze pro zpetnou kompatibilitu s Nettim robot loaderem ---------------		
+		
 		$loaders = Nette\Loaders\AutoLoader::getLoaders();
 		$classes = array();
 		if(count($loaders) > 0) {

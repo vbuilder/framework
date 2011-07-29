@@ -51,23 +51,48 @@ class RobotLoader extends Nette\Loaders\RobotLoader {
 	 * @return array of fully qualified class names (with namespace)
 	 */
 	public function getAllChildrenOf($parentClassName) {
-		$cache = $this->getCache();
 		$cacheKey = $this->getKey();
-		$cacheKey[] = 'instanceOf';
+		$cacheKey[] = 'childrenOf';
 		$cacheKey[] = $parentClassName;
-				
+		
+		return $this->getAllClassesHelper($cacheKey, function ($className) use ($parentClassName) {
+			return is_subclass_of($className, $parentClassName);
+		});
+	}
+	
+	/**
+	 * Returns all classes implementing specified interface
+	 * 
+	 * @param string interface name
+	 * @return array of fully qualified class names (with namespace)
+	 */
+	public function getAllClassesImplementing($interfaceName) {
+		$cacheKey = $this->getKey();
+		$cacheKey[] = 'implementing';
+		$cacheKey[] = $interfaceName;
+		
+		return $this->getAllClassesHelper($cacheKey, function ($className) use ($interfaceName) {
+			$class = new Nette\Reflection\ClassType($className);
+
+			return $class->implementsInterface($interfaceName) && $interfaceName != $className;
+		});
+	}
+	
+	private function getAllClassesHelper($cacheKey, $cb) {
+		$cache = $this->getCache();
+		
 		if(isset($cache[$cacheKey])) {
 			return $cache[$cacheKey];
 		} else {
 			$children = array();
 			$classes = array_keys($this->getIndexedClasses());
 			foreach($classes as $className) {
-				if(is_subclass_of($className, $parentClassName)) {
+				if($cb($className)) {
 					$children[] = $className;
 				}
 			}
 			
-			$cache[$cacheKey] = $children;
+			$cache->save($cacheKey, $children);
 			return $children;
 		}
 	}
