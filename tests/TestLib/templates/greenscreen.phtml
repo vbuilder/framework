@@ -1,0 +1,29 @@
+<?php
+$gs = vBuilder\Test\GreenScreen::getInstance();
+
+?><!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name="robots" content="noindex,noarchive">
+	<meta name="generator" content="vBuilder Framework">
+
+	<title>Test passed</title>
+
+	<?php include __DIR__ . '/style.phtml'; ?>
+</head>
+
+<body>
+	<div id="netteBluescreen">
+		<div id="netteBluescreenSuccess" class="panel">
+			<h1>Test passed :-)</h1>
+			
+			<p>Elapsed time: <?php echo $gs->getTime(); ?> ms</p>
+		</div>
+		
+		<div class="panel" style="margin-top: 20px;"> 
+			<a href="<?php echo htmlspecialchars($gs->getBackLink()); ?>">Get back to index</a>
+		</div>
+	</div>
+</body>
+</html>
