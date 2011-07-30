@@ -56,15 +56,19 @@ if(!file_exists(TEMP_DIR) || !file_exists(TEMP_DIR . '/cache')) {
 	TestHelpers::purge(TEMP_DIR);
 }
 
-// catch unexpected errors/warnings/notices
-class TestErrorException extends Exception {}
+// Pouze pro CLI, webove testy maji ladenku
+if(!defined('HTTP_TEST') || !HTTP_TEST) {
+	// catch unexpected errors/warnings/notices
+	class TestErrorException extends Exception {}
 
-set_error_handler(function($severity, $message, $file, $line) {
-	if (($severity & error_reporting()) === $severity) {
-		throw new TestErrorException("$message in $file:$line");
-	}
-	return FALSE;
-});
+	set_error_handler(function($severity, $message, $file, $line) {
+		if (($severity & error_reporting()) === $severity) {
+			throw new TestErrorException("$message in $file:$line");
+		}
+		return FALSE;
+	});
+
+}
 
 $_SERVER = array_intersect_key($_SERVER, array_flip(array('PHP_SELF', 'SCRIPT_NAME', 'SERVER_ADDR', 'SERVER_SOFTWARE', 'HTTP_HOST', 'DOCUMENT_ROOT', 'OS')));
 $_SERVER['REQUEST_TIME'] = 1234567890;
