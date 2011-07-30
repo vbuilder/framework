@@ -60,8 +60,6 @@ Nette\Environment::getContext()->addService('Nette\\Caching\\ICacheStorage', 'Ne
 $date = new \DateTime('2011-06-15 21:34:16');
 TestCron::run($date);
 
-exit;
-
 // Test, pokud se ignoruji "jiz zaregistrovana" volani (zpatky do minulosti)
 try {
 	TestCron::run($date->sub(\DateInterval::createFromDateString('7 days')));
