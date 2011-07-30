@@ -29,9 +29,10 @@
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require __DIR__ . '/../bootstrap.php';
+use vBuilder\Security\Sha1SaltedHashProvider,
+	 vBuilder\Test\Assert;
 
-use vBuilder\Security\Sha1SaltedHashProvider;
+require __DIR__ . '/../bootstrap.php';
 
 $provider = new Sha1SaltedHashProvider;
 $password = uniqid();

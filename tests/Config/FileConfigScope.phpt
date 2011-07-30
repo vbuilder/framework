@@ -21,9 +21,10 @@
  * along with vManager. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require __DIR__.'/../bootstrap.php';
+use vBuilder\Config\FileConfigScope,
+	 vBuilder\Test\Assert;
 
-use vBuilder\Config\FileConfigScope;
+require __DIR__.'/../bootstrap.php';
 
 $conf = new FileConfigScope(array(
 	__DIR__.'/dummy.ini',

@@ -29,9 +29,10 @@
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-require __DIR__.'/../bootstrap.php';
+use Nette\Environment,
+	 vBuilder\Test\Assert;
 
-use Nette\Environment;
+require __DIR__.'/../bootstrap.php';
 
 Environment::getContext()->addService('vBuilder\Config\IConfig',
 		  array('vBuilder\Config\DbUserConfig', 'createUserConfig'));
