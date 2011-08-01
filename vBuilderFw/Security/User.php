@@ -93,7 +93,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 		if(!$deepLook)
 			return false;
 
-		$acl = Nette\Environment::getUser()->getAuthorizationHandler();
+		$acl = Nette\Environment::getUser()->getAuthorizator();
 		if($acl instanceof Nette\Security\Permission) {
 			foreach($roles as $childRole) {
 				if($acl->roleInheritsFrom($childRole, $role))
@@ -120,7 +120,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	 */
 	public function setRoles(array $roles) {
 		// Vyzaduju ACL system pro kontrolu roli
-		$acl = Nette\Environment::getUser()->getAuthorizationHandler();
+		$acl = Nette\Environment::getUser()->getAuthorizator();
 		if($acl instanceof Nette\Security\Permission) {
 			$newRoles = array();
 

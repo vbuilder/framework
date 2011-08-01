@@ -373,7 +373,7 @@ class Entity extends vBuilder\Object {
 		$thisReflection = new Nette\Reflection\ClassType(__CLASS__);
 		
 		// Nalezeni primeho potomka
-		$reflection = new Nette\Reflection\ClassType(\get_called_class());
+		$reflection = $firstReflection = new Nette\Reflection\ClassType(\get_called_class());
 		$reflections = array();
 		
 		while($reflection !== null && !Nette\Utils\Strings::startsWith($reflection->getName(), 'vBuilder\Orm')) {
@@ -384,9 +384,9 @@ class Entity extends vBuilder\Object {
 			$ref = new Nette\Reflection\ClassType('vBuilder\Orm\MergedMetadata');
 			$metadata = $ref->newInstanceArgs(\array_reverse($reflections));
 		} else {
-			$metadata = new AnnotationMetadata($reflection);
+			$metadata = new AnnotationMetadata($firstReflection);
 		}
-		
+
 		return $metadata;
 	}
 	

@@ -463,7 +463,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 			
 			$resId = self::getParentResourceId() . '(' . implode($ids, ',') . ')';
 			
-			$acl = Nette\Environment::getUser()->getAuthorizationHandler();
+			$acl = Nette\Environment::getUser()->getAuthorizator();
 			if($acl instanceof Nette\Security\Permission && !$acl->hasResource($resId))
 				$acl->addResource($resId, static::getParentResourceId()); 
 			
