@@ -321,6 +321,30 @@ class Entity extends vBuilder\Object {
 	}
 	
 	/**
+	 * Returns names of protected/public class properties, which are meant to be
+	 * serialized
+	 * 
+	 * @return array of property names
+	 */
+	public function __sleep() {
+		return array('data');
+	}
+	
+	/**
+	 * Reinitializes class after unserialization
+	 * 
+	 * @return void
+	 */
+	public function __wakeup() {
+		$this->container = Repository::getContainer();
+		$this->metadata = static::getMetadata();
+		
+		// Chovani
+		foreach($this->metadata->getBehaviors() as $behaviorName)
+			$this->addBehavior($behaviorName, $this->metadata->getBehaviorArgs($behaviorName));
+	}
+	
+	/**
 	 * Returns dependency container
 	 * 
 	 * @return Nette\DI\Container
