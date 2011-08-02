@@ -23,7 +23,9 @@
 
 namespace vBuilder\Orm;
 
-use dibi;
+use vBuilder,
+	 Nette,
+	 dibi;
 
 /**
  * Modified DibiFluent for getting results
@@ -34,20 +36,23 @@ use dibi;
  */
 class Fluent extends \DibiFluent {
 
-	private $rowClass = null;
+	/** @var string name of row class */
+	protected $rowClass = null;
+	
+	/** @var Nette\DI\IContainer DI */
+	protected $context;
 
 	/**
-	 * Constructs flunent object
+	 * Constructs fluent object
 	 * 
 	 * @param string $rowClass row class
-	 * @param DibiConnection $connection connection link
+	 * @param Nette\DI\IContainer DI
 	 */
-	public function __construct($rowClass, \DibiConnection $connection = null) {
+	public function __construct($rowClass, Nette\DI\IContainer $context) {
 		$this->rowClass = $rowClass;
-		if($connection === null)
-			$connection = \dibi::getConnection();
-
-		parent::__construct($connection);
+		$this->context = $context;
+		
+		parent::__construct($this->context->connection);
 	}
 
 	/**
@@ -58,8 +63,14 @@ class Fluent extends \DibiFluent {
 	 */
 	protected function query($args) {
 		$result = call_user_func_array(array($this->connection, 'query'), func_get_args());
-		if($result instanceOf \DibiResult)
-			$result->setRowClass($this->rowClass);
+		if($result instanceOf \DibiResult) {
+			$context = $this->context;
+			$rowClass = $this->rowClass;
+			
+			$result->setRowFactory(function ($data) use ($context, $rowClass) {
+				return new $rowClass($data, $context);
+			});
+		}
 
 		return $result;
 	}

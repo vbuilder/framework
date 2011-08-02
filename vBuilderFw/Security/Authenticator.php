@@ -37,6 +37,13 @@ use Nette, dibi,
  */
 class Authenticator implements Nette\Security\IAuthenticator {
 	
+	/** @var Nette\DI\IContainer DI */
+	protected $context;
+	
+	public function __construct(Nette\DI\IContainer $context) {
+		$this->context = $context;
+	}
+	
 	/**
 	 * Performs an authentication against data model.
 	 * and returns IIdentity on success or throws AuthenticationException
@@ -48,15 +55,16 @@ class Authenticator implements Nette\Security\IAuthenticator {
 	 */
 	public function authenticate(array $credentials) {
 		$entity = Security::getUserClassName();
-		
-		$user = Repository::findAll($entity)->where('[username] = %s', $credentials[self::USERNAME])->fetch();
+				
+		$user = $this->context->repository->findAll($entity)->where('[username] = %s', $credentials[self::USERNAME])->fetch();
 
 		if($user !== false) {
 			if($user->checkPassword($credentials[self::PASSWORD])) {
-				dibi::query(
+				$remoteAddr = $this->context->httpRequest->getRemoteAddress();
+				$this->context->connection->query(
 					'INSERT INTO ['.LastLoginInfo::getMetadata()->getTableName().'] ([userId], [time], [ip], [time2], [ip2]) VALUES(' .
-					'%i', $user->getId(), ', NOW(), %s', Nette\Environment::getHttpRequest()->getRemoteAddress(), ', NULL, NULL) ' .
-					'ON DUPLICATE KEY UPDATE [time2] = [time], [ip2] = [ip], [time] = NOW(), [ip] = %s', Nette\Environment::getHttpRequest()->getRemoteAddress()
+					'%i', $user->getId(), ', NOW(), %s', $remoteAddr, ', NULL, NULL) ' .
+					'ON DUPLICATE KEY UPDATE [time2] = [time], [ip2] = [ip], [time] = NOW(), [ip] = %s', $remoteAddr
 				);					  
 					  
 				return $user;

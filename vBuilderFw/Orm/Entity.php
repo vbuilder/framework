@@ -259,14 +259,16 @@ class Entity extends vBuilder\Object {
 	/** @var array of event listeners for first read (pass-through of this event to EntityData) */
 	public $onFirstRead = array();
 	
-	/** @var Nette\DI\Container */
-	private $container;
+	/** @var Nette\DI\IContainer */
+	protected $context;
 	
 	/**
 	 * Constructor of Entity.
 	 * 
 	 * Takes array of data as parameter or ID value (or more IDs if defined
-	 * as separate parameters). 
+	 * as separate parameters).
+	 * 
+	 * Last argument has to be Nette\DI\Container
 	 * 
 	 * @param array|mixed data row
 	 */
@@ -279,12 +281,14 @@ class Entity extends vBuilder\Object {
 		if($numargs > 0) {
 			$cont = \func_get_arg($numargs-1); // last one
 			if($cont instanceof Nette\DI\Container) {
-				$this->container = $cont;
+				$this->context = $cont;
 				$numargs--;
 			}
 		}
 		
-		if(!isset($this->container)) $this->container = Repository::getContainer();
+		if(!isset($this->context)) {
+			throw new \Nette\InvalidArgumentException("Missing DI container (context) for entity '".get_called_class()."'");
+		}
 		
 		// Prebirani primary id
 		if(!is_array($data)) {
@@ -292,7 +296,7 @@ class Entity extends vBuilder\Object {
 			
 			$cont = \func_get_arg($numargs-1); // last one
 			if ($cont instanceof Nette\DI\Container) {
-				$this->container = $cont;
+				$this->context = $cont;
 				$numargs--;
 			}
 			
@@ -336,21 +340,14 @@ class Entity extends vBuilder\Object {
 	 * @return void
 	 */
 	public function __wakeup() {
-		$this->container = Repository::getContainer();
+		// Bacha neni to context z parentu, muzou chybet nejake sluzby!
+		// ORM, ale vyuziva jen connection a repository, takze by melo byt vse Ok
+		$this->context = Nette\Environment::getContext();
 		$this->metadata = static::getMetadata();
 		
 		// Chovani
 		foreach($this->metadata->getBehaviors() as $behaviorName)
 			$this->addBehavior($behaviorName, $this->metadata->getBehaviorArgs($behaviorName));
-	}
-	
-	/**
-	 * Returns dependency container
-	 * 
-	 * @return Nette\DI\Container
-	 */
-	protected function getContainer() {
-		return $this->container;
 	}
 	
 	/** 
@@ -638,7 +635,7 @@ class Entity extends vBuilder\Object {
 		
 		// Nactu vsechny implementace datovych typu, pokud je potreba
 		if(self::$_dataTypesImplementations === null)
-			self::searchForOrmClasses($this->container);
+			self::searchForOrmClasses($this->context);
 
 		$type = $this->metadata->getFieldType($name);
 		
@@ -679,7 +676,7 @@ class Entity extends vBuilder\Object {
 				}
 				
 				$class = $this->metadata->getFieldEntityName($name);
-				$instance = new $class($targetEntityData, $this->getContainer());
+				$instance = new $class($targetEntityData, $this->context);
 
 				return $instance;
 			}
@@ -692,9 +689,9 @@ class Entity extends vBuilder\Object {
 			if(is_object($data)) return $data;
 			
 			if($this->metadata->getFieldEntityName($name) !== null)
-				$instance = new EntityCollection($this, $name, $this->metadata->getFieldEntityName($name), $this->getContainer());
+				$instance = new EntityCollection($this, $name, $this->metadata->getFieldEntityName($name), $this->context);
 			else
-				$instance = new Collection($this, $name, $this->getContainer());
+				$instance = new Collection($this, $name, $this->context);
 			
 			return $instance;
 		}
@@ -712,12 +709,12 @@ class Entity extends vBuilder\Object {
 		
 		// Nactu implementace chovani entit
 		if(self::$_behaviorImplementations === null)
-			self::searchForOrmClasses($this->container);  
+			self::searchForOrmClasses($this->context);  
 		
 		if(!isset(self::$_behaviorImplementations[$behaviorName]))
 			throw new EntityException("Entity behavior '$behaviorName' was not defined", EntityException::ENTITY_BEHAVIOR_NOT_DEFINED);
 		
-		$this->behaviors[] = new self::$_behaviorImplementations[$behaviorName]($this, $args);
+		$this->behaviors[] = new self::$_behaviorImplementations[$behaviorName]($this->context, $this, $args);
 	}
 	
 	/**

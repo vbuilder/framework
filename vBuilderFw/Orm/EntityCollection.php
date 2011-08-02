@@ -36,14 +36,14 @@ class EntityCollection extends Collection {
 	/** @var string name of target entity */
 	protected $targetEntity;
 	
-	function __construct(Entity &$parent, $fieldName, $targetEntityName, Nette\DI\Container $container) {
+	function __construct(Entity &$parent, $fieldName, $targetEntityName, Nette\DI\IContainer $context) {
 		$this->targetEntity = $targetEntityName;
-		parent::__construct($parent, $fieldName, $container);
+		parent::__construct($parent, $fieldName, $context);
 	}
 	
 	public function load() {
 		$parentMetadata = $this->parent->getMetadata();
-		$ds = Repository::findAll($this->targetEntity);
+		$ds = $this->context->repository->findAll($this->targetEntity);
 
 		// Podminky spojeni a separace joinKeys
 		$joinKeys = array();

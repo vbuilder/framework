@@ -23,6 +23,8 @@
 
 namespace vBuilder\Orm;
 
+use Nette;
+
 /**
  * Interface for all ORM entity behaviors
  *
@@ -34,8 +36,10 @@ interface IBehavior {
 	/**
 	 * Register behavior to entity
 	 * 
+	 * @parem Nette\DI\IContainer DI
 	 * @param Entity entity reference
+	 * @param array of arguments (associative)
 	 */
-	public function __construct(Entity &$entity, array $args = array());
+	public function __construct(Nette\DI\IContainer $context, Entity $entity, array $args = array());
 	
 }

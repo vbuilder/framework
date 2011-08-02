@@ -48,13 +48,19 @@ class Secure implements vBuilder\Orm\IBehavior {
 	/** @var reference to entity */
 	private $entity;
 	
+	/** @var Nette\DI\IContainer DI */
+	private $context;
+	
 	/**
 	 * Register behavior to entity
 	 * 
+	 * @param Nette\DI\IContainer DI
 	 * @param ActiveEntity entity reference
+	 * @param array of arguments (associative)
 	 */
-	public function __construct(Entity &$entity, array $args = array()) {
-		$this->entity = &$entity;
+	public function __construct(Nette\DI\IContainer $context, Entity $entity, array $args = array()) {
+		$this->entity = $entity;
+		$this->context = $context;
 		
 		$this->entity->onFirstRead[] = \callback($this, 'readSecurityCheck');
 		$this->entity->onCreate[] = \callback($this, 'createSecurityCheck');
@@ -106,7 +112,7 @@ class Secure implements vBuilder\Orm\IBehavior {
 	 * @throws SecurityException if user does not have permission to do that
 	 */
 	protected function checkPermission($permission) {
-		if(!Nette\Environment::getUser()->isAllowed($this->entity, $permission))
+		if(!$this->context->user->isAllowed($this->entity, $permission))
 			throw new SecurityException("Operation '$permission' is not permitted on '".$this->entity->getResourceId()."'", SecurityException::OPERATION_NOT_PERMITTED);
 	}
 	

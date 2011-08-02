@@ -36,6 +36,20 @@ require_once __DIR__ . '/Loaders/RobotLoader.php';
 class Configurator extends Nette\Configurator {
 	
 	/**
+	 * @return DibiConnection
+	 */
+	public static function createServiceConnection(Nette\DI\Container $container) {
+		return new \DibiConnection($container->params['database']);
+	}
+	
+	/**
+	 * @return vBuilder\Orm\Repository 
+	 */
+	public static function createServiceRepository(Nette\DI\Container $container) {
+		return new Orm\Repository($container);
+	}
+	
+	/**
 	 * @return vBuilder\Config\IConfig
 	 */
 	public static function createServiceConfig(Nette\DI\Container $container) {
@@ -45,7 +59,7 @@ class Configurator extends Nette\Configurator {
 	}
 	
 	/**
-	 * @return Nette\Loaders\RobotLoader
+	 * @return vBuilder\Loaders\RobotLoader
 	 */
 	public static function createServiceRobotLoader(Nette\DI\Container $container, array $options = NULL) {
 		$loader = new Loaders\RobotLoader;
@@ -63,6 +77,13 @@ class Configurator extends Nette\Configurator {
 		}
 		$loader->register();
 		return $loader;
+	}
+	
+	/**
+	 * @return Nette\Security\IAuthenticator
+	 */
+	public static function createServiceAuthenticator(Nette\DI\Container $container) {
+		return new Security\Authenticator($container);
 	}
 	
 }

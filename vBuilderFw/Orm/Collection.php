@@ -44,8 +44,8 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 	/** @var bool true if data has been loaded already */
 	protected $loaded = false;
 	
-	/** @var Nette\DI\Container */ 
-	protected $container;
+	/** @var Nette\DI\IContainer */ 
+	protected $context;
 
 	/**
 	 * Conctructs collection
@@ -53,8 +53,8 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 	 * @param Entity reference to parent entity
 	 * @param string name of virtual field in parent entity
 	 */
-	function __construct(Entity &$parent, $fieldName, Nette\DI\Container $container) {
-		$this->container = $container;
+	function __construct(Entity &$parent, $fieldName, Nette\DI\IContainer $context) {
+		$this->context = $context;
 		$this->parent = &$parent;
 		$this->field = $fieldName;
 
@@ -70,7 +70,7 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 		if($parentMetadata->getFieldTableName($this->field) == null)
 			throw new \InvalidArgumentException("Table name for field '$this->field' in entity '".get_class($this->parent)."' has to be specified");
 
-		$ds = $this->container->connection->select("*")->from($parentMetadata->getFieldTableName($this->field));
+		$ds = $this->context->connection->select("*")->from($parentMetadata->getFieldTableName($this->field));
 
 		// Podminky spojeni a separace joinKeys
 		$joinKeys = array();

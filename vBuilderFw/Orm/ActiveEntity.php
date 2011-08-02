@@ -435,10 +435,10 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	/**
 	 * Returns connection to DB
 	 * 
-	 * @return dibi\DibiConnection
+	 * @return DibiConnection
 	 */
 	protected function getDb() {
-		return $this->container->connection;
+		return $this->context->connection;
 	}
 	
 	/**

@@ -23,7 +23,10 @@
 
 namespace vBuilder\Orm\Behaviors;
 
-use vBuilder, vBuilder\Orm\Entity, dibi;
+use vBuilder,
+	 vBuilder\Orm\Entity,
+	 Nette,
+	 dibi;
 
 /**
  * Versionable behavior for ORM entities
@@ -62,13 +65,23 @@ class Versionable implements vBuilder\Orm\IBehavior {
 	/** @var name of revision column */
 	private $revisionColumn;
 	
+	/** @var Nette\DI\IContainer DI */
+	private $context;
+	
+	/** @var DibiConnection DB connection */
+	private $db;
+	
 	/**
 	 * Register behavior to entity
 	 * 
+	 * @param Nette\DI\IContainer DI
 	 * @param ActiveEntity entity reference
+	 * @param array of arguments (associative)
 	 */
-	public function __construct(Entity &$entity, array $args = array()) {
-		$this->entity = &$entity;
+	public function __construct(Nette\DI\IContainer $context, Entity $entity, array $args = array()) {
+		$this->entity = $entity;
+		$this->context = $context;
+		$this->db = $this->context->connection;
 		
 		// Zjisitm ID, Revision column a field name, pripadne hodim default
 		foreach(array('id', 'revision') as $curr) {
@@ -95,21 +108,21 @@ class Versionable implements vBuilder\Orm\IBehavior {
 		// vyjimky se provede rollback
 		
 		$table = $this->entity->getMetadata()->getTableName();
-		dibi::query("LOCK TABLES [" . $table . "] WRITE");
-		dibi::begin();
+		$this->db->query("LOCK TABLES [" . $table . "] WRITE");
+		$this->db->begin();
 		
 		// Pokud se zadna data nezmenila, nema to smysl
 		if(!$this->entity->hasChanged()) return ;
 		
 		// Zjistim cislo posledni revize
-		$revision = isset($this->entity->{$this->idField}) ? dibi::query("SELECT [". $this->revisionColumn ."] FROM [". $table
+		$revision = isset($this->entity->{$this->idField}) ? $this->db->query("SELECT [". $this->revisionColumn ."] FROM [". $table
 				  ."] WHERE [". $this->revisionColumn ."] > 0"
 				  ." AND [". $this->idColumn ."] = %i", $this->entity->{$this->idField})
 				  ->setType($this->revisionColumn, dibi::INTEGER)->fetchSingle() : false;
 				  
 		// Pokud neexistuje vubec zadna revize tyhle instance, vytvorim auto-id
 		if($revision === false) {
-			$id = dibi::query("SELECT COALESCE(MAX([". $this->idColumn ."]), 0) + 1 AS [maxid]  FROM [". $table ."]")
+			$id = $this->db->query("SELECT COALESCE(MAX([". $this->idColumn ."]), 0) + 1 AS [maxid]  FROM [". $table ."]")
 					  ->setType('maxid', dibi::INTEGER)->fetchSingle();
 			
 			$this->entity->{$this->idField} = $id;
@@ -119,7 +132,7 @@ class Versionable implements vBuilder\Orm\IBehavior {
 		} else {
 			$this->entity->{$this->revisionField} = $revision + 1;
 			
-			$revision = dibi::query("UPDATE [". $table . "]"
+			$revision = $this->db->query("UPDATE [". $table . "]"
 				  ." SET [". $this->revisionColumn ."] = 0 - [". $this->revisionColumn ."]"
 				  ." WHERE [". $this->revisionColumn ."] > 0"
 				  ." AND [". $this->idColumn ."] = %i", $this->entity->{$this->idField}
@@ -137,7 +150,7 @@ class Versionable implements vBuilder\Orm\IBehavior {
 		// Nesmim tu davat commit, o commit se mi postara uz samotna active entity.
 		// Kdybych tu dal commit, nedal by se udelat pripadny rollback z handleru
 		// zavolanych po me (behavior se registruje jako prvni).
-		dibi::query("UNLOCK TABLES");
+		$this->db->query("UNLOCK TABLES");
 	}
 	
 	/**

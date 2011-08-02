@@ -33,23 +33,36 @@ use vBuilder, Nette, dibi;
  */
 class Repository extends vBuilder\Object {
 	
-	/** @var Nette\DI\Container */
-	protected $container;
+	/** @var Nette\DI\IContainer DI */
+	protected $context;
 
+	/** @var DibiConnection DB connection */
+	protected $db;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param Nette\DI\IContainer DI
+	 */
+	public function __construct(Nette\DI\IContainer $context) {
+		$this->context = $context;
+		$this->db = $this->context->connection;
+	}
+	
 	 /**
 	 * Returns one entity
 	 * 
 	 * @param string entity name
-	 * @return IActiveEntity
+	 * @return vBuilder\Orm\IActiveEntity
 	 */
-	public static function get($entity) {
-		$class = self::getEntityClass($entity);
-		// TODO: Dodelat genericke entity z configu
+	public function get($entity) {
+		$class = $this->getEntityClass($entity);
+		
 		if($class === false) throw new EntityException("Entity '$entity' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
 		
 		$args = func_get_args();
 		array_shift($args);
+		$args[] = $this->context;
 		
 		$reflection = new \ReflectionClass($class);
 		$entityInstance = $reflection->newInstanceArgs($args);
@@ -58,12 +71,12 @@ class Repository extends vBuilder\Object {
 	}
 	
 	/**
-	 * Creates DataSource for finding all entities
+	 * Creates Fluent for building select query
 	 * 
 	 * @param string entity name
-	 * @return Fluent
+	 * @return vBuilder\Orm\Fluent
 	 */
-	public static function findAll($entity) {
+	public function findAll($entity) {
 		$class = self::getEntityClass($entity);
 		// TODO: Dodelat genericke entity z configu
 		if($class === false) throw new EntityException("Entity '$entity' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
@@ -72,8 +85,9 @@ class Repository extends vBuilder\Object {
 
 		// Delam zvlast, protoze jinak by se mohla vyhazovat
 		// vyjimka pri DibiFluent::__toString
-		if(!dibi::getConnection()->isConnected()) dibi::getConnection()->connect();
-		$fluent = new Fluent($class);
+		if(!$this->db->isConnected()) $this->db->connect();
+		
+		$fluent = new Fluent($class, $this->context);
 		$fluent->select('*')->from($metadata->getTableName());
 		
 		return $fluent;
@@ -83,10 +97,10 @@ class Repository extends vBuilder\Object {
 	 * Returns new entity
 	 * 
 	 * @param string entity name
-	 * @return IActiveEntity
+	 * @return vBuilder\Orm\IActiveEntity
 	 */
-	public static function create($entity) {
-		return self::get($entity);
+	public function create($entity) {
+		return $this->get($entity);
 	}
 	
 	/**
@@ -95,22 +109,12 @@ class Repository extends vBuilder\Object {
 	 * @param string entity name
 	 * @return string|bool return false, if no such class has been found 
 	 */
-	private static function getEntityClass($entity) {
+	protected function getEntityClass($entity) {
 		if(class_exists($entity)) {
 			return $entity;
 		}
 		
 		return false;
-	}
-	
-	public static function getContainer() {
-		$container = new Nette\DI\Container();
-			
-		$container->addService('connection', function ($cont) {
-			return dibi::getConnection();
-		});
-		
-		return $container;
 	}
 
 }
