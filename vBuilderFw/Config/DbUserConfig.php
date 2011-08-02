@@ -36,24 +36,26 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 	
 	private $userId;
 	
+	
 	/**
 	 * Constructor
 	 */
-	function __construct($user = null) {		
+	function __construct(Nette\DI\IContainer $context, $user = null) {		
 		$defaults = file_exists(static::getDefaultsFilepath())
 				  ? new FileConfigScope(array(static::getDefaultsFilepath()))
 				  : null;
 		
+		// TODO: Zbavit se zavislosti na Environment -> $context
 		if($user === null) {
 			if(Nette\Environment::getUser()->isLoggedIn()) $this->userId = Nette\Environment::getUser()->getId();
 		} elseif(is_object($user))
 			$this->userId = $user->getId();
 		
 		if($this->userId !== null) {
-			$global = new DbConfigScope('global', $defaults);
-			parent::__construct('user('.$this->userId.')', $global);
+			$global = new DbConfigScope($context, 'global', $defaults);
+			parent::__construct($context, 'user('.$this->userId.')', $global);
 		} else {
-			parent::__construct('global', $defaults);
+			parent::__construct($context, 'global', $defaults);
 		}
 	}
 	
@@ -79,19 +81,28 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 	}
 	
 	/**
+	 * Returns absolute path to config file with default values
+	 * 
+	 * @return string absolute path
+	 */
+	public static function getDefaultsFilepath() {
+		return APP_DIR . '/defaults.neon';
+	}
+	
+	/**
 	 * For service purposes we also need to register handlers
 	 * when current user is changed (log in / log out have to reload config).
 	 * 
 	 * @internal
 	 */
-	public static function createUserConfig() {
+	/*public static function createUserConfig() {
 		$config = new static();
 
 		Nette\Environment::getUser()->onLoggedIn[] = callback(get_called_class(), 'onUserChanged');
 		Nette\Environment::getUser()->onLoggedOut[] = callback(get_called_class(), 'onUserChanged');
 		
 		return $config;
-	}
+	} */
 	
 	/**
 	 * When new user logs in or out, we have to refresh config
@@ -100,13 +111,9 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 	 * 
 	 * @param Nette\Http\User $user 
 	 */
-	public static function onUserChanged(Nette\Http\User $user) {
+	/*public static function onUserChanged(Nette\Http\User $user) {
 		Nette\Environment::getContext()->removeService('vBuilder\Config\IConfig');
 		Nette\Environment::getContext()->addService('vBuilder\Config\IConfig', get_called_class());
-	}
-	
-	public static function getDefaultsFilepath() {
-		return APP_DIR . '/defaults.neon';
-	}
+	} */
 	
 }

@@ -38,13 +38,22 @@ class DbConfigScope extends ConfigScope {
 	/** @var string scope name */
 	private $scopeName;
 	
+	/** @var Nette\DI\IContainer DI */
+	protected $context;
+	
+	/** @var DibiConnection DB connection */
+	protected $db;
+	
 	/** @var array of cached scope data */
 	static private $cache = array();
 	
 	/**
 	 * Constructor
 	 */
-	function __construct($name, $fallback = null) {
+	function __construct(Nette\DI\IContainer $context, $name, $fallback = null) {
+		$this->context = $context;
+		$this->db = $this->context->connection;
+		
 		$this->scopeName = $name;
 		
 		if(!isset(self::$cache[$this->scopeName]))
@@ -67,7 +76,7 @@ class DbConfigScope extends ConfigScope {
 		
 		$alreadyWrittenInto = count($this->data) > 0;
 		
-		$results = dibi::query('SELECT * FROM ['.self::TABLE_NAME.'] WHERE [scope] = %s', $this->scopeName)->fetchAll();
+		$results = $this->db->query('SELECT * FROM ['.self::TABLE_NAME.'] WHERE [scope] = %s', $this->scopeName)->fetchAll();
 		foreach($results as $curr) {
 			if(!$alreadyWrittenInto || !$this->has($curr['key'])) {
 				$this->set($curr['key'], $curr['value']);
@@ -91,18 +100,16 @@ class DbConfigScope extends ConfigScope {
 			);
 		}
 		
-		var_dump($data);
-		
-		dibi::begin();
-		dibi::query('DELETE FROM ['.self::TABLE_NAME.'] WHERE [scope] = %s', $this->scopeName);
-		if(count($data) > 0) dibi::query('INSERT INTO ['.self::TABLE_NAME.'] %ex', $data);
-		dibi::commit();
+		$this->db->begin();
+		$this->db->query('DELETE FROM ['.self::TABLE_NAME.'] WHERE [scope] = %s', $this->scopeName);
+		if(count($data) > 0) $this->db->query('INSERT INTO ['.self::TABLE_NAME.'] %ex', $data);
+		$this->db->commit();
 		
 		
 		// TODO: Save only changed records and handle removes.
 		/*
 		if(count($data)) {			
-			dibi::begin();
+			$this->db->begin();
 			
 			foreach($dict as $key => $value) {
 				$data = array(
@@ -111,11 +118,11 @@ class DbConfigScope extends ConfigScope {
 				 'value' => $value
 				);
 				
-				dibi::query('INSERT INTO ['.self::TABLE_NAME.']', $data,
+				$this->db->query('INSERT INTO ['.self::TABLE_NAME.']', $data,
 						  'ON DUPLICATE KEY UPDATE [value] = %s', $data['value']);
 			}
 			
-			dibi::commit();
+			$this->db->commit();
 		} */
 		
 		$this->hasChanged = false;
