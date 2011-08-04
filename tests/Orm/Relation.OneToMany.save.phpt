@@ -32,12 +32,12 @@ namespace vBuilder\Orm\EntityTest;
 
 require __DIR__ . '/Relation.OneToMany.inc.php';
 
-use vBuilder, Nette, dibi,
+use vBuilder, Nette,
 	 vBuilder\Test\Assert; 
 
 // =============================================================================
 
-$e1 = new TestEntity;
+$e1 = new TestEntity($context);
 $e1->name = 'C';
 
 Assert::true($e1->getRoles() instanceOf vBuilder\Orm\EntityCollection);
@@ -49,22 +49,22 @@ try {
 	Assert::exception('InvalidArgumentException', null, $e);
 }
 
-$re1 = new OneToManyEntity;
+$re1 = new OneToManyEntity($context);
 $re1->name = 'Red';
 $e1->getRoles()->add($re1);
 
-$re2 = new OneToManyEntity;
+$re2 = new OneToManyEntity($context);
 $re2->name = 'Green';
 $e1->getRoles()->add($re2);
 
-$re3 = new OneToManyEntity;
+$re3 = new OneToManyEntity($context);
 $re3->name = 'Blue';
 $e1->getRoles()->add($re3);
 
 $e1->save();
 
 $found = false;
-$entities = dibi::query("SELECT * FROM [".TestEntity::getMetadata()->getTableName()."]")->fetchAll();
+$entities = $db->query("SELECT * FROM [".TestEntity::getMetadata()->getTableName()."]")->fetchAll();
 foreach($entities as $curr) {
 	if($curr['name'] == $e1->name) {
 		$found = $curr['id'];
@@ -73,7 +73,7 @@ foreach($entities as $curr) {
 }
 
 if($found === false) Assert::fail('Main entity save failed');
-$relatedEntities = dibi::query("SELECT * FROM [".OneToManyEntity::getMetadata()->getTableName()."] WHERE [id] = %i", $found)->fetchAll();
+$relatedEntities = $db->query("SELECT * FROM [".OneToManyEntity::getMetadata()->getTableName()."] WHERE [id] = %i", $found)->fetchAll();
 Assert::arrayEqual(array(
 	 array('id' => 3, 'name' => 'Red'),
 	 array('id' => 3, 'name' => 'Green'),

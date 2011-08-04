@@ -37,7 +37,10 @@ use vBuilder, Nette, dibi,
 	 vBuilder\Orm\ActiveEntity,
 	 vBuilder\Test\Assert; 
 
-dibi::query(
+$db = $context->connection;
+$repository = $context->repository;
+
+$db->query(
 	"CREATE TEMPORARY TABLE [TestEntityTable] (".
 	"	[id] int(11) NOT NULL AUTO_INCREMENT,".
    "	[name] varchar(255),".
@@ -46,8 +49,8 @@ dibi::query(
 	");"
 );
 
-dibi::insert('TestEntityTable', array('id' => 1, 'name' => 'A'))->execute();
-dibi::insert('TestEntityTable', array('id' => 2, 'name' => 'B'))->execute();
+$db->insert('TestEntityTable', array('id' => 1, 'name' => 'A'))->execute();
+$db->insert('TestEntityTable', array('id' => 2, 'name' => 'B'))->execute();
 
 /**
  * @Table(name="TestEntityTable")
@@ -60,17 +63,17 @@ class TestEntity extends ActiveEntity {
 }
 
 // Test nacteni entity
-$e1 = Repository::get('vBuilder\Orm\EntityTest\TestEntity', 1);
+$e1 = $repository->get('vBuilder\Orm\EntityTest\TestEntity', 1);
 Assert::true($e1->exists());
 Assert::equal('A', $e1->name);
 
 // Test nacteni entity, co neni v DB
-$e2 = Repository::get('vBuilder\Orm\EntityTest\TestEntity', 123);
+$e2 = $repository->get('vBuilder\Orm\EntityTest\TestEntity', 123);
 Assert::false($e2->exists());
 
 // Test neexistujici entity
 try {
-	$e2 = Repository::get('vBuilder\Orm\EntityTest\BlaBla', 2);
+	$e2 = $repository->get('vBuilder\Orm\EntityTest\BlaBla', 2);
 	Assert::fail('Non existing entity test failed (Expected exception)');
 } catch(\Exception $exception) {
 	Assert::exception('vBuilder\Orm\EntityException', null, vBuilder\Orm\EntityException::ENTITY_TYPE_NOT_DEFINED, $exception);
@@ -78,7 +81,7 @@ try {
 
 // Warning: Pro dibi::$numOfQueries musi byt aktivovan profiler
 $num = dibi::$numOfQueries;
-$all = Repository::findAll('vBuilder\Orm\EntityTest\TestEntity')->orderBy('id')->fetchAll();
+$all = $repository->findAll('vBuilder\Orm\EntityTest\TestEntity')->orderBy('id')->fetchAll();
 Assert::equal(2, count($all));
 Assert::equal('A', $all[0]->name);
 Assert::equal('B', $all[1]->name);
@@ -86,8 +89,6 @@ Assert::equal(1, dibi::$numOfQueries - $num); // Pocet dotazu (kontrola, ze se v
 
 // Test, ze se zaznamy z listingu ulozi a nejsou nacitany znova pri getu
 $num = dibi::$numOfQueries;
-$e2 = Repository::get('vBuilder\Orm\EntityTest\TestEntity', 2);
+$e2 = $repository->get('vBuilder\Orm\EntityTest\TestEntity', 2);
 Assert::equal('B', $e2->name);
 Assert::equal($num, dibi::$numOfQueries);
-
-debug('My var', $all);

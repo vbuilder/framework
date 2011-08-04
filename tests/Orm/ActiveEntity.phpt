@@ -36,9 +36,11 @@ use vBuilder, Nette, dibi,
 	 vBuilder\Orm\ActiveEntity,
 	 vBuilder\Test\Assert; 
 
+$db = $context->connection;
+
 class TestException extends \LogicException { }
 
-dibi::query(
+$db->query(
 	"CREATE TEMPORARY TABLE [TestEntityTable] (".
 	"	[id] int(11) NOT NULL AUTO_INCREMENT,".
    "	[name] varchar(255),".
@@ -58,7 +60,7 @@ class TestEntity extends ActiveEntity { }
 
 // =============================================================================
 
-$e = new TestEntity(array('id' => 123));
+$e = new TestEntity(array('id' => 123), $context);
 $e->onPreLoad[] = function() { throw new TestException('Data loaded'); };
 
 // Test, lazy loadingu (existujici data nesmeji vyvolat nacteni)
@@ -77,7 +79,7 @@ try {
 } 
 
 // Test existence entity
-$e2 = new TestEntity(array('id' => 1));
+$e2 = new TestEntity(array('id' => 1), $context);
 Assert::false($e2->exists());
 
 try {
@@ -88,7 +90,7 @@ try {
 }
 
 // Test insertu
-$e3 = new TestEntity();
+$e3 = new TestEntity($context);
 $e3->name = 'A';
 Assert::false($e3->exists());
 $e3->save();
@@ -101,15 +103,15 @@ $e3->save();
 Assert::same($e3->id, 1);
 Assert::same($e3->name, 'B');
 
-$e4 = new TestEntity();
+$e4 = new TestEntity($context);
 $e4->name = 'Bla bla';
 $e4->save();
 Assert::same($e4->id, 2);
 
 // Test mazani
 $e3->delete();
-$result = dibi::query("SELECT * FROM [TestEntityTable] WHERE [id] = %i", 1)->fetch();
+$result = $db->query("SELECT * FROM [TestEntityTable] WHERE [id] = %i", 1)->fetch();
 Assert::false($result);
-$result = dibi::query("SELECT * FROM [TestEntityTable] WHERE [id] = %i", 2)->fetch();
+$result = $db->query("SELECT * FROM [TestEntityTable] WHERE [id] = %i", 2)->fetch();
 if($result === false) 
 	Assert::fail("Delete test failed");

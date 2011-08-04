@@ -32,13 +32,13 @@ namespace vBuilder\Orm\EntityTest;
 
 require __DIR__ . '/Relation.SimpleOneToMany.inc.php';
 
-use vBuilder, Nette, dibi,
+use vBuilder, Nette,
 	 vBuilder\Orm\Repository,
 	 vBuilder\Test\Assert; 
 
 // =============================================================================
 // 
 // Kontrola mazani spolu s entitou --------------------
-$e1 = new TestEntity(1);
+$e1 = new TestEntity(1, $context);
 $e1->delete();
-Assert::same(0, count(dibi::select('*')->from('TestEntityTableList')->fetchAll()));
+Assert::same(0, count($db->select('*')->from('TestEntityTableList')->fetchAll()));

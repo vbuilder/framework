@@ -39,13 +39,13 @@ require __DIR__ . '/Relation.OneToOne.inc.php';
 // =============================================================================
 
 // Test pri listingu
-$e1 = Repository::findAll(__NAMESPACE__ . '\\TestEntity')->fetch();
+$e1 = $context->repository->findAll(__NAMESPACE__ . '\\TestEntity')->fetch();
 Assert::equal('Jan', $e1->name);
 Assert::equal(__NAMESPACE__ . '\\OneToOneEntity', get_class($e1->address));
 Assert::equal('Dolní', $e1->address->street);
 
 // Test pri primem nacteni
-$e2 = Repository::get(__NAMESPACE__ . '\\TestEntity', 2);
+$e2 = $context->repository->get(__NAMESPACE__ . '\\TestEntity', 2);
 Assert::equal('Iveta', $e2->name);
 Assert::equal(__NAMESPACE__ . '\\OneToOneEntity', get_class($e2->address));
 Assert::equal('Horní', $e2->address->street);

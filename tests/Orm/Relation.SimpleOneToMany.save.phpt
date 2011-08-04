@@ -32,17 +32,17 @@ namespace vBuilder\Orm\EntityTest;
 
 require __DIR__ . '/Relation.SimpleOneToMany.inc.php';
 
-use vBuilder, Nette, dibi,
+use vBuilder, Nette,
 	 vBuilder\Orm\Repository,
 	 vBuilder\Test\Assert; 
 
-dibi::query('TRUNCATE TABLE [TestEntityTable]');
-dibi::query('TRUNCATE TABLE [TestEntityTableList]');
-dibi::query('TRUNCATE TABLE [TestEntityTableList2]');
+$db->query('TRUNCATE TABLE [TestEntityTable]');
+$db->query('TRUNCATE TABLE [TestEntityTableList]');
+$db->query('TRUNCATE TABLE [TestEntityTableList2]');
 
 // =============================================================================
 
-$e1 = new TestEntity();
+$e1 = new TestEntity($context);
 $e1->name = 'A';
 $e1->roles = array("foo", "bar");
 $e1->complex = array(array('a' => 'foo2', 'b' => 'bar2'), array('a' => 'foo3', 'b' => 'bar3'));
@@ -50,14 +50,14 @@ $e1->save();
 
 Assert::arrayEqual(array(
 	array('id' => 1, 'name' => 'A') 
-), dibi::select('*')->from('TestEntityTable')->fetchAll());
+), $db->select('*')->from('TestEntityTable')->fetchAll());
 
 Assert::arrayEqual(array(
 	array('id' => 1, 'name' => 'foo'),
 	array('id' => 1, 'name' => 'bar') 
-), dibi::select('*')->from('TestEntityTableList')->fetchAll());
+), $db->select('*')->from('TestEntityTableList')->fetchAll());
 
 Assert::arrayEqual(array(
 	array('id' => 1, 'a' => 'foo2', 'b' => 'bar2'),
 	array('id' => 1, 'a' => 'foo3', 'b' => 'bar3') 
-), dibi::select('*')->from('TestEntityTableList2')->fetchAll());
+), $db->select('*')->from('TestEntityTableList2')->fetchAll());

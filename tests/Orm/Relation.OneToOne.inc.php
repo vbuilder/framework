@@ -26,10 +26,11 @@ namespace vBuilder\Orm\EntityTest;
 require __DIR__ . '/../bootstrap.php';
 
 
-use dibi,
-	 vBuilder\Orm\ActiveEntity;
+use vBuilder\Orm\ActiveEntity;
 
-dibi::query(
+$db = $context->connection;
+
+$db->query(
 	"CREATE TEMPORARY TABLE [TestEntity_profile] (".
 	"	[id] int(11) NOT NULL AUTO_INCREMENT,".
    "	[name] varchar(255),".
@@ -40,7 +41,7 @@ dibi::query(
 	");"
 );
 
-dibi::query(
+$db->query(
 	"CREATE TEMPORARY TABLE [TestEntity_address] (".
 	"	[id] int(11) NOT NULL AUTO_INCREMENT,".
    "	[street] varchar(255),".
@@ -50,10 +51,10 @@ dibi::query(
 	");"
 );
 
-dibi::insert('TestEntity_profile', array('name' => 'Jan', 'surname' => 'Noha', 'address' => 1))->execute();
-dibi::insert('TestEntity_address', array('street' => 'Dolní', 'city' => 'Domažlice'))->execute();
-dibi::insert('TestEntity_profile', array('name' => 'Iveta', 'surname' => 'Blažková', 'address' => 2))->execute();
-dibi::insert('TestEntity_address', array('street' => 'Horní', 'city' => 'Domažlice'))->execute();
+$db->insert('TestEntity_profile', array('name' => 'Jan', 'surname' => 'Noha', 'address' => 1))->execute();
+$db->insert('TestEntity_address', array('street' => 'Dolní', 'city' => 'Domažlice'))->execute();
+$db->insert('TestEntity_profile', array('name' => 'Iveta', 'surname' => 'Blažková', 'address' => 2))->execute();
+$db->insert('TestEntity_address', array('street' => 'Horní', 'city' => 'Domažlice'))->execute();
 
 /**
  * @Table(name="TestEntity_address")

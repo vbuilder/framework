@@ -30,22 +30,22 @@
 
 namespace vBuilder\Orm\EntityTest;
 
-use vBuilder, Nette, dibi,
+use vBuilder, Nette,
 	 vBuilder\Orm\Repository,
 	 vBuilder\Test\Assert;
 
 require __DIR__ . '/Relation.OneToOne.inc.php';
 
-dibi::query('TRUNCATE TABLE [TestEntity_profile]');
-dibi::query('TRUNCATE TABLE [TestEntity_address]');
+$db->query('TRUNCATE TABLE [TestEntity_profile]');
+$db->query('TRUNCATE TABLE [TestEntity_address]');
 
 // =============================================================================
 
-$e1 = new TestEntity;
+$e1 = new TestEntity($context);
 $e1->name = 'Jan';
 $e1->surname = 'Noha';
 
-$o1 = new OneToOneEntity;
+$o1 = new OneToOneEntity($context);
 $o1->street = 'Horni 12';
 $o1->city = 'Domazlice';
 
@@ -57,17 +57,17 @@ Assert::arrayEqual(array(array(
 	 'name' => 'Jan',
 	 'surname' => 'Noha',
 	 'address' => 1
-)), dibi::query("SELECT * FROM [TestEntity_profile]")->fetchAll());
+)), $db->query("SELECT * FROM [TestEntity_profile]")->fetchAll());
 
 Assert::arrayEqual(array(array(
 	 'id' => 1,
 	 'street' => 'Horni 12',
 	 'city' => 'Domazlice'
-)), dibi::query("SELECT * FROM [TestEntity_address]")->fetchAll());
+)), $db->query("SELECT * FROM [TestEntity_address]")->fetchAll());
 
 // Změna na jinou OneToOne entitu se zachováním původní ************************
 
-$o2 = new OneToOneEntity;
+$o2 = new OneToOneEntity($context);
 $o2->street = 'Spodní 13';
 $o2->city = 'Domazlice';
 
@@ -79,7 +79,7 @@ Assert::arrayEqual(array(array(
 	 'name' => 'Jan',
 	 'surname' => 'Noha',
 	 'address' => 2
-)), dibi::query("SELECT * FROM [TestEntity_profile]")->fetchAll());
+)), $db->query("SELECT * FROM [TestEntity_profile]")->fetchAll());
 
 Assert::arrayEqual(array(array(
 	 'id' => 1,
@@ -89,7 +89,7 @@ Assert::arrayEqual(array(array(
 	 'id' => 2,
 	 'street' => 'Spodní 13',
 	 'city' => 'Domazlice'
-)), dibi::query("SELECT * FROM [TestEntity_address]")->fetchAll());
+)), $db->query("SELECT * FROM [TestEntity_address]")->fetchAll());
 
 // Ulozeni OneToOne entity skrze hlavni entitu *********************************
 
@@ -102,7 +102,7 @@ Assert::arrayEqual(array(array(
 	 'name' => 'Jan',
 	 'surname' => 'Noha',
 	 'address' => 2
-)), dibi::query("SELECT * FROM [TestEntity_profile]")->fetchAll());
+)), $db->query("SELECT * FROM [TestEntity_profile]")->fetchAll());
 
 Assert::arrayEqual(array(array(
 	 'id' => 1,
@@ -112,7 +112,7 @@ Assert::arrayEqual(array(array(
 	 'id' => 2,
 	 'street' => 'Spodní 14',
 	 'city' => 'Domazlice'
-)), dibi::query("SELECT * FROM [TestEntity_address]")->fetchAll());
+)), $db->query("SELECT * FROM [TestEntity_address]")->fetchAll());
 
 // Akceptace a ulozeni NULL hodnoty ********************************************
 
@@ -124,15 +124,15 @@ Assert::arrayEqual(array(array(
 	 'name' => 'Jan',
 	 'surname' => 'Noha',
 	 'address' => null
-)), dibi::query("SELECT * FROM [TestEntity_profile]")->fetchAll());
+)), $db->query("SELECT * FROM [TestEntity_profile]")->fetchAll());
 
 // Kaskadovani ulozeni enity - storno cele transakce ***************************
 
-$e2 = new TestEntity;
+$e2 = new TestEntity($context);
 $e2->name = 'Béďa';
 $e2->surname = 'Zelený';
 
-$o3 = new OneToOneEntity;
+$o3 = new OneToOneEntity($context);
 $o3->street = 'Za dubem';
 $o3->city = 'Malý nora u Domažlic';
 $o3->onPreSave[] = function ($entity) {
@@ -150,5 +150,5 @@ try {
 }
 
 // Žádná data nesmí být uložena
-Assert::false(dibi::query("SELECT * FROM [TestEntity_profile] WHERE [name] = %s", $e2->name)->fetch());
-Assert::false(dibi::query("SELECT * FROM [TestEntity_address] WHERE [city] = %s", $o3->city)->fetch());
+Assert::false($db->query("SELECT * FROM [TestEntity_profile] WHERE [name] = %s", $e2->name)->fetch());
+Assert::false($db->query("SELECT * FROM [TestEntity_address] WHERE [city] = %s", $o3->city)->fetch());

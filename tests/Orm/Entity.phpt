@@ -59,7 +59,7 @@ class TestEntity extends Entity {
 	
 }
 
-$e = new TestEntity(array('id' => '123', 'someDt' => '2011-02-17 20:02:13'));
+$e = new TestEntity(array('id' => '123', 'someDt' => '2011-02-17 20:02:13'), $context);
 
 // Test necachovane polozky
 if($e->getName() == $e->getName())

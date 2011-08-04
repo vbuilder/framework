@@ -36,9 +36,11 @@ use vBuilder, Nette, dibi,
 	 vBuilder\Orm\ActiveEntity,
 	 vBuilder\Test\Assert; 
 
+$db = $context->connection;
+
 class TestException extends \LogicException { }
 
-dibi::query(
+$db->query(
 	"CREATE TEMPORARY TABLE [TestEntityTable] (".
 	"	[id] int(11) NOT NULL,".
 	"	[revision] int(11) NOT NULL,".
@@ -62,14 +64,14 @@ class TestEntity extends ActiveEntity { }
 // =============================================================================
 
 // Test ulozeni nove entity a auto-id
-$te = new TestEntity;
+$te = new TestEntity($context);
 $te->name = 'Lorem ipsum';
 $te->save();
-Assert::arrayEqual(array(array("id" => 1, "revision" => 1, "name" => "Lorem ipsum")), dibi::query('SELECT * FROM [TestEntityTable]')->fetchAll());
+Assert::arrayEqual(array(array("id" => 1, "revision" => 1, "name" => "Lorem ipsum")), $db->query('SELECT * FROM [TestEntityTable]')->fetchAll());
 
 // Test, ze se nevytvari nova verze, kdyz se nezmenila data
 $te->save();
-Assert::arrayEqual(array(array("id" => 1, "revision" => 1, "name" => "Lorem ipsum")), dibi::query('SELECT * FROM [TestEntityTable]')->fetchAll());
+Assert::arrayEqual(array(array("id" => 1, "revision" => 1, "name" => "Lorem ipsum")), $db->query('SELECT * FROM [TestEntityTable]')->fetchAll());
 
 // Test inkrementace revize a ponechani stare (zmena znamenka)
 $te->name = 'Lorem ipsum 2';
@@ -77,17 +79,17 @@ $te->save();
 Assert::arrayEqual(array(
 				array("id" => 1, "revision" => -1, "name" => "Lorem ipsum"),
 				array("id" => 1, "revision" => 2, "name" => "Lorem ipsum 2")
-		  ), dibi::query('SELECT * FROM [TestEntityTable] ORDER BY [revision]')->fetchAll());
+		  ), $db->query('SELECT * FROM [TestEntityTable] ORDER BY [revision]')->fetchAll());
 
 // Test, ze dalsi zaznam neovlivnuje cisla revizi
-$te2 = new TestEntity;
+$te2 = new TestEntity($context);
 $te2->name = 'Some other record';
 $te2->save();
 Assert::arrayEqual(array(
 				array("id" => 1, "revision" => -1, "name" => "Lorem ipsum"),
 				array("id" => 1, "revision" => 2, "name" => "Lorem ipsum 2"),
 				array("id" => 2, "revision" => 1, "name" => "Some other record")
-		  ), dibi::query('SELECT * FROM [TestEntityTable] ORDER BY [revision]')->fetchAll());
+		  ), $db->query('SELECT * FROM [TestEntityTable] ORDER BY [revision]')->fetchAll());
 
 // Test, ze se zmena revize neprovede v pripade, ze je vyvolana chyba pri ukladani
 // (napr. vztaznou entitou, nebo nejakym eventem)
@@ -107,4 +109,4 @@ try {
 // Nesmi se zmenit ani data, ale hlavne ani revize
 Assert::arrayEqual(array(
 	 array("id" => 2, "revision" => 1, "name" => "Some other record")
-), dibi::query('SELECT * FROM [TestEntityTable] WHERE [id] = %i', $te2->id, 'ORDER BY [revision]')->fetchAll());
+), $db->query('SELECT * FROM [TestEntityTable] WHERE [id] = %i', $te2->id, 'ORDER BY [revision]')->fetchAll());

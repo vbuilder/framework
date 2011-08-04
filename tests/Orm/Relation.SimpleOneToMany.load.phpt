@@ -38,13 +38,13 @@ use vBuilder, Nette, dibi,
 
 // =============================================================================
 
-$e1 = Repository::get(__NAMESPACE__ . '\\TestEntity', 1);
+$e1 = $context->repository->get(__NAMESPACE__ . '\\TestEntity', 1);
 Assert::equal('A', $e1->name);
 Assert::true($e1->roles instanceOf vBuilder\Orm\Collection);
 Assert::arrayEqual(array("foo", "bar"), $e1->getRoles());
 
 // Prazdny join ---------------------------------------
-$e2 = new TestEntity(2);
+$e2 = new TestEntity(2, $context);
 Assert::arrayEqual(array(), $e2->getRoles()); 
 
 // Komplexnni join ------------------------------------

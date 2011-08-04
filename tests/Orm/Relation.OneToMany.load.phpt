@@ -38,7 +38,7 @@ use vBuilder, Nette, dibi,
 
 // =============================================================================
 
-$e1 = new TestEntity(1);
+$e1 = new TestEntity(1, $context);
 
 $expectedRoles = array("foo", "bar");
 foreach($e1->getRoles() as $curr) {	
@@ -53,5 +53,5 @@ foreach($e1->getRoles() as $curr) {
 Assert::same(0, count($expectedRoles));
 
 // Prazdny join ---------------------------------------
-$e2 = new TestEntity(2);
+$e2 = new TestEntity(2, $context);
 Assert::arrayEqual(array(), $e2->getRoles()); 

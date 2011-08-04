@@ -39,6 +39,6 @@ use vBuilder, Nette, dibi,
 // =============================================================================
 
 // Kontrola mazani spolu s entitou --------------------
-$e1 = new TestEntity(1);
+$e1 = new TestEntity(1, $context);
 $e1->delete();
-Assert::same(0, count(dibi::select('*')->from('TestEntityTableList')->fetchAll()));
+Assert::same(0, count($db->select('*')->from('TestEntityTableList')->fetchAll()));

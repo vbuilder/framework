@@ -26,10 +26,11 @@ namespace vBuilder\Orm\EntityTest;
 require __DIR__ . '/../bootstrap.php';
 
 
-use dibi,
-	 vBuilder\Orm\ActiveEntity;
+use vBuilder\Orm\ActiveEntity;
 
-dibi::query(
+$db = $context->connection;
+
+$db->query(
 	"CREATE TEMPORARY TABLE [TestEntityTable] (".
 	"	[id] int(11) NOT NULL AUTO_INCREMENT,".
    "	[name] varchar(255),".
@@ -38,7 +39,7 @@ dibi::query(
 	");"
 );
 
-dibi::query(
+$db->query(
 	"CREATE TEMPORARY TABLE [TestEntityTableList] (".
 	"	[id] int(11) NOT NULL,".
    "	[name] varchar(255),".
@@ -47,10 +48,10 @@ dibi::query(
 	");"
 );
 
-dibi::insert('TestEntityTable', array('id' => 1, 'name' => 'A'))->execute();
-dibi::insert('TestEntityTable', array('id' => 2, 'name' => 'B'))->execute();
-dibi::insert('TestEntityTableList', array('id' => 1, 'name' => 'foo'))->execute();
-dibi::insert('TestEntityTableList', array('id' => 1, 'name' => 'bar'))->execute();
+$db->insert('TestEntityTable', array('id' => 1, 'name' => 'A'))->execute();
+$db->insert('TestEntityTable', array('id' => 2, 'name' => 'B'))->execute();
+$db->insert('TestEntityTableList', array('id' => 1, 'name' => 'foo'))->execute();
+$db->insert('TestEntityTableList', array('id' => 1, 'name' => 'bar'))->execute();
 
 /**
  * @Table(name="TestEntityTableList")
