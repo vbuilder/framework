@@ -443,6 +443,9 @@ class Assert {
 	 * @return void
 	 */
 	private static function log($expected, $actual) {
+		// Webove testy nemaji prava k zapisu
+		if(defined('HTTP_TEST') && HTTP_TEST) return ;
+		
 		$trace = debug_backtrace();
 		$item = end($trace);
 		// in case of shutdown handler, we want to skip inner-code blocks
