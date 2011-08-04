@@ -34,7 +34,7 @@ require_once __DIR__ . '/Loaders/RobotLoader.php';
  * @since Aug 2, 2011
  */
 class Configurator extends Nette\Configurator {
-	
+		
 	/**
 	 * @return DibiConnection
 	 */
@@ -53,9 +53,18 @@ class Configurator extends Nette\Configurator {
 	 * @return vBuilder\Config\IConfig
 	 */
 	public static function createServiceConfig(Nette\DI\Container $container) {
-		// TODO: Je tam treba vyresit ta zmena uzivatele, zamenena celeho service, jako
-		// to bylo do ted je hovadina
-		return new Config\DbUserConfig($container);
+		$userConfig = new Config\DbUserConfig($container);
+		$user = $container->user;
+		
+		$user->onLoggedIn[] = function () use ($userConfig, $user) {
+			$userConfig->setUserId($user->getId());
+		};
+		
+		$user->onLoggedOut[] = function () use ($userConfig) {
+			$userConfig->setUserId(null);
+		};
+		
+		return $userConfig;
 	}
 	
 	/**

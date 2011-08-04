@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Test of user configuration service refresh
+ * Test of database configuration scope
  *
  * @author Adam Staněk (V3lbloud)
- * @since Jun 20, 2011
+ * @since Aug 4, 2011
  *
  * @package    vBuilder\Config
  * @subpackage UnitTests
@@ -28,28 +28,35 @@
  * You should have received a copy of the GNU global Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
+namespace vBuilder\Config\Tests;
 
-use Nette\Environment,
-	 vBuilder\Test\Assert;
+use vBuilder\Test\Assert,
+	 vBuilder\Config\DbConfigScope,
+	 Nette;
 
 require __DIR__.'/../bootstrap.php';
 
-Environment::getContext()->addService('vBuilder\Config\IConfig',
-		  array('vBuilder\Config\DbUserConfig', 'createUserConfig'));
+class TestDbConfigScope extends DbConfigScope {
+	
+	function __construct(Nette\DI\IContainer $context) {
+		$globalScope = new DbConfigScope($context, 'global');		
+		parent::__construct($context, null, $globalScope);
+		
+		// Fallback na global
+		Assert::same(array('a'), $this->getKeys());
+		
+		// Zmena na usera s UID 1
+		$this->setScopeName('user(1)');
+		Assert::arrayEqual(array('a', 'b', 'd'), $this->getKeys());
+		Assert::equal(11, $this->b);
+		
+		// Zmena na usera s UID 2
+		$this->setScopeName('user(2)');
+		Assert::arrayEqual(array('a', 'b', 'c'), $this->getKeys());
+		Assert::equal(22, $this->b);
+	}
+	
+}
 
-Environment::getUser()->setAuthenticator(new Nette\Security\SimpleAuthenticator(array('user' => 'password')));
-
-// Singleton
-$config = Environment::getService('vBuilder\Config\IConfig');
-$config2 = Environment::getService('vBuilder\Config\IConfig');
-Assert::true($config === $config2);
-
-// Refresh po loginu noveho uzivatele
-Environment::getUser()->login('user', 'password');
-$config2 = Environment::getService('vBuilder\Config\IConfig');
-Assert::false($config === $config2);
-
-// Refresh po logoutu uzivatele
-Environment::getUser()->logout(true);
-$config3 = Environment::getService('vBuilder\Config\IConfig');
-Assert::false($config3 === $config2);
+$context->connection->loadFile(__DIR__ . '/testdata.sql');
+new TestDbConfigScope($context);

@@ -33,13 +33,42 @@ use Nette;
  */
 class ConfigDAO implements \ArrayAccess {
 
+	/**
+	 * @var ConfigScope reference to scope object
+	 */
 	private $scope;
+	
+	/**
+	 * @var ConfigScope|null reference to fallback scope
+	 * (got from $scope->getFallbackScope())
+	 */
 	private $fallbackScope;
+	
+	/**
+	 * @var ConfigDAO|null reference to parent dao 
+	 */
 	private $parent;
+	
+	/**
+	 * @var string|null absolute key for this DAO (null if root DAO - scope)
+	 */
 	private $key;
+	
+	/** 
+	 * @var array of data
+	 * (actually pointer to position in data array in the scope)
+	 */
 	private $data;
 	
+	/**
+	 * @var array of cached DAO objects (associative by query key)
+	 */
 	private $dao = array();
+	
+	/**
+	 * @var bool status of last ::get call, if true, everithing went ok, if false
+	 * key was not found. This variable is used for internal purpose of ::has method.
+	 */
 	private $lastFound;
 	
 	/**
@@ -58,6 +87,20 @@ class ConfigDAO implements \ArrayAccess {
 		$this->key = $key;
 	}
 
+	/**
+	 * Deletes all cached DAO objects and purge data.
+	 * This function is neccessary to call after each reload.
+	 * 
+	 * It is not meant to be called recursively, call it on scope only!
+	 * 
+	 * @internal
+	 * 
+	 * @param array reference to new data array
+	 */
+	protected function reset(&$newDataPtr) {
+		$this->dao = array();
+		$this->data = &$dataPtr;
+	}
 	
 	/**
 	 * Returns value for key. Unlike direct object access / array access
@@ -277,6 +320,8 @@ class ConfigDAO implements \ArrayAccess {
 	
 	// ==========================================================================
 	
+	// <editor-fold defaultstate="collapsed" desc="Object access">
+	
 	public function &__get($key) {
 		$this->checkKey($key);
 
@@ -290,6 +335,27 @@ class ConfigDAO implements \ArrayAccess {
 		return $val;
 	}
 
+	public function __set($key, $value) {
+		$this->checkKey($key);
+		
+		
+		$this->set($key, $this->parseBools($value));
+	}
+	
+	/**
+	 * Returns true, if $key exists and is not NULL
+	 * 
+	 * @param string key
+	 * @return bool 
+	 */
+	public function __isset($key) {
+		return $this->get($key, null) !== null;
+	}
+	
+	// </editor-fold>
+	
+	// <editor-fold defaultstate="collapsed" desc="Array access">
+	
 	/**
 	 * Implementation of ArrayAccess::offsetGet
 	 * 
@@ -300,16 +366,6 @@ class ConfigDAO implements \ArrayAccess {
 	 */
 	public function offsetGet($key) {
 		return $this->__get($key);
-	}
-
-	/**
-	 * Returns true, if $key exists and is not NULL
-	 * 
-	 * @param string key
-	 * @return bool 
-	 */
-	public function __isset($key) {
-		return $this->get($key, null) !== null;
 	}
 
 	/**
@@ -324,13 +380,6 @@ class ConfigDAO implements \ArrayAccess {
 		return array_key_exists($key, (array) $this->data);
 	}
 
-	public function __set($key, $value) {
-		$this->checkKey($key);
-		
-		
-		$this->set($key, $this->parseBools($value));
-	}
-
 	/**
 	 * Implementation of \ArrayAccess::offsetSet
 	 * 
@@ -342,18 +391,6 @@ class ConfigDAO implements \ArrayAccess {
 	 */
 	public function offsetSet($key, $value) {
 		$this->__set($key, $value);
-	}
-
-	
-	protected function parseBools($value) {
-		$consts = array(
-			'true' => TRUE, 'True' => TRUE, 'TRUE' => TRUE, 'yes' => TRUE, 'Yes' => TRUE, 'YES' => TRUE, 'on' => TRUE, 'On' => TRUE, 'ON' => TRUE,
-			'false' => FALSE, 'False' => FALSE, 'FALSE' => FALSE, 'no' => FALSE, 'No' => FALSE, 'NO' => FALSE, 'off' => FALSE, 'Off' => FALSE, 'OFF' => FALSE, 
-		);
-		if (isset($consts[$value])) {
-			$value = $consts[$value];
-		}
-		return $value;
 	}
 	
 	/**
@@ -370,7 +407,28 @@ class ConfigDAO implements \ArrayAccess {
 		$this->remove($key);
 	}
 	
-		/**
+	// </editor-fold>
+	
+	// <editor-fold defaultstate="collapsed" desc="Helpers">
+	
+	/**
+	 * Parse boolean value from string
+	 * 
+	 * @param mixed value to parse
+	 * @return bool
+	 */
+	protected function parseBools($value) {
+		$consts = array(
+			'true' => TRUE, 'True' => TRUE, 'TRUE' => TRUE, 'yes' => TRUE, 'Yes' => TRUE, 'YES' => TRUE, 'on' => TRUE, 'On' => TRUE, 'ON' => TRUE,
+			'false' => FALSE, 'False' => FALSE, 'FALSE' => FALSE, 'no' => FALSE, 'No' => FALSE, 'NO' => FALSE, 'off' => FALSE, 'Off' => FALSE, 'OFF' => FALSE, 
+		);
+		if (isset($consts[$value])) {
+			$value = $consts[$value];
+		}
+		return $value;
+	}
+	
+	/**
 	 * Function helper for key sane checking
 	 * 
 	 * @param string key 
@@ -383,5 +441,7 @@ class ConfigDAO implements \ArrayAccess {
 		if(strpos($key, '.') !== false)
 			throw new \InvalidArgumentException("Key must not contain any dots");
 	}
+	
+	// </editor-fold>
 	
 }

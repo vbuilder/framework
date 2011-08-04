@@ -35,7 +35,7 @@ class DbConfigScope extends ConfigScope {
 	
 	const TABLE_NAME = 'config';
 	
-	/** @var string scope name */
+	/** @var string|null scope name, if null no load/save is performed */
 	private $scopeName;
 	
 	/** @var Nette\DI\IContainer DI */
@@ -49,21 +49,55 @@ class DbConfigScope extends ConfigScope {
 	
 	/**
 	 * Constructor
+	 * 
+	 * @param Nette\DI\IContainer DI
+	 * @param string|null scope name, if null this scope won't perform any load
+	 * @param ConfigScope|null reference to fallback config scope or null if there isn't one
 	 */
 	function __construct(Nette\DI\IContainer $context, $name, $fallback = null) {
 		$this->context = $context;
 		$this->db = $this->context->connection;
 		
-		$this->scopeName = $name;
-		
-		if(!isset(self::$cache[$this->scopeName]))
-			self::$cache[$this->scopeName] = array();
-		else 
-			$this->isLoaded = true;
-		
-		$this->data = &self::$cache[$this->scopeName];
+		// Scope name
+		if($name !== null) $this->setScopeName($name);		
 		
 		parent::__construct($fallback);
+	}
+	
+	/**
+	 * Returns scope name of current instance
+	 * 
+	 * @return string|null
+	 */
+	protected function getScopeName() {
+		return $this->scopeName;
+	}
+	
+	/**
+	 * Sets scope name and purge all data from previous scope
+	 * @param type $newScopeName
+	 * @return type 
+	 */
+	protected function setScopeName($newScopeName) {
+		if($this->scopeName == $newScopeName) return ;
+		$this->scopeName = $newScopeName;
+		$this->hasChanged = false;
+		
+		if($this->scopeName !== null) {
+			if(!isset(self::$cache[$this->scopeName])) {
+				self::$cache[$this->scopeName] = array();
+				$this->isLoaded = false;
+		
+			} else 
+				$this->isLoaded = true;
+
+			$this->data = &self::$cache[$this->scopeName];
+		} else {
+			$this->data = array();
+			$this->isLoaded = true;
+		}
+		
+		$this->reset($this->data); // Reset DAO
 	}
 	
 	/**
@@ -74,12 +108,14 @@ class DbConfigScope extends ConfigScope {
 		// load => has => get => isLoaded? => load
 		$this->isLoaded = true;
 		
-		$alreadyWrittenInto = count($this->data) > 0;
-		
-		$results = $this->db->query('SELECT * FROM ['.self::TABLE_NAME.'] WHERE [scope] = %s', $this->scopeName)->fetchAll();
-		foreach($results as $curr) {
-			if(!$alreadyWrittenInto || !$this->has($curr['key'])) {
-				$this->set($curr['key'], $curr['value']);
+		if($this->scopeName !== null) {
+			$alreadyWrittenInto = count($this->data) > 0;
+
+			$results = $this->db->query('SELECT * FROM ['.self::TABLE_NAME.'] WHERE [scope] = %s', $this->scopeName)->fetchAll();
+			foreach($results as $curr) {
+				if(!$alreadyWrittenInto || !$this->has($curr['key'])) {
+					$this->set($curr['key'], $curr['value']);
+				}
 			}
 		}
 	}
@@ -89,6 +125,10 @@ class DbConfigScope extends ConfigScope {
 	 */
 	public function save() {
 		if(!$this->hasChanged) return ;
+		if($this->scopeName === null) 
+			throw new \LogicException('You cannot save null scope');
+		
+		
 		$dict = $this->saveHelper($this->data);
 		
 		$data = array();

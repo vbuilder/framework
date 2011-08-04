@@ -34,29 +34,46 @@ use Nette;
  */
 class DbUserConfig extends DbConfigScope implements IConfig {
 	
+	/** @var int|null user id */
 	private $userId;
-	
 	
 	/**
 	 * Constructor
+	 * 
+	 * @param Nette\DI\IContainer DI
+	 * @param vBuilder\Security\User|int|null user id, if null only global config
+	 * will be loaded
 	 */
 	function __construct(Nette\DI\IContainer $context, $user = null) {		
-		$defaults = file_exists(static::getDefaultsFilepath())
+		$defaults = static::getDefaultsFilepath() !== null && file_exists(static::getDefaultsFilepath())
 				  ? new FileConfigScope(array(static::getDefaultsFilepath()))
 				  : null;
 		
-		// TODO: Zbavit se zavislosti na Environment -> $context
-		if($user === null) {
-			if(Nette\Environment::getUser()->isLoggedIn()) $this->userId = Nette\Environment::getUser()->getId();
-		} elseif(is_object($user))
-			$this->userId = $user->getId();
+		$global = new DbConfigScope($context, 'global', $defaults);
 		
-		if($this->userId !== null) {
-			$global = new DbConfigScope($context, 'global', $defaults);
-			parent::__construct($context, 'user('.$this->userId.')', $global);
-		} else {
-			parent::__construct($context, 'global', $defaults);
-		}
+		if(is_object($user)) $this->userId = $user->getId();
+		else $this->userId = $user;
+		
+		parent::__construct($context, $this->userId !== null ? 'user('.$this->userId.')' : null, $global);
+	}
+	
+	/**
+	 * Returns user id of user whoose config it is loaded
+	 * 
+	 * @return int|null user id or null if it is global config only
+	 */
+	function getUserId() {
+		return $this->userId;
+	}
+	
+	/**
+	 * Sets user id and loads it's config
+	 * 
+	 * @param int user id
+	 */
+	function setUserId($userId) {
+		$this->userId = $userId;
+		$this->setScopeName($this->userId !== null ? 'user('.$this->userId.')' : null);
 	}
 	
 	/**
@@ -88,32 +105,5 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 	public static function getDefaultsFilepath() {
 		return APP_DIR . '/defaults.neon';
 	}
-	
-	/**
-	 * For service purposes we also need to register handlers
-	 * when current user is changed (log in / log out have to reload config).
-	 * 
-	 * @internal
-	 */
-	/*public static function createUserConfig() {
-		$config = new static();
-
-		Nette\Environment::getUser()->onLoggedIn[] = callback(get_called_class(), 'onUserChanged');
-		Nette\Environment::getUser()->onLoggedOut[] = callback(get_called_class(), 'onUserChanged');
-		
-		return $config;
-	} */
-	
-	/**
-	 * When new user logs in or out, we have to refresh config
-	 * 
-	 * @internal
-	 * 
-	 * @param Nette\Http\User $user 
-	 */
-	/*public static function onUserChanged(Nette\Http\User $user) {
-		Nette\Environment::getContext()->removeService('vBuilder\Config\IConfig');
-		Nette\Environment::getContext()->addService('vBuilder\Config\IConfig', get_called_class());
-	} */
 	
 }
