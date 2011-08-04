@@ -44,6 +44,14 @@ require_once __DIR__ . '/TestLib/GreenScreen.php';
 require_once __DIR__ . '/TestLib/Assert.php';
 require_once __DIR__ . '/TestLib/TestException.php';
 
+// Configurator
+if(!isset($configurator)) {
+	require_once __DIR__ . '/TestConfigurator.php';
+	$configurator = new vBuilder\TestConfigurator;
+	Nette\Environment::setConfigurator($configurator);
+	$context = $configurator->container;
+}
+
 // configure environment
 error_reporting(E_ALL | E_STRICT);
 ini_set('display_errors', TRUE);
@@ -82,9 +90,8 @@ if (extension_loaded('xdebug')) {
 	xdebug_disable();
 	TestHelpers::startCodeCoverage(__DIR__ . '/coverage.dat');
 }
-	
+
+
+
 // Load configuration from config.neon file
 Nette\Environment::loadConfig();
-
-// Dibi
-dibi::connect(Nette\Environment::getConfig('database'));
