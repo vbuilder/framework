@@ -133,4 +133,25 @@ interface IEntityMetadata {
 	 */
 	public function isFieldGenerated($name);
 	
+	/**
+	 * Does field have $property option set?
+	 * 
+	 * @param string field name
+	 * @param string property name
+	 * 
+	 * @return bool
+	 */
+	public function hasFieldProperty($field, $property);
+	
+	/**
+	 * Returns field's property value
+	 * 
+	 * @param string field name
+	 * @param string property name
+	 * @param mixed default value
+	 * 
+	 * @return mixed
+	 */
+	public function getFieldProperty($field, $property, $default = null);
+	
 }

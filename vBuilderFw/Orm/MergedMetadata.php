@@ -196,4 +196,29 @@ class MergedMetadata implements IEntityMetadata {
 		return null;
 	}
 	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function hasFieldProperty($field, $property) {
+		if(!$this->hasField($field))
+			throw new \InvalidArgumentException("Field '$name' is not defined");
+		
+		for($i = count($this->metadata) - 1; $i >= 0; $i--)
+			if($this->metadata[$i]->hasField($field) && $this->metadata[$i]->hasFieldProperty($field, $property))
+				return true;
+			
+		return false;
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getFieldProperty($field, $property, $default = null) {		
+		for($i = count($this->metadata) - 1; $i >= 0; $i--)
+			if($this->metadata[$i]->hasFieldProperty($field, $property))
+				return $this->metadata[$i]->getFieldProperty($field, $property, $default);
+		
+		return $default;
+	}
+	
 }

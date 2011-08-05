@@ -93,7 +93,7 @@ class AnnotationMetadata implements IEntityMetadata {
 								
 				if(isset($this->fields[$name]['id']) || isset($this->fields[$name]['pk'])) $this->idFields[] = $name;
 			}
-		}		
+		}	
 	}
 	
 	/**
@@ -145,27 +145,21 @@ class AnnotationMetadata implements IEntityMetadata {
 	 * {@inheritdoc} 
 	 */
 	public function getFieldColumn($name) {
-		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
-		
-		return isset($this->fields[$name]['realName']) ? $this->fields[$name]['realName'] : $name;
+		return $this->getFieldProperty($name, 'realName', $name);
 	}
 	
 	/**
 	 * {@inheritdoc} 
 	 */
 	public function getFieldType($name) {
-		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
-		
-		return isset($this->fields[$name]['type']) ? $this->fields[$name]['type'] : 'string';
+		return $this->getFieldProperty($name, 'type', 'string');
 	}
 	
 	/**
 	 * {@inheritdoc} 
 	 */
 	public function getFieldEntityName($name) {
-		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
-		
-		return isset($this->fields[$name]['entity']) ? $this->fields[$name]['entity'] : null;
+		return $this->getFieldProperty($name, 'entity');
 	}
 	
 	/**
@@ -206,18 +200,32 @@ class AnnotationMetadata implements IEntityMetadata {
 	 * {@inheritdoc} 
 	 */
 	public function getFieldMappedBy($name) {
-		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
-		
-		return isset($this->fields[$name]['mappedBy']) ? $this->fields[$name]['mappedBy'] : null;
+		return $this->getFieldProperty($name, 'mappedBy');
 	}
 	
 	/**
 	 * {@inheritdoc} 
 	 */
-	public function isFieldGenerated($name) {
-		if(!$this->hasField($name)) throw new \InvalidArgumentException("Field '$name' is not defined");
+	public function isFieldGenerated($name) {		
+		return (bool) $this->getFieldProperty($name, 'generatedValue', false);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function hasFieldProperty($field, $property) {
+		if(!$this->hasField($field)) throw new \InvalidArgumentException("Field '$field' is not defined");
 		
-		return isset($this->fields[$name]['generatedValue']) ? (bool) $this->fields[$name]['generatedValue'] : false;
+		return array_key_exists($property, $this->fields[$field]);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getFieldProperty($field, $property, $default = null) {		
+		return $this->hasFieldProperty($field, $property)
+				  ? $this->fields[$field][$property]
+				  : $default;
 	}
 	
 }

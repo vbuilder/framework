@@ -139,4 +139,22 @@ class ConfigMetadata implements IEntityMetadata {
 		return null;
 	}
 	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function hasFieldProperty($field, $property) {	
+		if(!$this->hasField($field)) throw new \InvalidArgumentException("Field '$field' is not defined");
+		
+		return array_key_exists($property, $this->config["fields"][$field]);
+	}
+	
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getFieldProperty($field, $property, $default = null) {		
+		return $this->hasFieldProperty($field, $property)
+				  ? $this->config["fields"][$field][$property]
+				  : $default;
+	}
+	
 }
