@@ -49,7 +49,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 
 	public function __construct() {
 		$this->onCreate[] = \callback('vBuilder\Security', 'onUserCreated');
-		$this->onDelete[] = \callback('vBuilder\Security', 'onUserDeleted');
+		$this->onPostDelete[] = \callback('vBuilder\Security', 'onUserDeleted');
 
 		call_user_func_array(array('parent', '__construct'), func_get_args());
 	}

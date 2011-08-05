@@ -65,7 +65,7 @@ class Secure implements vBuilder\Orm\IBehavior {
 		$this->entity->onFirstRead[] = \callback($this, 'readSecurityCheck');
 		$this->entity->onCreate[] = \callback($this, 'createSecurityCheck');
 		$this->entity->onUpdate[] = \callback($this, 'updateSecurityCheck');
-		$this->entity->onDelete[] = \callback($this, 'deleteSecurityCheck');
+		$this->entity->onPreDelete[] = \callback($this, 'deleteSecurityCheck');
 	}
 	
 	/**

@@ -59,8 +59,11 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	/** @var array of event listeners for event, when new entity is saved to DB */
 	public $onCreate = array();
 	
-	/** @var array of event listeners for event, when entity removes DB */
-	public $onDelete = array();
+	/** @var array of event listeners for event before entity removes itself from DB */
+	public $onPreDelete = array();
+	
+	/** @var array of event listeners for event, when entity has removed itself from DB */
+	public $onPostDelete = array();
 	
 	/** @var int state of entity */
 	private $state = ActiveEntity::STATE_NEW;
@@ -394,6 +397,8 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		
 		$this->getDb()->begin();
 		
+		$this->onPreDelete($this);
+		
 		$query = $this->getDb()->delete($this->metadata->getTableName());
 		$idFields = $this->metadata->getIdFields();
 		foreach($idFields as $name) 
@@ -421,7 +426,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		$this->state = self::STATE_DELETED;
 		
 		try {
-			$this->onDelete($this);
+			$this->onPostDelete($this);
 			$this->getDb()->commit();
 		} catch(Exception $e) {
 			$this->getDb()->rollback();
