@@ -71,6 +71,15 @@ class TestConfigurator extends Configurator {
 		return $connection;
 	}
 	
-	
+	/**
+	 * @return vBuilder\Config\IConfig
+	 */
+	public static function createServiceConfig(Nette\DI\Container $container) {
+		$configDefaults = Config\DbUserConfig::getDefaultsFilepath();
+		if(!file_exists($configDefaults))
+			throw new Nette\InvalidStateException("Missing '$configDefaults' config file");
+
+		return new Config\FileConfigScope(array($configDefaults));
+	}	
 	
 }
