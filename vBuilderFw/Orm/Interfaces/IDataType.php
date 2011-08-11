@@ -23,6 +23,9 @@
 
 namespace vBuilder\Orm;
 
+use vBuilder,
+	 Nette;
+
 /**
  * Interface for redaction data types
  *
@@ -37,8 +40,9 @@ interface IDataType {
 	 * @param mixed reference to data (important for RW access)
 	 * @param string field name
 	 * @param Entity instance
+	 * @param Nette\DI\IContainer DI context
 	 */
-	public function __construct(&$data, $fieldName, &$entity);
+	public function __construct(&$data, $fieldName, &$entity, Nette\DI\IContainer $context);
 
 	/**
 	 * Returns array of names of all data types accepted by this class.

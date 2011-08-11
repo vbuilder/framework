@@ -645,7 +645,7 @@ class Entity extends vBuilder\Object {
 		
 		// Datove typy
 		} elseif(isset(self::$_dataTypesImplementations[$type])) {
-			$class = new self::$_dataTypesImplementations[$type]($data, $name, $this);
+			$class = new self::$_dataTypesImplementations[$type]($data, $name, $this, $this->context);
 			return $class;			
 		
 		// Integer

@@ -23,7 +23,8 @@
 
 namespace vBuilder\Orm\DataTypes;
 
-use vBuilder;
+use vBuilder,
+	 Nette;
 
 /**
  * Date and time, subclassed from Nette\dibi
@@ -33,7 +34,7 @@ use vBuilder;
  */
 class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 
-	public function __construct(&$data, $fieldName, &$entity) {
+	public function __construct(&$data, $fieldName, &$entity, Nette\DI\IContainer $context) {
 		if(is_numeric($data)) $data = date('Y-m-d H:i:s', $data);
 		
 		parent::__construct($data);
