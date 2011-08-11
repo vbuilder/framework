@@ -57,6 +57,7 @@ function d() {
 	foreach (func_get_args() as $m) {
 		Debug::dump($m);
 	}
+	Debug::$maxDepth = 3;
 }
 function dd() {
 	call_user_func_array('d', func_get_args());
