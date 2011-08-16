@@ -215,7 +215,7 @@ class MergedMetadata implements IEntityMetadata {
 	 */
 	public function getFieldProperty($field, $property, $default = null) {		
 		for($i = count($this->metadata) - 1; $i >= 0; $i--)
-			if($this->metadata[$i]->hasFieldProperty($field, $property))
+			if($this->metadata[$i]->hasField($field) && $this->metadata[$i]->hasFieldProperty($field, $property))
 				return $this->metadata[$i]->getFieldProperty($field, $property, $default);
 		
 		return $default;
