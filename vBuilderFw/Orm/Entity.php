@@ -653,6 +653,11 @@ class Entity extends vBuilder\Object {
 			$data = (int) $data;
 			return $data;
 			
+		// Float
+		} elseif(Nette\Utils\Strings::compare($type, "Float")) {
+			$data = (float) $data;
+			return $data;
+			
 		// String
 		} elseif(Nette\Utils\Strings::compare($type, "String")) {
 			$data = (String) $data;
