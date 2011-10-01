@@ -99,7 +99,7 @@ class ConfigDAO implements \ArrayAccess {
 	 */
 	protected function reset(&$newDataPtr) {
 		$this->dao = array();
-		$this->data = &$dataPtr;
+		$this->data = &$newDataPtr;
 	}
 	
 	/**

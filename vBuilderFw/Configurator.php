@@ -53,9 +53,9 @@ class Configurator extends Nette\Configurator {
 	 * @return vBuilder\Config\IConfig
 	 */
 	public static function createServiceConfig(Nette\DI\Container $container) {
-		$userConfig = new Config\DbUserConfig($container);
 		$user = $container->user;
-		
+		$userConfig = new Config\DbUserConfig($container, $user->isLoggedIn() ? $user->getId() : null);
+				
 		$user->onLoggedIn[] = function () use ($userConfig, $user) {
 			$userConfig->setUserId($user->getId());
 		};
