@@ -52,6 +52,12 @@ function debug($msg, $var = null) {
 	}
 }
 
+function bd() {
+	foreach (func_get_args() as $m) {
+		Nette\Diagnostics\Debugger::barDump($m);
+	}
+}
+
 function d() {
 	Debug::$maxDepth = 10;
 	foreach (func_get_args() as $m) {
