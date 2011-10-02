@@ -56,6 +56,15 @@ class Fluent extends \DibiFluent {
 	}
 
 	/**
+	 * Returns row class name which will be assigned as result set data holder
+	 * 
+	 * @return string class name
+	 */
+	public function getRowClass() {
+		return $this->rowClass;
+	}
+	
+	/**
 	 * Executes query and translates result
 	 * 
 	 * @param  array|mixed      one or more arguments
