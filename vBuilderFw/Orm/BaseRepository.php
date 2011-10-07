@@ -78,7 +78,7 @@ abstract class BaseRepository extends vBuilder\Object implements IRepository {
 	 * @return vBuilder\Orm\IActiveEntity
 	 */
 	public function create($entityName) {
-		return $this->get($entity);
+		return $this->get($entityName);
 	}
 	
 	/**

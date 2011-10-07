@@ -50,6 +50,13 @@ class Configurator extends Nette\Configurator {
 	}
 	
 	/**
+	 * @return vBuilder\Orm\Repository 
+	 */
+	public static function createServiceSessionRepository(Nette\DI\Container $container) {
+		return new Orm\SessionRepository($container);
+	}
+	
+	/**
 	 * @return vBuilder\Config\IConfig
 	 */
 	public static function createServiceConfig(Nette\DI\Container $container) {
