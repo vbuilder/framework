@@ -26,18 +26,15 @@ namespace vBuilder\Orm;
 use vBuilder, Nette, dibi;
 
 /**
- * Repository class for ORM entities
+ * Base repository
  *
- * @author Adam Staněk (V3lbloud)
- * @since Mar 4, 2011
+ * @author Adam Staněk (velbloud)
+ * @since Oct 7, 2011
  */
-class Repository extends vBuilder\Object {
+abstract class BaseRepository extends vBuilder\Object implements IRepository {
 	
 	/** @var Nette\DI\IContainer DI */
 	protected $context;
-
-	/** @var DibiConnection DB connection */
-	protected $db;
 
 	/**
 	 * Constructor
@@ -45,11 +42,15 @@ class Repository extends vBuilder\Object {
 	 * @param Nette\DI\IContainer DI
 	 */
 	public function __construct(Nette\DI\IContainer $context) {
-		$this->context = $context;
-		$this->db = $this->context->connection;
+
+		// Aby vsechny mnou vytvorene tridy mely me jako repozitar
+		$this->context = clone $context;
+		$this->context->removeService('repository');
+		$this->context->addService('repository', $this);
+	
 	}
 	
-	 /**
+	/**
 	 * Returns one entity
 	 * 
 	 * @param string entity name
@@ -69,37 +70,14 @@ class Repository extends vBuilder\Object {
 				
 		return $entityInstance;
 	}
-	
-	/**
-	 * Creates Fluent for building select query
-	 * 
-	 * @param string entity name
-	 * @return vBuilder\Orm\Fluent
-	 */
-	public function findAll($entity) {
-		$class = self::getEntityClass($entity);
-		// TODO: Dodelat genericke entity z configu
-		if($class === false) throw new EntityException("Entity '$entity' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
 		
-		$metadata = $class::getMetadata();
-
-		// Delam zvlast, protoze jinak by se mohla vyhazovat
-		// vyjimka pri DibiFluent::__toString
-		if(!$this->db->isConnected()) $this->db->connect();
-		
-		$fluent = new Fluent($class, $this->context);
-		$fluent->select('*')->from($metadata->getTableName());
-		
-		return $fluent;
-	}
-	
 	/**
 	 * Returns new entity
 	 * 
 	 * @param string entity name
 	 * @return vBuilder\Orm\IActiveEntity
 	 */
-	public function create($entity) {
+	public function create($entityName) {
 		return $this->get($entity);
 	}
 	

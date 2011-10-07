@@ -233,7 +233,7 @@ use vBuilder,
 class Entity extends vBuilder\Object {
 	
 	/** @var EntityData raw unmodified data from DB */
-	protected $data;
+	private $data;
 	
 	/** @var IEntityMetadata metadata for current instance */
 	protected $metadata;
@@ -272,10 +272,7 @@ class Entity extends vBuilder\Object {
 	 * 
 	 * @param array|mixed data row
 	 */
-	public function __construct($data = array()) {
-		// Nactu metadata
-		$this->metadata = static::getMetadata();
-				
+	public function __construct($data = array()) {		
 		$numargs = \func_num_args();
 		
 		if($numargs > 0) {
@@ -288,6 +285,14 @@ class Entity extends vBuilder\Object {
 		
 		if(!isset($this->context)) {
 			throw new \Nette\InvalidArgumentException("Missing DI container (context) for entity '".get_called_class()."'");
+		}
+		
+		// Nactu metadata
+		$this->metadata = static::getMetadata();
+		
+		if($this->repository instanceof DibiRepository) {
+			if($this->metadata->getTableName() == "")
+			  throw new \LogicException("Entity '$className' does not have table name defined");
 		}
 		
 		// Prebirani primary id
@@ -350,6 +355,24 @@ class Entity extends vBuilder\Object {
 			$this->addBehavior($behaviorName, $this->metadata->getBehaviorArgs($behaviorName));
 	}
 	
+	/**
+	 * Returns owning repository
+	 * 
+	 * @return vBuilder\Orm\IRepository 
+	 */
+	final public function getRepository() {
+		return $this->context->repository;
+	}
+	
+	/**
+	 * Returns data container
+	 * 
+	 * @return EntityData 
+	 */
+	final public function getData() {
+		return $this->data;
+	}
+	
 	/** 
 	 * Returns metadata object. This function is for public calling.
 	 * It has to be final, because it takes care about metadata caching.
@@ -367,9 +390,6 @@ class Entity extends vBuilder\Object {
 		self::$_metadata[$className] = static::getMetadataInternal();
 		
 		// VALIDACE METADAT ------------------------------------------------------
-		
-		if(self::$_metadata[$className]->getTableName() == "")
-			  throw new \LogicException("Entity '$className' does not have table name defined");
 		
 		if(count(self::$_metadata[$className]->getFields()) == 0)
 			throw new \LogicException("Entity '$className' does not have defined any fields");

@@ -42,6 +42,8 @@ class EntityCollection extends Collection {
 	}
 	
 	public function load() {
+		$this->loaded = true;
+		
 		$parentMetadata = $this->parent->getMetadata();
 		$ds = $this->context->repository->findAll($this->targetEntity);
 
@@ -50,12 +52,11 @@ class EntityCollection extends Collection {
 		foreach($parentMetadata->getFieldJoinPairs($this->field) as $join)
 			$ds->where("[".$join[1]."] = %s", $this->parent->{$join[0]});
 		
-		// Nactu data
-		$this->data = $ds->fetchAll();
-		$this->loaded = true;
+		// Nactu data (a musim zachovat soucasna)
+		$this->data = (array) $this->data + (array) $ds->fetchAll();
 	}
 	
-	public function save() {		
+	public function save() {	
 		$joinPairs = $this->parent->getMetadata()->getFieldJoinPairs($this->field);
 		
 		foreach($this->data as &$member) {
@@ -70,10 +71,10 @@ class EntityCollection extends Collection {
 		if(!($relatedEntity instanceOf $this->targetEntity))
 			  throw new \InvalidArgumentException("Added entity has to be instance of '$relatedEntity'");
 		
-		foreach($this->data as $curr) 
+		foreach((array) $this->data as $curr) 
 			if($curr === $relatedEntity)
 				throw new \InvalidArgumentException('This entity is already contained in collection');
-		
+			
 		$this->data[] = $relatedEntity;
 	}
 	

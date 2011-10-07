@@ -57,42 +57,43 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 		$this->context = $context;
 		$this->parent = &$parent;
 		$this->field = $fieldName;
-
-		$this->load();
+	}
+	
+	/**
+	 * Returns owning entity
+	 * 
+	 * @return Entity
+	 */
+	public function getParent() {
+		return $this->parent;
+	}
+	
+	/**
+	 * Returns name of joined field
+	 * 
+	 * @return string 
+	 */
+	public function getIdField() {
+		return $this->field;
+	}
+	
+	/**
+	 * Saves loaded data (called from repository loader)
+	 * 
+	 * @param array of data
+	 * 
+	 * @internal
+	 */
+	public function performDataLoad($data) {
+		$this->data = $data;
+		$this->loaded = true;
 	}
 
 	/**
-	 * Loads joined data from DB
+	 * Calls load on repository
 	 */
 	public function load() {
-		$parentMetadata = $this->parent->getMetadata();
-
-		if($parentMetadata->getFieldTableName($this->field) == null)
-			throw new \InvalidArgumentException("Table name for field '$this->field' in entity '".get_class($this->parent)."' has to be specified");
-
-		$ds = $this->context->connection->select("*")->from($parentMetadata->getFieldTableName($this->field));
-
-		// Podminky spojeni a separace joinKeys
-		$joinKeys = array();
-		foreach($parentMetadata->getFieldJoinPairs($this->field) as $join) {
-			$ds->where("[".$join[1]."] = %s", $this->parent->{$join[0]});
-			$joinKeys[$join[1]] = null;
-		}
-
-		$targetData = $ds->fetchAll();
-
-		// Upravim data do pole
-		$d = array();
-		foreach($targetData as $c) {
-			$cd = array_diff_key((array) $c, $joinKeys);
-			if(count($cd) == 1)
-				$cd = current($cd);
-
-			$d[] = $cd;
-		}
-
-		$this->data = $d;
-		$this->loaded = true;
+		$this->context->repository->load($this);		
 	}
 
 	/**
@@ -129,6 +130,9 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 	 * @return ArrayIterator 
 	 */
 	public function getIterator() {
+		if(!$this->loaded)
+			$this->load();
+		
 		return new \ArrayIterator($this->data);
 	}
 

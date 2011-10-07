@@ -46,7 +46,7 @@ class Configurator extends Nette\Configurator {
 	 * @return vBuilder\Orm\Repository 
 	 */
 	public static function createServiceRepository(Nette\DI\Container $container) {
-		return new Orm\Repository($container);
+		return new Orm\DibiRepository($container);
 	}
 	
 	/**

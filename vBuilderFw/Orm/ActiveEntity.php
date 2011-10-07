@@ -93,24 +93,9 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		if($this->state != self::STATE_NEW || !$this->checkIfIdIsDefined()) return ;
 		
 		$this->onPreLoad();
-		
-		// Delam zvlast, protoze jinak by se mohla vyhazovat
-		// vyjimka pri DibiFluent::__toString
-		if(!$this->getDb()->isConnected()) $this->getDb()->connect();
-		
-		$query = $this->getDb()->select('*')->from($this->metadata->getTableName());
-		$idFields = $this->metadata->getIdFields();
-		foreach($idFields as $name) 
-			$query = $query->where("[".$this->metadata->getFieldColumn($name)."] = %s", $this->data->$name);
-		
-		$result = $query->fetch();
-		if($result !== false) {
-			$loadedData = (array) $result;			
-			$this->data->loadData($loadedData);
-			
-		} else {
+				
+		if(!$this->repository->load($this))
 			$this->throwNoRecordFound();
-		}
 		
 		$this->state = self::STATE_LOADED;
 		$this->onPostLoad();
@@ -161,215 +146,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	 * @throws \LogicException if there is more than one auto-generated fields
 	 */
 	public function save() {		
-		$idFields = $this->metadata->getIdFields();
-		$fields = $this->metadata->getFields();
-		$autoField = null;
-		
-		// Pokud jsou na zaznam vazany relace, ktere je treba ulozit
-		$needToSaveEvenWithoutData = false;
-		
-		$this->getDb()->begin();	
-		
-		try {
-			// Provedu upravy pred ulozenim (zaregistrovane Behaviors, etc.)
-			$this->onPreSave($this);
-
-			// Kontrola, jestli mam definovane sloupce s PK indexem
-			foreach($idFields as $name) {
-				if(!$this->metadata->isFieldGenerated($name)) {
-					if(!isset($this->data->$name))
-						throw new EntityException("Cannot save with missing value for field '$name' which is mandatory because of ID index", EntityException::ID_NOT_DEFINED);
-				} elseif($autoField === null) {
-					$autoField = $name;
-				} else
-					throw new \LogicException('More than one generated ID field are not supported');
-			}
-
-			// Nactu si vsechny zmenene polozky do pole: sloupec => hodnota
-			$updateData = $this->data->getChangedData(true);
-			
-			// Pole se vsemi virtualnimi sloupci, ktere jsou ve skutecnosti vazany v jine tabulce
-			// Musime je na konci odebrat z tech, co se ukladaji do teto entity
-			$externalFields = array();
-			
-			
-			// Projdu vsechny registrovane polozky a overim pripadne externi vazby
-			foreach($fields as $curr) {
-				$type = $this->metadata->getFieldType($curr);
-				
-				// Pokud je polozka OneToOne relaci (z moji strany -> mappedBy moje entita)
-				// musim ji ulozit PRED samotnou entitou (potrebuje jeji ID)
-				// Po ulozeni svazane entity si musim vzit jeji ID a pridat ho do dat k ulozeni.
-				if($type == 'OneToOne') {
-					if($this->metadata->getFieldMappedBy($curr) === null || (get_called_class() != $this->metadata->getFieldMappedBy($curr) && !is_subclass_of(get_called_class(), $this->metadata->getFieldMappedBy($curr)) )) {						
-						
-						// Ukladam jen non-NULL sloupce
-						if(isset($this->data->{$curr})) {
-							// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
-							// pri nacteni z DB pouze ID)
-							$targetEntity = $this->{$curr};
-							if($targetEntity !== null) {
-								if(!($targetEntity instanceof ActiveEntity))
-									throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
-
-								$targetEntity->save();
-								$joinPairs = $this->metadata->getFieldJoinPairs($curr);
-								if(count($joinPairs) != 1) throw new \LogicException("Joining entity on more keys is currently not supported");
-								list($localIdField, $targetIdField) = reset($joinPairs);
-								if($this->data->{$localIdField} !== $targetEntity->{$targetIdField})
-									$updateData[$this->metadata->getFieldColumn($localIdField)] = $targetEntity->{$targetIdField};
-							}
-						}
-					
-					// Pokud polozka je pouze mapovana na nasi entitu, klic je na druhe strane
-					// => Ukladam ji az po ulozeni sama sebe
-					} else {
-						$externalFields[] = $curr;
-						unset($updateData[$curr]);
-					}
-				}
-				
-				// Pokud je polozka OneToMany relaci, sloupec v teto entite neexistuje,
-				// vazba probiha na druhem konci, proto data vyloucim z updatu.
-				// Entity se musi ulozi az POTOM, co se ulozi tato entita (aby znaly jeji ID).
-				elseif($type == 'OneToMany') {
-					if($this->{$curr} instanceOf Collection && $this->{$curr}->count())
-						$needToSaveEvenWithoutData = true;
-					
-					$externalFields[] = $curr;
-					unset($updateData[$curr]);
-				}
-			}
-			
-			// Vsechny data k ulozeni do tabulky (vcetne tech nezmenenych, ale bez virtualnich sloupcu - vazeb)
-			$allTableFields = array_diff_key(array_merge($this->data->getAllData(true), $updateData), array_flip($externalFields));	
-			
-			// ULOZENI SAMOTNE ENTITY ---------------------------------------------
-			// Pokud jsou k ulozeni nejaka TABULKOVA data, ulozim je
-			$addtionalDataToMerge = array();
-			$action = null;
-			if(count($updateData) > 0 || $needToSaveEvenWithoutData) {
-				$this->getDb()->query('INSERT IGNORE ', $this->metadata->getTableName(), $allTableFields, '%if', $updateData, ' ON DUPLICATE KEY UPDATE %a', $updateData);
-
-				// Provedl se INSERT
-				if($this->getDb()->affectedRows() == 1) {
-
-					// Zjistim ID pro generovane sloupce
-					$addtionalDataToMerge = $autoField === null ? array() : array($autoField => $this->getDb()->insertId());
-					$this->data->mergeData($addtionalDataToMerge);
-
-					$action = 'create';
-				}
-
-				// Provedl se UPDATE
-				elseif($this->getDb()->affectedRows() == 2) {
-					$action = 'update';
-				}
-
-				// Data se nezmenila
-				else {
-					// Nevim jestli je to takhle uplne idealni, sice insert ignore ... on duplicate key update
-					// setri zamykani tabulky, ale zese je treba overovat, jestli se neco neposralo
-					// a pokud jo, tak nemam zadny chybovy report
-					// Zkontroluju, jeslti byl zaznam opravdu ulozen do DB
-					$query = $this->getDb()->select('1')->from($this->metadata->getTableName());
-					$idFields = $this->metadata->getIdFields();
-					foreach($idFields as $name)
-						$query = $query->where("[".$this->metadata->getFieldColumn($name)."] = %s", $this->data->$name);
-
-					$result = $query->fetch();
-					if($result === false)
-						throw new EntityException('Error saving entity. Missing mandatory fields?', EntityException::SAVE_FAILED);
-				}
-			}
-			
-			// KONEC ULOZENI ENTITY -----------------------------------------------
-			
-			// Relace (OneToMany) -> ulozeni externich sloupcu
-			foreach($externalFields as $curr) {
-				
-				// Reverzni OneToOne relace
-				if($this->metadata->getFieldType($curr) == 'OneToOne') {
-					if($this->metadata->getFieldMappedBy($curr) !== null && (get_called_class() == $this->metadata->getFieldMappedBy($curr) || is_subclass_of(get_called_class(), $this->metadata->getFieldMappedBy($curr)) ) ) {
-						
-						// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
-						// pri nacteni z DB pouze ID)
-						$targetEntity = $this->{$curr};
-						if($targetEntity !== null) {
-							if($targetEntity->hasChanged())
-								throw new Nette\NotImplementedException("Saving of reversed OneToOne entities is currently not implemented");
-						}
-						
-					}
-					
-					continue;
-				}
-				
-	
-				// Dale resim pouze OneToMany
-				if($this->metadata->getFieldType($curr) != 'OneToMany') continue;
-				
-				// OneToMany zalozene na kolekcich
-				if($this->{$curr} instanceOf EntityCollection) {
-					$this->{$curr}->save();
-					continue;
-				}
-				
-				// Puvodni save pro OneToMany (TODO: prepsat taky na kolekce)
-				// Pokud se data zmenila
-				if(array_key_exists($curr, $this->data->getChangedData())) {
-					
-					// Momentalne nepodporuju relace s plnou entitou
-					if($this->metadata->getFieldEntityName($curr) !== null)
-						throw new Nette\NotImplementedException("Entity based OneToMany save is currently not implemented");
-					
-					// Smazu soucasny zaznamy a vytvorim si ID data pro nove
-					$joinIdFields = array();
-					$query2 = $this->getDb()->delete($this->metadata->getFieldTableName($curr));
-					foreach($this->metadata->getFieldJoinPairs($curr) as $join)  {
-						$query2->where("[".$join[1]."] = %s", $this->{$join[0]});	
-						$joinIdFields[$join[1]] = $this->{$join[0]};
-					}
-					$query2->execute();
-					
-					$ch = $this->data->getChangedData();
-					$dataToSave = (array) $ch[$curr];
-					if(count($dataToSave) > 0) {
-						// Pokud se jedna o neassociativni pole, musim zjistit nazvy sloupcu
-						if(!is_array(reset($dataToSave))) {
-							$columnNames = $this->getDb()->query("SHOW COLUMNS FROM [".$this->metadata->getFieldTableName($curr)."]")->fetchAll();
-							
-							$singleColumnKey = null;
-							foreach($columnNames as $column) {								
-								if(!array_key_exists($column["Field"], $joinIdFields)) {
-									if($singleColumnKey != null) throw new \LogicException("Saving joined single column data into multi column table");
-									$singleColumnKey = $column["Field"];
-								}
-							}
-						}
-						
-						// Nahazim tam nove
-						foreach($dataToSave as $joinFields) {
-							$iData = array_merge(!is_array($joinFields) ? array($singleColumnKey => $joinFields) : $joinFields, $joinIdFields);
-							$this->getDb()->insert($this->metadata->getFieldTableName($curr), $iData)->execute();
-						}
-					}
-				}
-			}
-			
-			
-			// Zavolani eventu
-			if($action == 'create')	$this->onCreate($this);
-			elseif($action == 'update') $this->onUpdate($this);
-			$this->onPostSave($this);
-			
-			// Commitnuti dat a provedeni merge automaticky generovanech polozek do entity
-			$this->getDb()->commit();
-			$this->data->performSaveMerge();
-		} catch(\Exception $e) {
-			$this->getDb()->rollback();
-			throw $e;
-		}
+		$this->repository->save($this);
 		
 		return $this;
 	}
@@ -395,55 +172,22 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		if($this->state == self::STATE_DELETED) return ;
 		$this->checkIfIdIsDefined(true);
 		
-		$this->getDb()->begin();
-		
-		$this->onPreDelete($this);
-		
-		$query = $this->getDb()->delete($this->metadata->getTableName());
-		$idFields = $this->metadata->getIdFields();
-		foreach($idFields as $name) 
-			$query = $query->where("[".$this->metadata->getFieldColumn($name)."] = %s", $this->data->$name);
-		
-		$query = $query->limit("1");
-		
-		$query->execute();
-		if($this->getDb()->affectedRows() == 0) $this->throwNoRecordFound();
-		
-		// Relace (OneToMany, ...)
-		// TODO: Prekontrolovat preklad nazvu sloupcu, nejak se mi to nelibi
-		foreach($this->metadata->getFields() as $curr) {
-			if($this->metadata->getFieldType($curr) == "OneToMany") {
-				$query2 = $this->getDb()->delete($this->metadata->getFieldTableName($curr));
-				foreach($this->metadata->getFieldJoinPairs($curr) as $join) {
-					$query2->where("[".$join[1]."] = %s", $this->{$join[0]});
-				}
-				
-				$query2->execute();
-			}
-		}
-		
 		$tmpState = $this->state;
 		$this->state = self::STATE_DELETED;
 		
 		try {
-			$this->onPostDelete($this);
-			$this->getDb()->commit();
-		} catch(Exception $e) {
-			$this->getDb()->rollback();
+			$success = $this->repository->delete($this);
+		} catch(\Exception $e) {
 			$this->state = $tmpState;
 			throw $e;
 		}
 		
+		if(!$success) {
+			$this->state = $tmpState;
+			$this->throwNoRecordFound();
+		}
+		
 		return $this;
-	}
-	
-	/**
-	 * Returns connection to DB
-	 * 
-	 * @return DibiConnection
-	 */
-	protected function getDb() {
-		return $this->context->connection;
 	}
 	
 	/**
