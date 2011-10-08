@@ -30,6 +30,11 @@ use vBuilder,
 /**
  * Entity repository for temporary store in the session
  *
+ * TODO:
+ * Implementovat vsechny eventy pro ActiveEntity
+ * Implementovat ukladani jednoduchych kolekci
+ * Napsat dokumentaci
+ * 
  * @author Adam Staněk (V3lbloud)
  * @since Oct 7, 2011
  */
@@ -50,7 +55,7 @@ class SessionRepository extends BaseRepository {
 		
 	public function findAll($entityName) {
 		$array = isset($this->session[$entityName]) ? $this->session[$entityName] : array();
-		return new ArrayFluent($array, $this->context);
+		return new ArrayFluent($array, $entityName, $this->context);
 	}
 	
 	/**
@@ -100,6 +105,9 @@ class SessionRepository extends BaseRepository {
 		
 		if(isset($entities[$id])) {
 			unset($entities[$id]);
+			
+			$this->session[get_class($entity)] = $entities;
+			$entity->onPostDelete($entity);
 			
 			return true;
 		}		
@@ -177,5 +185,9 @@ class SessionRepository extends BaseRepository {
 		foreach($entity->metadata->getIdFields() as $curr) $idFields[] = $entity->{$curr};
 		return count($idFields) > 1 ? md5(implode(',', $idFields)) : reset($idFields);
 	}	
+	
+	public function isEmptyIdFieldAllowed() {
+		return true;
+	}
 	
 }

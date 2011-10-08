@@ -428,5 +428,9 @@ class DibiRepository extends BaseRepository {
 			throw $e;
 		}
 	}
+	
+	public function isEmptyIdFieldAllowed() {
+		return false;
+	}
 
 }

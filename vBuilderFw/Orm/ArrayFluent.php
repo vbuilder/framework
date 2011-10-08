@@ -35,6 +35,9 @@ use vBuilder,
  */
 class ArrayFluent implements \IteratorAggregate {
 
+		/** @var string name of row class */
+	protected $rowClass;
+	
 	/** @var array of data */
 	protected $data;
 	
@@ -52,8 +55,14 @@ class ArrayFluent implements \IteratorAggregate {
 	 * 
 	 * @param Nette\DI\IContainer DI
 	 */
-	public function __construct($array, Nette\DI\IContainer $context) {
-		$this->data = $array;
+	public function __construct($array, $rowClass, Nette\DI\IContainer $context) {
+		$this->data = array();
+		$this->rowClass = $rowClass;
+		
+		foreach($array as $curr) {
+			$this->data[] = new $rowClass($curr, $context);
+		}
+		
 		$this->context = $context;
 	}
 
@@ -85,8 +94,6 @@ class ArrayFluent implements \IteratorAggregate {
 					foreach($conditions as $cond) {
 						if($entity instanceof Entity) {
 							if($entity->{$cond[0]} != $cond[1]) return false;
-						} else {
-							if($entity[$cond[0]] != $cond[1]) return false;
 						}
 					}
 					

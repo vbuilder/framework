@@ -45,4 +45,6 @@ interface IRepository {
 	
 	public function delete(Entity $entity);
 	
+	public function isEmptyIdFieldAllowed();
+	
 }

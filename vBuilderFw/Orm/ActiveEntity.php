@@ -28,6 +28,9 @@ use vBuilder, Nette, dibi;
 /**
  * Active record layer for Entity
  *
+ * TODO: Refaktorovat! V podstate by tu zadna logika nemela byt. Vse delegovat
+ * do repozitare.
+ * 
  * @author Adam Staněk (V3lbloud)
  * @since Feb 17, 2011
  */
@@ -90,7 +93,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	 * @throws EntityException if no matching record has been found
 	 */
 	public function load() {
-		if($this->state != self::STATE_NEW || !$this->checkIfIdIsDefined()) return ;
+		if($this->state != self::STATE_NEW || (!$this->checkIfIdIsDefined() && !$this->repository->isEmptyIdFieldAllowed())) return ;
 		
 		$this->onPreLoad();
 				
@@ -113,7 +116,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	 */
 	public function exists() {
 		if($this->state == self::STATE_LOADED)	return true;
-		if(!$this->checkIfIdIsDefined() || $this->state == self::STATE_DELETED) return false;
+		if((!$this->checkIfIdIsDefined() && !$this->repository->isEmptyIdFieldAllowed()) || $this->state == self::STATE_DELETED) return false;
 		
 		// Zjistit jestli jsou definovany jiny sloupce nez jen ID
 		$nonIdFields = \array_diff($this->metadata->getFields(), $this->metadata->getIdFields());
@@ -170,7 +173,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	 */
 	public function delete() {
 		if($this->state == self::STATE_DELETED) return ;
-		$this->checkIfIdIsDefined(true);
+		if(!$this->repository->isEmptyIdFieldAllowed()) $this->checkIfIdIsDefined(true);
 		
 		$tmpState = $this->state;
 		$this->state = self::STATE_DELETED;
