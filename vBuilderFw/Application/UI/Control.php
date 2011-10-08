@@ -34,6 +34,8 @@ use Nette;
 class Control extends Nette\Application\UI\Control {
 	
 	protected $view = 'default';
+	private $actionHandled = false;
+	private $renderCalled = false;
 	
 	/**
 	 * @var array 
@@ -46,15 +48,19 @@ class Control extends Nette\Application\UI\Control {
 	 */
 	private $_renderer;
 	
+	private $tplCreated = false;
+	
 	/**
 	 * Renders control
 	 */
 	function render($params = array()) {		
-		// TODO: dodelat cely workflow
+		$this->renderCalled = true;
 		$this->renderParams = $params;
 		
-		// action<View>
-		$actionCalled = $this->tryCall($this->formatActionMethod($this->view), $this->params);
+		// Pokud jsme neprosli skrz ::signalRecieved - default action, etc.
+		if(!$this->actionHandled)
+			$this->tryCall($this->formatActionMethod($this->view), $this->params, $this);
+		
 		
 		// render<View> on renderer instance
 		$this->tryCall($this->formatRenderMethod($this->view), $this->params, $this->renderer);
@@ -97,6 +103,7 @@ class Control extends Nette\Application\UI\Control {
 	protected function createTemplate($class = NULL) {
 		if(func_num_args() > 0 && $class != NULL) throw new \InvalidArgumentException(get_called_class() . "::createTemplate do not support $class argument. Take look at renderers instead.");
 		
+		$this->tplCreated = true;
 		return $this->renderer->template;
 	}
 	
@@ -148,15 +155,17 @@ class Control extends Nette\Application\UI\Control {
 	 * @throws BadSignalException if there is not handler method
 	 */
 	public function signalReceived($signal) {		
+		$this->actionHandled = true;
+		
 		if(!$this->tryCall($this->formatHandleMethod($signal), $this->params)) {
 			$this->view = $signal;
 			
-			if(!$this->tryCall($this->formatActionMethod($signal), $this->params, $this, true)) {
+			if(!$this->tryCall($this->formatActionMethod($signal), $this->params, $this)) {
 				if(!$this->tryCall($this->formatRenderMethod($signal), $this->params, $this->renderer, true)) {
 					$class = get_class($this);
 					throw new Nette\Application\UI\BadSignalException("There is no handler for signal '$signal' in class $class.");
 				}
-			}		
+			}	
 			
 		}
 	}
@@ -208,8 +217,10 @@ class Control extends Nette\Application\UI\Control {
 	/**
 	 * This function is for hacking only. It will never get called because of
 	 * overloaded signalRecieved method.
+	 * 
+	 * Note: Be awere of parameter number (because of Presenter::argsToParams)
 	 */
-	final public function signalHandler() {
+	final public function signalHandler($foo, $bar) {
 		throw new \LogicException(get_called_class() . '::signalHandler() called!');
 	}
 	
@@ -240,6 +251,37 @@ class Control extends Nette\Application\UI\Control {
 	}
 	
 	// </editor-fold>	
+
+	/**
+	 * Redirect to another presenter, action or signal.
+	 * @param  int      [optional] HTTP error code
+	 * @param  string   destination in format "[[module:]presenter:]view" or "signal!"
+	 * @param  array|mixed
+	 * @return void
+	 * @throws Nette\Application\AbortException
+	 * @throws Nette\InvalidStateException
+	 */
+	public function redirect($code, $destination = NULL, $args = array()) {
+		if(!$this->actionHandled && $this->renderCalled) {
+			throw new Nette\InvalidStateException("You cannot use redirect when no signal is called. Use ".get_called_class()."::changeView() instead.");
+		}
+		
+		parent::redirect($code, $destination, $args);
+	} 
+	
+	/**
+	 * Switches current control view
+	 * 
+	 * @param string view
+	 * @throws Nette\InvalidStateException if template has been created 
+	 */
+	public function changeView($view) {
+		if($this->tplCreated) {
+			throw new Nette\InvalidStateException("You cannot call ".get_called_class()."::changeView after template has been created.");
+		}
+		
+		$this->signalReceived($view);
+	}
 	
 }
 
