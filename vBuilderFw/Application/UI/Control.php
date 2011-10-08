@@ -35,6 +35,11 @@ class Control extends Nette\Application\UI\Control {
 	
 	protected $view = 'default';
 	
+	/**
+	 * @var array 
+	 */
+	protected $renderParams = array();
+	
 	/** 
 	 * @var vBuilder\Application\UI\ControlRenderer renderer instance
 	 * @internal
@@ -44,8 +49,9 @@ class Control extends Nette\Application\UI\Control {
 	/**
 	 * Renders control
 	 */
-	function render() {
+	function render($params = array()) {		
 		// TODO: dodelat cely workflow
+		$this->renderParams = $params;
 		
 		// action<View>
 		$actionCalled = $this->tryCall($this->formatActionMethod($this->view), $this->params);
