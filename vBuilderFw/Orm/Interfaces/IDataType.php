@@ -37,13 +37,19 @@ interface IDataType {
 	/**
 	 * Constructor is mandatory and it takes reference to raw data
 	 *
-	 * @param mixed reference to data (important for RW access)
 	 * @param string field name
 	 * @param Entity instance
 	 * @param Nette\DI\IContainer DI context
 	 */
-	public function __construct(&$data, $fieldName, &$entity, Nette\DI\IContainer $context);
+	public function __construct($fieldName, &$entity, Nette\DI\IContainer $context);
 
+	/**
+	 * Tries to convert value from setter
+	 * 
+	 * @throws Nette\InvalidArgumentException if input is not convertible
+	 */
+	public function convertFrom(&$data);
+	
 	/**
 	 * Returns array of names of all data types accepted by this class.
 	 * Assumes PHP 5.3 (in earlier versions it should still work, but not if

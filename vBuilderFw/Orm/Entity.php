@@ -432,6 +432,64 @@ class Entity extends vBuilder\Object {
 	}
 	
 	/**
+	 * Default setter implementation. Takes care about reverse datatype translation.
+	 * 
+	 * @param string field name
+	 * @param mixed value 
+	 */
+	public function defaultSetter($fieldName, $value) {
+		
+		// Nactu vsechny implementace datovych typu, pokud je potreba
+		if(self::$_dataTypesImplementations === null)
+			self::searchForOrmClasses($this->context);
+
+		$type = $this->metadata->getFieldType($fieldName);
+		
+		// Zachovavani NULL povolujeme pro vsechny typy
+		if($value === null) {
+			$this->data->$fieldName = null;
+		
+		// Datove typy
+		} elseif(isset(self::$_dataTypesImplementations[$type])) {		
+			if($this->fieldCache($fieldName) == null) {
+				$this->{$fieldName} = new self::$_dataTypesImplementations[$type]($fieldName, $this, $this->context);
+			}
+			
+			$this->{$fieldName}->convertFrom($value);
+		
+		
+		// Integer
+		} elseif(Nette\Utils\Strings::compare($type, "Integer")) {
+			$this->data->$fieldName = (int) $value;
+					
+		// Float
+		} elseif(Nette\Utils\Strings::compare($type, "Float")) {
+			$this->data->$fieldName = (float) $value;
+						
+		// String
+		} elseif(Nette\Utils\Strings::compare($type, "String")) {
+			$this->data->$fieldName = (string) $value;
+		
+		// TODO -------------------------
+			
+		// OneToOne
+		} /* elseif(Nette\Utils\Strings::compare($type, "OneToOne")) {
+			
+			
+		// OneToMany
+		} elseif(Nette\Utils\Strings::compare($type, "OneToMany")) {	
+			
+		}
+
+		*/
+		
+		else {
+			$this->data->$fieldName = $value;
+			//throw new EntityException("Data type '$type' is not defined", EntityException::DATATYPE_NOT_DEFINED);
+		}
+	}
+	
+	/**
 	 * Default getter implementation. Looks up cache and runs data type mapping.
 	 * 
 	 * Note: This function has to be public because of possible calls
@@ -595,7 +653,7 @@ class Entity extends vBuilder\Object {
 
 				// IMPLICITNI SET
 				elseif(count($args)) {
-					$this->data->$fieldName = $args[0];
+					$this->defaultSetter($fieldName, $args[0]);
 
 					return ;
 				}
@@ -665,7 +723,7 @@ class Entity extends vBuilder\Object {
 		
 		// Datove typy
 		} elseif(isset(self::$_dataTypesImplementations[$type])) {
-			$class = new self::$_dataTypesImplementations[$type]($data, $name, $this, $this->context);
+			$class = new self::$_dataTypesImplementations[$type]($name, $this, $this->context);
 			return $class;			
 		
 		// Integer

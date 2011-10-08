@@ -34,12 +34,17 @@ use vBuilder,
  */
 class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 
-	public function __construct(&$data, $fieldName, &$entity, Nette\DI\IContainer $context) {
+	public function __construct($fieldName, &$entity, Nette\DI\IContainer $context) {
+		$data = $entity->data->{$fieldName};
 		if(is_numeric($data)) $data = date('Y-m-d H:i:s', $data);
 		
 		parent::__construct($data);
 	}
 
+	public function convertFrom(&$data) {		
+		throw new Nette\InvalidArgumentException("'".  gettype($data)."' is not supported by " . get_called_class());
+	}
+	
 	public static function acceptedDataTypes() {
 		return array("DateTime", "Timestamp");
 	}
