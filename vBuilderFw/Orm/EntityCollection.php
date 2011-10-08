@@ -33,6 +33,9 @@ use vBuilder, Nette, dibi;
  */
 class EntityCollection extends Collection {
 	
+	/** @var array of event listeners - function (Entity, EntityCollection) */
+	public $onItemAdded = array();
+	
 	/** @var string name of target entity */
 	protected $targetEntity;
 	
@@ -53,7 +56,10 @@ class EntityCollection extends Collection {
 			$ds->where("[".$join[1]."] = %s", $this->parent->{$join[0]});
 		
 		// Nactu data (a musim zachovat soucasna)
-		$this->data = (array) $this->data + (array) $ds->fetchAll();
+		foreach($ds->fetchAll() as $curr) {
+			$this->data[] = $curr;
+			$this->connect($curr);
+		}
 	}
 	
 	public function save() {	
@@ -76,6 +82,23 @@ class EntityCollection extends Collection {
 				throw new \InvalidArgumentException('This entity is already contained in collection');
 			
 		$this->data[] = $relatedEntity;
+		
+		$this->onItemAdded($relatedEntity, $this);
+	}
+	
+	public function remove($entity) {
+		foreach($this->data as $k=>$curr) {
+			if($entity === $curr) {
+				unset($this->data[$k]);
+				break;
+			}
+		}
+	}
+	
+	protected function connect(Entity $entity) {
+		if($entity instanceof ActiveEntity) {
+			$entity->onPostDelete[] = array($this, 'remove');
+		}
 	}
 	
 }
