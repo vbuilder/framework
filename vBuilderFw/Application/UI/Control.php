@@ -266,6 +266,9 @@ class Control extends Nette\Application\UI\Control {
 			throw new Nette\InvalidStateException("You cannot use redirect when no signal is called. Use ".get_called_class()."::changeView() instead.");
 		}
 		
+		if($code == 'this') $code = $this->view;
+		elseif($destination == 'this') $destination = $this->view;
+		
 		parent::redirect($code, $destination, $args);
 	} 
 	
