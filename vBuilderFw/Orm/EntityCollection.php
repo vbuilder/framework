@@ -46,6 +46,7 @@ class EntityCollection extends Collection {
 	
 	public function load() {
 		$this->loaded = true;
+		$this->data = array();
 		
 		$parentMetadata = $this->parent->getMetadata();
 		$ds = $this->context->repository->findAll($this->targetEntity);
@@ -55,6 +56,8 @@ class EntityCollection extends Collection {
 		foreach($parentMetadata->getFieldJoinPairs($this->field) as $join)
 			$ds->where("[".$join[1]."] = %s", $this->parent->{$join[0]});
 		
+		
+			
 		// Nactu data (a musim zachovat soucasna)
 		foreach($ds->fetchAll() as $curr) {
 			$this->data[] = $curr;
@@ -63,6 +66,8 @@ class EntityCollection extends Collection {
 	}
 	
 	public function save() {	
+		if(!$this->data) return;
+		
 		$joinPairs = $this->parent->getMetadata()->getFieldJoinPairs($this->field);
 		
 		foreach($this->data as &$member) {

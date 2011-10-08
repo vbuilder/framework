@@ -88,10 +88,11 @@ class SessionRepository extends BaseRepository {
 		if(isset($entities[$id])) {
 			$entity->data->loadData($entities[$id]);
 			
-			return true;
+			
 		}		
 		
-		return false;
+		// Vracim porad true, protoze entity mohou byt neuplny
+		return true;
 	}
 		
 	/**
