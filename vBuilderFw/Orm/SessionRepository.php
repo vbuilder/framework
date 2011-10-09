@@ -41,7 +41,10 @@ use vBuilder,
 class SessionRepository extends BaseRepository {
 	
 	const SESSION_NAMESPACE = 'vBuilder.Orm';
-
+	
+	// Nesmi byt NULL, protoze jinak by se nenacitaly vztazne entity (zachovani NULL hodnoty)
+	const NO_ID = ''; // '[NO_ID]';
+	
 	protected $_session;
 	
 	/**
@@ -82,13 +85,16 @@ class SessionRepository extends BaseRepository {
 	 * @return bool true if record has been successfuly loaded, false if record does not exist
 	 */
 	protected function loadEntity($entity) {		
+		
+		
 		$entities = isset($this->session[get_class($entity)]) ? $this->session[get_class($entity)] : array();		
 		$id = $this->getEntityId($entity);
 		
+		//d('load', get_class($entity), $id, $entities);
+		
 		if(isset($entities[$id])) {
 			$entity->data->loadData($entities[$id]);
-			
-			
+						
 		}		
 		
 		// Vracim porad true, protoze entity mohou byt neuplny
@@ -138,21 +144,42 @@ class SessionRepository extends BaseRepository {
 	 * @param Entity $entity 
 	 */
 	public function saveEntity(Entity $entity) {
+		//d('---- SaveEntity called -----');
 		$entities = isset($this->session[get_class($entity)]) ? $this->session[get_class($entity)] : array();
-	
+			
 		$entities[$this->getEntityId($entity)] = $entity->getData()->getAllData();
+
 		
 		$fields = $entity->metadata->getFields();
 		foreach($fields as $curr) {
-			if($entity->{$curr} instanceof EntityCollection || $entity->{$curr} instanceof ActiveEntity) {
+			if($entity->metadata->getFieldType($curr) == 'OneToOne') {				
+				if($entity->{$curr}) {
+					$entities[$this->getEntityId($entity)][$curr] = $this->getEntityId($entity->{$curr});
+					
+					// Musim se nejprve nacist, protoze jinak tam zustane polotovar
+					$entity->{$curr}->load();
+					
+					$entity->{$curr}->save();
+					continue;
+				}
+				
+			} elseif($entity->{$curr} instanceof EntityCollection) {
 				$entity->{$curr}->save();
 				continue;
-			} elseif(in_array($entity->metadata->getFieldType($curr), array('OneToOne', 'OneToMany'))) {
+			
+				
+				
+			} elseif(in_array($entity->metadata->getFieldType($curr), array('OneToMany'))) {
 				throw new Nette\NotSupportedException("Only saving of ActiveEntities and EntityCollections is supported at the moment");
 			}
 		}
 		
+		//d('save', get_class($entity), $entities);
+		
+		
 		$this->session[get_class($entity)] = $entities;
+		
+		//d($this->session[get_class($entity)]);
 	}
 
 	/**
@@ -183,7 +210,8 @@ class SessionRepository extends BaseRepository {
 	 */
 	protected function getEntityId($entity) {
 		$idFields = array();
-		foreach($entity->metadata->getIdFields() as $curr) $idFields[] = $entity->{$curr};
+		foreach($entity->metadata->getIdFields() as $curr) $idFields[] = $entity->{$curr} ? $entity->{$curr} : self::NO_ID;
+				
 		return count($idFields) > 1 ? md5(implode(',', $idFields)) : reset($idFields);
 	}	
 	

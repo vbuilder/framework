@@ -46,7 +46,7 @@ class EntityCollection extends Collection {
 	
 	public function load() {
 		$this->loaded = true;
-		$this->data = array();
+		if(!$this->data) $this->data = array();
 		
 		$parentMetadata = $this->parent->getMetadata();
 		$ds = $this->context->repository->findAll($this->targetEntity);

@@ -77,6 +77,9 @@ class EntityData extends vBuilder\Object {
 	/** @var array of all loaded entities data */
 	private static $_repository = array();
 	
+	/** @var need to fetch lock */
+	private $currentlyPerformingOnNeedToFetch = false;
+	
 	/**
 	 * Constructor of entity data object
 	 * 
@@ -210,9 +213,16 @@ class EntityData extends vBuilder\Object {
 					// Nacitani pro me nema smysl, pokud policko nepatri moji entite
 					if($this->metadata->getFieldType($name) == 'OneToMany') return $result;
 
-					// debug("On need to fetch called for field", $name, $this->metadata->getTableName(), $this->data);
+					//debug("On need to fetch called for field", $name, $this->metadata->getTableName(), $this->data);
+					//echo "----<br />\n";
 					
-					$this->onNeedToFetch();
+					if(!$this->currentlyPerformingOnNeedToFetch) {
+						$this->currentlyPerformingOnNeedToFetch = true;
+						$this->onNeedToFetch();
+						$this->currentlyPerformingOnNeedToFetch = false;
+					} else {
+						return $result;
+					}
 				}
 			}
 			
