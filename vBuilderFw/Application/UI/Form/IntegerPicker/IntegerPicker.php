@@ -63,6 +63,7 @@ class IntegerPicker extends Nette\Forms\Controls\TextInput {
 	}
 	
 	public static function validatePositive(IntegerPicker $control) {
-		return ctype_digit($control->getValue());
+		$val = $control->getValue();
+		return ctype_digit($val) && $val > 0;
 	}
 }
