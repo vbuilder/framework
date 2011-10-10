@@ -148,7 +148,6 @@ class SessionRepository extends BaseRepository {
 		$entities = isset($this->session[get_class($entity)]) ? $this->session[get_class($entity)] : array();
 			
 		$entities[$this->getEntityId($entity)] = $entity->getData()->getAllData();
-
 		
 		$fields = $entity->metadata->getFields();
 		foreach($fields as $curr) {
@@ -163,15 +162,15 @@ class SessionRepository extends BaseRepository {
 					continue;
 				}
 				
-			} elseif($entity->{$curr} instanceof EntityCollection) {
-				$entity->{$curr}->save();
+			} elseif($entity->metadata->getFieldType($curr) == 'OneToMany') {
+				unset($entities[$this->getEntityId($entity)][$curr]);
+				
+				if($entity->{$curr}) {
+					$entity->{$curr}->save();
+				}
 				continue;
-			
-				
-				
-			} elseif(in_array($entity->metadata->getFieldType($curr), array('OneToMany'))) {
-				throw new Nette\NotSupportedException("Only saving of ActiveEntities and EntityCollections is supported at the moment");
-			}
+								
+			} 
 		}
 		
 		//d('save', get_class($entity), $entities);

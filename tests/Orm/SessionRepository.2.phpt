@@ -41,6 +41,7 @@ use vBuilder, Nette,
  * @Column(id, id, type="integer", generatedValue)
  * @Column(name)
  * @Column(related, type="OneToOne", entity="vBuilder\Orm\EntityTest\RelatedEntity", joinOn="related=id")
+ * @Column(related2, type="OneToMany", entity="vBuilder\Orm\EntityTest\RelatedEntity2", joinOn="id=sharedId")
  */
 class TestEntity extends ActiveEntity {
 	
@@ -51,6 +52,14 @@ class TestEntity extends ActiveEntity {
  * @Column(foo)
  */
 class RelatedEntity extends ActiveEntity {
+	
+}
+
+/**
+ * @Column(sharedId, id)
+ * @Column(value)
+ */
+class RelatedEntity2 extends ActiveEntity {
 	
 }
 
@@ -68,6 +77,15 @@ $repo->session[__NAMESPACE__ . '\\RelatedEntity'] = array(
 		SessionRepository::NO_ID => array('id' => null, 'foo' => 123)
 );
 
+$repo->session[__NAMESPACE__ . '\\RelatedEntity2'] = array(
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'Q'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'W'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'E'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'R'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'T'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'Z'),
+);
+
 
 $e1 = $repo->get(__NAMESPACE__ . '\\TestEntity');
 Assert::same('foo', $e1->name);
@@ -83,3 +101,12 @@ Assert::arrayEqual(array(
 Assert::arrayEqual(array(
 		SessionRepository::NO_ID => array('id' => null, 'foo' => 123)
 ), $repo->session[__NAMESPACE__ . '\\RelatedEntity']);
+
+Assert::arrayEqual(array(
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'Q'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'W'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'E'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'R'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'T'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'Z')
+), $repo->session[__NAMESPACE__ . '\\RelatedEntity2']);

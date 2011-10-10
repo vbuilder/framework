@@ -41,6 +41,7 @@ use vBuilder, Nette,
  * @Column(id, id, type="integer", generatedValue)
  * @Column(name)
  * @Column(related, type="OneToOne", entity="vBuilder\Orm\EntityTest\RelatedEntity", joinOn="related=id")
+ * @Column(related2, type="OneToMany", entity="vBuilder\Orm\EntityTest\RelatedEntity2", joinOn="id=sharedId")
  */
 class TestEntity extends ActiveEntity {
 	
@@ -54,6 +55,14 @@ class RelatedEntity extends ActiveEntity {
 	
 }
 
+/**
+ * @Column(sharedId, id)
+ * @Column(value)
+ */
+class RelatedEntity2 extends ActiveEntity {
+	
+}
+
 $repo = $context->sessionRepository;
 $repo->clear();
 
@@ -63,6 +72,17 @@ $e1 = $repo->create(__NAMESPACE__ . '\\TestEntity');
 $e1->name = 'foo';
 $e1->related = $repo->create(__NAMESPACE__ . '\\RelatedEntity');
 $e1->related->foo = 123;
+
+Assert::true($e1->related2 instanceof vBuilder\Orm\EntityCollection);
+
+$e1a = $repo->create(__NAMESPACE__ . '\\RelatedEntity2');
+$e1a->value = 'A';
+$e1->related2->add($e1a);
+
+$e1b = $repo->create(__NAMESPACE__ . '\\RelatedEntity2');
+$e1b->value = 'B';
+$e1->related2->add($e1b);
+
 $e1->save();
 
 Assert::arrayEqual(array(
@@ -72,6 +92,11 @@ Assert::arrayEqual(array(
 Assert::arrayEqual(array(
 		SessionRepository::NO_ID => array('id' => null, 'foo' => 123)
 ), $repo->session[__NAMESPACE__ . '\\RelatedEntity']);
+
+Assert::arrayEqual(array(
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'A'),
+		SessionRepository::NO_ID => array('sharedId' => null, 'value' => 'B')
+), $repo->session[__NAMESPACE__ . '\\RelatedEntity2']);
 
 // ----------
 
