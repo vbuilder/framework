@@ -1,0 +1,11 @@
+A.integerPickerMore,
+A.integerPickerLess {
+	text-decoration: none;
+}
+
+A.integerPickerMore IMG,
+A.integerPickerLess IMG {
+	border: none;
+}
+
+

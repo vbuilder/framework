@@ -56,7 +56,7 @@ class IntegerPicker extends Nette\Forms\Controls\TextInput {
 		$control = parent::getControl();
 		$control->class[] = 'integerPicker';
 		$template = $this->getForm()->getPresenter()->createTemplate();
-		$template->setFile(__DIR__.'/templates/control.latte');
+		$template->setFile(__DIR__.'/Templates/control.latte');
 		$template->input = $control;
 		$container->setHtml($template);
 		return $container;
