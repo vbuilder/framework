@@ -210,14 +210,15 @@ class ControlRenderer extends vBuilder\Object {
 		$template->renderer = $this;
 		$template->control = $this->control;
 		$template->presenter = $presenter;
+		$template->context = $this->context;
+		$template->baseUri = $template->baseUrl = rtrim($this->context->httpRequest->getUrl()->getBaseUrl(), '/');
+		$template->basePath = preg_replace('#https?://[^/]+#A', '', $template->baseUrl);
 		
 		if ($presenter instanceof Presenter) {
 			$template->setCacheStorage($presenter->getContext()->templateCacheStorage);
 			$template->user = $presenter->getUser();
 			$template->netteHttpResponse = $presenter->getHttpResponse();
 			$template->netteCacheStorage = $presenter->getContext()->cacheStorage;
-			$template->baseUri = $template->baseUrl = rtrim($presenter->getHttpRequest()->getUrl()->getBaseUrl(), '/');
-			$template->basePath = preg_replace('#https?://[^/]+#A', '', $template->baseUrl);
 
 			// flash message
 			if ($presenter->hasFlashSession()) {
@@ -238,9 +239,10 @@ class ControlRenderer extends vBuilder\Object {
 	 * @param  Nette\Templating\Template
 	 * @return void
 	 */
-	public function templatePrepareFilters($template) {
-		$engine = new Nette\Latte\Engine;
-		vBuilder\Latte\Macros\RedactionMacros::install($engine->parser);
+	public function templatePrepareFilters($template, &$engine = null) {
+		if(!$engine) $engine = new Nette\Latte\Engine;
+		
+		vBuilder\Latte\Macros\SystemMacros::install($engine->parser);
 		$template->registerFilter($engine);
 	}
 	
