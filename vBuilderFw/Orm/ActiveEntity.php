@@ -171,19 +171,13 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	 * @return ActiveEntity fluent interface
 	 * @throws EntityException if record was not found
 	 */
-	public function delete() {
+	public function delete() {		
 		if($this->state == self::STATE_DELETED) return ;
 		if(!$this->repository->isEmptyIdFieldAllowed()) $this->checkIfIdIsDefined(true);
-		
+								
+		$success = $this->repository->delete($this);
 		$tmpState = $this->state;
 		$this->state = self::STATE_DELETED;
-		
-		try {
-			$success = $this->repository->delete($this);
-		} catch(\Exception $e) {
-			$this->state = $tmpState;
-			throw $e;
-		}
 		
 		if(!$success) {
 			$this->state = $tmpState;

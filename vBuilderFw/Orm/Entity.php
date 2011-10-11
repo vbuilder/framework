@@ -232,8 +232,8 @@ use vBuilder,
  */
 class Entity extends vBuilder\Object {
 	
-	/** @var EntityData raw unmodified data from DB */
-	private $data;
+	/** @var EntityData raw unmodified data from DB, musi byt protected kvuli __sleep! */
+	protected $data;
 	
 	/** @var IEntityMetadata metadata for current instance */
 	protected $metadata;
