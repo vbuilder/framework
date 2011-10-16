@@ -49,7 +49,9 @@ class EntityCollection extends Collection {
 		if(!$this->data) $this->data = array();
 		
 		$parentMetadata = $this->parent->getMetadata();
-		$ds = $this->context->repository->findAll($this->targetEntity);
+		
+		$processSubclasses = $parentMetadata->getFieldProperty($this->field, 'processSubclasses', false);
+		$ds = $this->context->repository->findAll($this->targetEntity, $processSubclasses);
 
 		// Podminky spojeni a separace joinKeys
 		$joinKeys = array();

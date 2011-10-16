@@ -55,7 +55,10 @@ class DibiRepository extends BaseRepository {
 	 * @param string entity name
 	 * @return vBuilder\Orm\Fluent
 	 */
-	public function findAll($entityName) {
+	public function findAll($entityName, $processSubclasses = false) {
+		if($processSubclasses)
+			throw new Nette\NotImplementedException("findAll() with subclasses is not supported by " . get_called_class() . " at the moment.");
+		
 		$class = self::getEntityClass($entityName);
 		// TODO: Dodelat genericke entity z configu
 		if($class === false) throw new EntityException("Entity '$entity' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);

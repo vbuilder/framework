@@ -56,9 +56,23 @@ class SessionRepository extends BaseRepository {
 		parent::__construct($context);
 	}
 		
-	public function findAll($entityName) {
-		$array = isset($this->session[$entityName]) ? $this->session[$entityName] : array();
-		return new ArrayFluent($array, $entityName, $this->context);
+	public function findAll($entityName, $processSubclasses = false) {
+
+		$array = array();
+		$classes = $processSubclasses
+		? array_merge(array($entityName), $this->context->robotLoader->getAllChildrenOf($entityName))
+		: array($entityName);
+		
+		foreach($classes as $entityName) {
+			if(isset($this->session[$entityName])) {
+				foreach($this->session[$entityName] as $curr) {
+
+					$array[] = new $entityName($curr, $this->context);
+				}
+			}
+		}
+
+		return new ArrayFluent($array, $this->context);
 	}
 	
 	/**
@@ -147,6 +161,8 @@ class SessionRepository extends BaseRepository {
 		//d('---- SaveEntity called -----');
 		$entities = isset($this->session[get_class($entity)]) ? $this->session[get_class($entity)] : array();
 			
+		if($entity instanceof ActiveEntity) $entity->onPreSave($entity);
+		
 		$entities[$this->getEntityId($entity)] = $entity->getData()->getAllData();
 		
 		$fields = $entity->metadata->getFields();
@@ -177,6 +193,8 @@ class SessionRepository extends BaseRepository {
 		
 		
 		$this->session[get_class($entity)] = $entities;
+		
+		if($entity instanceof ActiveEntity) $entity->onPostSave($entity);
 		
 		//d($this->session[get_class($entity)]);
 	}
