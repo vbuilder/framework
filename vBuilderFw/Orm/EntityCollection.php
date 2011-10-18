@@ -67,16 +67,20 @@ class EntityCollection extends Collection {
 		}
 	}
 	
-	public function save() {	
+	public function save(IRepository $repository = null) {	
+		//if(!$this->loaded && $repository != null && $repository != $this->context->repository) $this->load();
 		if(!$this->data) return;
-		
+				
 		$joinPairs = $this->parent->getMetadata()->getFieldJoinPairs($this->field);
 		
 		foreach($this->data as &$member) {
 			foreach($joinPairs as $join) 
 				$member->{$join[1]} = $this->parent->{$join[0]};
 				
-			$member->save();
+			if($repository)
+				$repository->save($member);
+			else
+				$member->save();
 		}
 	}
 	

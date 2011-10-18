@@ -219,12 +219,14 @@ class DibiRepository extends BaseRepository {
 	}
 	
 	public function saveEntity(Entity $entity) {
+		if($entity->repository !== $this && $entity instanceof ActiveEntity) $entity->load();
+		
 		$idFields = $entity->metadata->getIdFields();
 		$fields = $entity->metadata->getFields();
 		$autoField = null;
 		
 		// Pokud jsou na zaznam vazany relace, ktere je treba ulozit
-		$needToSaveEvenWithoutData = false;
+		$needToSaveEvenWithoutData = $entity->repository !== $this;
 		
 		$this->db->begin();	
 		
@@ -270,7 +272,8 @@ class DibiRepository extends BaseRepository {
 								if(!($targetEntity instanceof ActiveEntity))
 									throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
 
-								$targetEntity->save();
+								$this->save($targetEntity);
+								
 								$joinPairs = $entity->metadata->getFieldJoinPairs($curr);
 								if(count($joinPairs) != 1) throw new \LogicException("Joining entity on more keys is currently not supported");
 								list($localIdField, $targetIdField) = reset($joinPairs);
@@ -301,7 +304,7 @@ class DibiRepository extends BaseRepository {
 			
 			// Vsechny data k ulozeni do tabulky (vcetne tech nezmenenych, ale bez virtualnich sloupcu - vazeb)
 			$allTableFields = array_diff_key(array_merge($entity->data->getAllData(true), $updateData), array_flip($externalFields));	
-			
+						
 			// ULOZENI SAMOTNE ENTITY ---------------------------------------------
 			// Pokud jsou k ulozeni nejaka TABULKOVA data, ulozim je
 			$addtionalDataToMerge = array();
@@ -369,7 +372,7 @@ class DibiRepository extends BaseRepository {
 				
 				// OneToMany zalozene na kolekcich
 				if($entity->{$curr} instanceOf EntityCollection) {
-					$entity->{$curr}->save();
+					$entity->{$curr}->save($this);
 					continue;
 				}
 				
