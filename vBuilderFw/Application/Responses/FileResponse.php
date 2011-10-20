@@ -39,7 +39,8 @@ class FileResponse extends Nette\Application\Responses\FileResponse {
 
 	/** @var string value for content disposition header */
 	private $contentDisposition = 'inline';
-
+	private $caching = true;
+	
 	/**
 	 * @param string file path
 	 * @param string file name (what will user get)
@@ -72,14 +73,49 @@ class FileResponse extends Nette\Application\Responses\FileResponse {
 		else
 			throw new \InvalidArgumentException("Content disposition must be one of these: ".implode(",", $values));
 	}
+	
+	/**
+	 * Sets caching allowed
+	 * 
+	 * @param bool true for allow client aching 
+	 */
+	final public function setCachingAllowed($allowed) {
+		$this->caching = $allowed;
+	}
+	
+	/**
+	 * Returns true, if browser caching is allowed for this file
+	 * 
+	 * @return bool 
+	 */
+	final public function isCachingAllowed() {
+		return $this->caching;
+	}
 
 	/**
 	 * Sends response to output.
 	 * @return void
 	 */
 	public function send(Nette\Http\IRequest $httpRequest, Nette\Http\IResponse $httpResponse) {
+		$lastMTime = \filemtime($this->getFile());
+		
+				
+		// Pokud je povoleno cachovani, podrzim to po dobu 14ti dnu (nebo dokud se soubor zmeni)
+		if($this->isCachingAllowed()) {
+			$httpResponse->setExpiration(time() + 60*60*24*14);
+		
+			$cachedTime = $httpRequest->getHeader('If-Modified-Since');
+			if($cachedTime >= $lastMTime) {
+				$httpResponse->setCode(304);
+
+				return ;
+			}
+		
+		}
+		
+		
 		$httpResponse->setContentType($this->getContentType());
-		$httpResponse->addHeader("Last-Modified", gmdate("U", \filemtime($this->getFile())));
+		$httpResponse->addHeader("Last-Modified", gmdate("U", $lastMTime));
 		$httpResponse->setHeader('Content-Disposition', $this->getContentDisposition().'; filename="'.$this->getName().'"');
 
 		$filesize = $length = filesize($this->getFile());
