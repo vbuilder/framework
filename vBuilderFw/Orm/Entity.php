@@ -320,7 +320,7 @@ class Entity extends vBuilder\Object {
 		}
 		
 		// Vytvorim data container
-		$this->data = new EntityData($this->metadata, $data);		
+		$this->data = new EntityData($this->metadata, $data, $this->repository);		
 		$this->data->onFieldChanged[] = callback($this, 'clearCache');
 		$this->data->onFirstRead[] = callback($this, 'onFirstRead');
 		
