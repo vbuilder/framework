@@ -110,8 +110,14 @@ class ControlRenderer extends vBuilder\Object {
 		// File templates
 		if($this->template instanceof Nette\Templating\IFileTemplate && !$this->template->getFile()) {
 			foreach($this->formatTemplateFiles() as $file) {
-				if(file_exists($file)) {
+				if(file_exists($file)) {					
 					$this->template->setFile($file);
+					
+					// Automaticky extend
+					if(!isset($this->template->_extends) && $file != $this->getDefaultTemplateFile() && file_exists($this->getDefaultTemplateFile())) {
+						$this->template->_extends = $this->getDefaultTemplateFile();
+					}
+					
 					$this->template->render();
 					return ;
 				}
@@ -145,6 +151,20 @@ class ControlRenderer extends vBuilder\Object {
 		return dirname($this->getReflection()->getFileName()) . '/Templates';
 	}
 	
+	
+	/**
+	 * Returns path to default template file for given view
+	 * 
+	 * @param null|string view name (if null, current view is used)
+	 * @return string absolute file path
+	 */
+	protected function getDefaultTemplateFile($view = null) {
+		if(!$view) $view = $this->view;
+		$filename = $view . '.latte';
+		
+		return $this->getDefaultTemplateDirectory() . '/' . $filename;
+	}
+	
 	/**
 	 * Retursn current template directory
 	 * 
@@ -166,7 +186,7 @@ class ControlRenderer extends vBuilder\Object {
 		if(isset($this->_tplDir)) {
 			return array(
 					$this->_tplDir . '/' . $filename,
-					$this->getDefaultTemplateDirectory() . '/' . $filename
+					$this->getDefaultTemplateFile()
 			);
 		}
 

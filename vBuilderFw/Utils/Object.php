@@ -33,6 +33,60 @@ use Nette;
  */
 class Object extends Nette\Object {
 
+	/** @var bool event setup state */
+	private $_eventSetupCalled = false;
+	
+	/** @var array of event listener installers: function(Object) */
+	public $onEventSetup = array();
+	
+	/**
+	 * Sets up object events
+	 */
+	protected function eventSetup() {
+
+	}
+	
+	/**
+	 * Call to undefined method.
+	 * @param  string  method name
+	 * @param  array   arguments
+	 * @return mixed
+	 * @throws MemberAccessException
+	 */
+	public function __call($name, $args) {
+		$class = new Nette\Reflection\ClassType($this);
+
+		if ($name === '') {
+			throw new Nette\MemberAccessException("Call to class '$class->name' method without name.");
+		}
+
+		// event functionality
+		if ($class->hasEventProperty($name)) {			
+			if(!$this->_eventSetupCalled) {
+				$this->_eventSetupCalled = true;
+				
+				$this->eventSetup();
+				$this->onEventSetup($this);
+			}
+			
+			if (is_array($list = $this->$name) || $list instanceof \Traversable) {
+				foreach ($list as $handler) {
+					callback($handler)->invokeArgs($args);
+				}
+			}
+			
+			return NULL;
+		}
+
+		// extension methods
+		if ($cb = $class->getExtensionMethod($name)) {
+			array_unshift($args, $this);
+			return $cb->invokeArgs($args);
+		}
+
+		throw new Nette\MemberAccessException("Call to undefined method $class->name::$name().");
+	}
+	
 	/**
 	 * Allowing to emit static events through public variable
 	 * 

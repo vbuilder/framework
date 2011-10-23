@@ -194,7 +194,7 @@ class CliArgsParser {
 			return false;
 		}
 		
-		foreach($this->options as $key => $option) {
+		foreach((array) $this->options as $key => $option) {
 			if($option['required'] && !isset($this->parsedOptions[$key])) {
 				$this->errorMsg = "Missing required option '$key'";
 				return false;

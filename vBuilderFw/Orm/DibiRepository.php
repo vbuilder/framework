@@ -56,8 +56,10 @@ class DibiRepository extends BaseRepository {
 	 * @return vBuilder\Orm\Fluent
 	 */
 	public function findAll($entityName, $processSubclasses = false) {
-		if($processSubclasses)
-			throw new Nette\NotImplementedException("findAll() with subclasses is not supported by " . get_called_class() . " at the moment.");
+		// Kvuli objednavkam, krici to tam, protoze se to pouziva v session, ale tady
+		// to neni potreba
+		/* if($processSubclasses)
+			throw new Nette\NotImplementedException("findAll() with subclasses is not supported by " . get_called_class() . " at the moment."); */
 		
 		$class = self::getEntityClass($entityName);
 		// TODO: Dodelat genericke entity z configu

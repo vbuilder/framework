@@ -233,8 +233,11 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 		}
 			
 		$class = get_class($this) . "(".$fields.")";
-				
-		throw new EntityException("No record found for $class in table '".$this->metadata->getTableName()."'", EntityException::NOT_FOUND);
+		
+		if($this->repository instanceof DibiRepository)
+			throw new EntityException("No record found for $class in table '".$this->metadata->getTableName()."'", EntityException::NOT_FOUND);
+		else
+			throw new EntityException("No record found for $class in " . get_class($this->repository), EntityException::NOT_FOUND);
 	}
 	
 	/**

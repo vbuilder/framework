@@ -80,14 +80,18 @@ class EntityData extends vBuilder\Object {
 	/** @var need to fetch lock */
 	private $currentlyPerformingOnNeedToFetch = false;
 	
+	/** @var string repository key */
+	private $repositoryId;
+	
 	/**
 	 * Constructor of entity data object
 	 * 
 	 * @param IEntityMetadata metadata object instance (ref)
 	 * @param array of initial data
 	 */
-	public function __construct(IEntityMetadata &$metadata, array $data = array()) {
+	public function __construct(IEntityMetadata &$metadata, array $data = array(), IRepository $repository) {
 		$this->metadata = &$metadata;
+		$this->repositoryId = get_class($repository);
 		$this->loadData($data);
 	}
 	
@@ -301,7 +305,7 @@ class EntityData extends vBuilder\Object {
 		if(count($newId) == count($idFields) && $newId != $oldId) {
 			
 			// Vytvorim si referenci pro nove ID
-			$this->data = &self::$_repository[$this->metadata->getTableName()];
+			$this->data = &self::$_repository[$this->repositoryId][$this->metadata->getTableName()];
 			foreach($newId as $curr) {
 				if(!isset($this->data[$curr])) $this->data[$curr] = array();
 				$this->data = &$this->data[$curr];
