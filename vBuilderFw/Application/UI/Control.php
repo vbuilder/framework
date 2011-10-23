@@ -53,7 +53,7 @@ class Control extends Nette\Application\UI\Control {
 	/**
 	 * Renders control
 	 */
-	function render($params = array()) {		
+	function render($params = array()) {
 		$this->renderCalled = true;
 		$this->renderParams = $params;
 		
@@ -284,6 +284,20 @@ class Control extends Nette\Application\UI\Control {
 		}
 		
 		$this->signalReceived($view);
+	}
+	
+	
+	/**
+	 *
+	 * @param string $name
+	 * @param array $args 
+	 */
+	public function __call($methodName, $args) {
+		if (Nette\Utils\Strings::startsWith($methodName, 'render')) {
+			$this->changeView(strtolower(substr($methodName, 6)));
+			return call_user_func_array(array($this, 'render'), $args);
+		}
+		return parent::__call($methodName, $args);
 	}
 	
 }
