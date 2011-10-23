@@ -45,6 +45,9 @@ class EntityCollection extends Collection {
 	}
 	
 	public function load() {
+		// Jinak by se data stale pricitala
+		if($this->loaded) return ;
+		
 		$this->loaded = true;
 		if(!$this->data) $this->data = array();
 		
