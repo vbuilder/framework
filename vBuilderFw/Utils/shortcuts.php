@@ -58,13 +58,43 @@ function bd() {
 	}
 }
 
+function dt(array $var) {
+	$firstRow = (array) reset($var);
+	
+	echo '<table style="border-collapse: collapse; font-size: 9pt; background: white; margin: 10px 0;"><thead><tr>';
+	echo '<td style="border: 1px solid #dddddd;">&nbsp;</td>';
+	foreach(array_keys($firstRow) as $col) {
+		echo "<td style=\"border: 1px solid #dddddd; padding: 3px 10px; text-align: center;\">$col</td>";
+	}
+	
+	echo '</tr><tbody>';
+	
+	$index = 0;
+	foreach($var as $row) {
+		echo '<td style="border: 1px solid #dddddd; padding: 3px 10px; color: #cc0000;">#'.++$index.'</td>';
+		
+		foreach($row as $col) {
+			echo "<td style=\"border: 1px solid #dddddd; padding: 3px 10px;\">\n";
+			Debug::dump($col);
+			echo "</td>\n";
+		}
+	}
+	
+	echo '</tbody></tbody>';
+}
+
 function d() {
 	Debug::$maxDepth = 10;
 	foreach (func_get_args() as $m) {
-		Debug::dump($m);
+		if($m instanceof \DibiResult) {
+			dt($m->fetchAll());
+		} else {
+			Debug::dump($m);
+		}
 	}
 	Debug::$maxDepth = 3;
 }
+
 function dd() {
 	call_user_func_array('d', func_get_args());
 	die;
