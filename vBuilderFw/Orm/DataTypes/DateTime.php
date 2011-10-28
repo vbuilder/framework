@@ -34,7 +34,13 @@ use vBuilder,
  */
 class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 
+	protected $entity;
+	protected $fieldName;
+	
 	public function __construct($fieldName, &$entity, Nette\DI\IContainer $context) {
+		$this->entity = $entity;
+		$this->fieldName = $fieldName;
+		
 		$data = $entity->data->{$fieldName};
 		if(is_numeric($data)) $data = date('Y-m-d H:i:s', $data);
 		
@@ -42,6 +48,13 @@ class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 	}
 
 	public function convertFrom(&$data) {		
+		if($data instanceof \DateTime) {
+			$this->entity->data->{$this->fieldName} = $data->format('Y-m-d H:i:s');
+			$this->setTimestamp($data->getTimestamp());
+			$this->setTimezone($data->getTimezone());
+			return ;
+		}
+		
 		throw new Nette\InvalidArgumentException("'".  gettype($data)."' is not supported by " . get_called_class());
 	}
 	
