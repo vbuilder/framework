@@ -68,6 +68,16 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	}
 
 	/**
+	 * Returns user display name. It can be overloaded to contain real user name and
+	 * surname or for example nick name.
+	 * 
+	 * @return string 
+	 */
+	public function getDisplayName() {
+		return $this->username;
+	}
+	
+	/**
 	 * Returns user id. Required implementation because of IIdentity.
 	 * 
 	 * @return int UID
