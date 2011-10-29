@@ -298,6 +298,8 @@ class Control extends Nette\Application\UI\Control {
 			if(!$this->actionHandled) {
 				$this->changeView(strtolower(substr($methodName, 6)));
 				return call_user_func_array(array($this, 'render'), $args);
+			} else {
+				$this->render();
 			}
 			
 			return ;
