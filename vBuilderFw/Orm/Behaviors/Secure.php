@@ -51,6 +51,9 @@ class Secure implements vBuilder\Orm\IBehavior {
 	/** @var Nette\DI\IContainer DI */
 	private $context;
 	
+	/** @var bool true if security checks are enabled */
+	private $_isEnabled = true;
+	
 	/**
 	 * Register behavior to entity
 	 * 
@@ -66,6 +69,24 @@ class Secure implements vBuilder\Orm\IBehavior {
 		$this->entity->onCreate[] = \callback($this, 'createSecurityCheck');
 		$this->entity->onUpdate[] = \callback($this, 'updateSecurityCheck');
 		$this->entity->onPreDelete[] = \callback($this, 'deleteSecurityCheck');
+	}
+	
+	/**
+	 * Allow to bypass security check
+	 * 
+	 * @param bool 
+	 */
+	public function setBypassSecurityCheck($enabled = true) {
+		$this->_isEnabled = !$enabled;
+	}
+	
+	/**
+	 * Returns true if security checks will be bypassed
+	 * 
+	 * @return bool 
+	 */
+	public function getBypassSecurityCheck() {
+		return !$this->_isEnabled;
 	}
 	
 	/**
@@ -112,6 +133,8 @@ class Secure implements vBuilder\Orm\IBehavior {
 	 * @throws SecurityException if user does not have permission to do that
 	 */
 	protected function checkPermission($permission) {
+		if(!$this->_isEnabled) return ;		
+		
 		if(!$this->context->user->isAllowed($this->entity, $permission))
 			throw new SecurityException("Operation '$permission' is not permitted on '".$this->entity->getResourceId()."'", SecurityException::OPERATION_NOT_PERMITTED);
 	}
