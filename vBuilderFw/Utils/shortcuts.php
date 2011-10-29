@@ -71,6 +71,7 @@ function dt(array $var) {
 	
 	$index = 0;
 	foreach($var as $row) {
+		echo '<tr>';
 		echo '<td style="border: 1px solid #dddddd; padding: 3px 10px; color: #cc0000;">#'.++$index.'</td>';
 		
 		foreach($row as $col) {
@@ -78,6 +79,7 @@ function dt(array $var) {
 			Debug::dump($col);
 			echo "</td>\n";
 		}
+		echo '</tr>';
 	}
 	
 	echo '</tbody></tbody>';
