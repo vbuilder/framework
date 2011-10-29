@@ -146,6 +146,8 @@ class SessionRepository extends BaseRepository {
 	public function save($holder) {		
 		if($holder instanceof Entity) {
 				return $this->saveEntity($holder);
+		} elseif($holder instanceof EntityCollection) {
+				$result = $this->saveEntityCollection($holder);
 		}
 				
 		throw new Nette\NotSupportedException("Saving of class '".get_class($holder)."' is not supported by repository '".get_called_class()."'");		

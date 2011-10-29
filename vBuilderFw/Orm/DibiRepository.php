@@ -38,6 +38,8 @@ class DibiRepository extends BaseRepository {
 	/** @var DibiConnection DB connection */
 	protected $db;
 
+	private $_inProgressLock = array();
+	
 	/**
 	 * Constructor
 	 * 
@@ -208,16 +210,41 @@ class DibiRepository extends BaseRepository {
 	 * @return bool true if record has been successfuly loaded, false if record does not exist
 	 */
 	public function save($holder) {
-		// Delam zvlast, protoze jinak by se mohla vyhazovat
-		// vyjimka pri DibiFluent::__toString
-		if(!$this->db->isConnected()) $this->db->connect();
+		$result = false;
 		
+		$classId = get_class($holder) . md5($holder);
 		if($holder instanceof Entity) {
-				return $this->saveEntity($holder);
-		}
+			$d = "";
+			foreach($holder->data->getAllData() as $key => $value) {
+				if(!$holder->metadata->isFieldGenerated($key))
+					$d .= $value;
+			}
 				
-		throw new Nette\NotSupportedException("Saving of class '".get_class($holder)."' is not supported by repository '".get_called_class()."'");		
-		return false;
+			$classId .= md5($d);
+		}
+		
+		// Ochrana proti nekonecneho cyklu pri ukladani obousmernych vazeb
+		if(!isset($this->_inProgressLock[$classId])) {
+			$this->_inProgressLock[$classId] = true;
+
+			// Delam zvlast, protoze jinak by se mohla vyhazovat
+			// vyjimka pri DibiFluent::__toString
+			if(!$this->db->isConnected()) $this->db->connect();
+
+			if($holder instanceof Entity) {
+				$result = $this->saveEntity($holder);
+			} elseif($holder instanceof EntityCollection) {
+				$result = $this->saveEntityCollection($holder);
+			}
+
+			unset($this->_inProgressLock[$classId]);
+			
+			if($result === false)
+				throw new Nette\NotSupportedException("Saving of class '".get_class($holder)."' is not supported by repository '".get_called_class()."'");		
+
+		}
+		
+		return $result;
 	}
 	
 	public function saveEntity(Entity $entity) {
@@ -240,7 +267,7 @@ class DibiRepository extends BaseRepository {
 			foreach($idFields as $name) {
 				if(!$entity->metadata->isFieldGenerated($name)) {
 					if(!isset($entity->data->$name))
-						throw new EntityException("Cannot save with missing value for field '$name' which is mandatory because of ID index", EntityException::ID_NOT_DEFINED);
+						throw new EntityException("Cannot save '".get_class($entity)."' with missing value for field '$name' which is mandatory because of ID index", EntityException::ID_NOT_DEFINED);
 				} elseif($autoField === null) {
 					$autoField = $name;
 				} else
@@ -277,7 +304,9 @@ class DibiRepository extends BaseRepository {
 								$this->save($targetEntity);
 								
 								$joinPairs = $entity->metadata->getFieldJoinPairs($curr);
-								if(count($joinPairs) != 1) throw new \LogicException("Joining entity on more keys is currently not supported");
+								if(count($joinPairs) == 0) throw new \LogicException("Missing join pairs for ".get_class($entity)."::$curr, forgot to set joinOn/joinUsing?");
+								elseif(count($joinPairs) > 1) throw new \LogicException("Joining entity on more keys is currently not supported (".get_class($entity)."::$curr)");
+								
 								list($localIdField, $targetIdField) = reset($joinPairs);
 								if($entity->data->{$localIdField} !== $targetEntity->{$targetIdField})
 									$updateData[$entity->metadata->getFieldColumn($localIdField)] = $targetEntity->{$targetIdField};
@@ -428,7 +457,7 @@ class DibiRepository extends BaseRepository {
 				$entity->onPostSave($entity);
 			}
 			
-			// Commitnuti dat a provedeni merge automaticky generovanech polozek do entity
+			// Commitnuti dat
 			$this->db->commit();
 			$entity->data->performSaveMerge();
 		} catch(\Exception $e) {

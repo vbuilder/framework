@@ -53,13 +53,16 @@ class EntityCollection extends Collection {
 		
 		$parentMetadata = $this->parent->getMetadata();
 		
+		$targetClass = $this->targetEntity;
+		$targetMetadata = $targetClass::getMetadata();
+		
 		$processSubclasses = $parentMetadata->getFieldProperty($this->field, 'processSubclasses', false);
 		$ds = $this->context->repository->findAll($this->targetEntity, $processSubclasses);
 
 		// Podminky spojeni a separace joinKeys
 		$joinKeys = array();
 		foreach($parentMetadata->getFieldJoinPairs($this->field) as $join)
-			$ds->where("[".$join[1]."] = %s", $this->parent->{$join[0]});
+			$ds->where("[".$targetMetadata->getFieldColumn($join[1])."] = %s", $this->parent->{$join[0]});
 		
 		
 			
@@ -71,25 +74,13 @@ class EntityCollection extends Collection {
 	}
 	
 	public function save(IRepository $repository = null) {	
-		//if(!$this->loaded && $repository != null && $repository != $this->context->repository) $this->load();
-		if(!$this->data) return;
-				
-		$joinPairs = $this->parent->getMetadata()->getFieldJoinPairs($this->field);
-		
-		foreach($this->data as &$member) {
-			foreach($joinPairs as $join) 
-				$member->{$join[1]} = $this->parent->{$join[0]};
-				
-			if($repository)
-				$repository->save($member);
-			else
-				$member->save();
-		}
+		if($repository === null) $repository = $this->parent->repository;
+		$repository->save($this);
 	}
 	
 	public function add($relatedEntity) {
 		if(!($relatedEntity instanceOf $this->targetEntity))
-			  throw new \InvalidArgumentException("Added entity has to be instance of '$relatedEntity'");
+			  throw new \InvalidArgumentException("Added entity has to be instance of '$this->targetEntity'");
 		
 		foreach((array) $this->data as $curr) 
 			if($curr === $relatedEntity)

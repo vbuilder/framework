@@ -94,5 +94,30 @@ abstract class BaseRepository extends vBuilder\Object implements IRepository {
 		
 		return false;
 	}
+	
+	// REPO INDEPENDENT STUFF ---------------------------------------------------
+	
+	public function saveEntityCollection(EntityCollection $collection) {
+		if(count($collection) == 0) return;
+				
+		$joinPairs = $collection->parent->getMetadata()->getFieldJoinPairs($collection->idField);
+		
+		foreach($collection as &$member) {
+			foreach($joinPairs as $join) {
+				// Oboustranna vazba
+				if($member->getMetaData()->getFieldType($join[1]) == 'OneToOne' && ($entityName = $member->getMetaData()->getFieldEntityName($join[1])) != '' && $collection->parent instanceof $entityName) {
+				
+					$member->{$join[1]} = $collection->parent;
+					
+				// Obycejny join
+				} else {
+					$member->{$join[1]} = $collection->parent->{$join[0]};
+				}
+				
+			}
+			
+			$this->save($member);
+		}
+	}
 
 }
