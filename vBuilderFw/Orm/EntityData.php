@@ -279,6 +279,20 @@ class EntityData extends vBuilder\Object {
 	}
 	
 	/**
+	 * Same as isset but allowing NULL values
+	 * 
+	 * @param string field name
+	 * @return bool 
+	 */
+	public function isKeySet($name) {
+		if($this->metadata->hasField($name)) {
+			return array_key_exists($name, $this->newData) || array_key_exists($name, $this->data);
+		}
+		
+		return false;
+	}
+	
+	/**
 	 * Function merges new data to repository
 	 * 
 	 * @param array of new data 
