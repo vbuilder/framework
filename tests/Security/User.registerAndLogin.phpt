@@ -33,13 +33,6 @@ use vBuilder\Test\Assert;
 
 require __DIR__ . '/../bootstrap.php';
 
-$config = $context->config->get('security.user')->toArray();
-
-dd($config);
-
-exit;
-
-
 $db = $context->connection;
 $webUser = $context->user->setNamespace('vBuilder\Security\Test');
 
