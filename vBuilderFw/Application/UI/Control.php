@@ -23,7 +23,7 @@
 
 namespace vBuilder\Application\UI;
 
-use Nette;
+use vBuilder, Nette;
 
 /**
  * Advanced base control for vBuilder based applications
@@ -264,6 +264,22 @@ class Control extends Nette\Application\UI\Control {
 	public function redirect($code, $destination = NULL, $args = array()) {
 		if(!$this->actionHandled && $this->renderCalled) {
 			throw new Nette\InvalidStateException("You cannot use redirect when no signal is called. Use ".get_called_class()."::changeView() instead.");
+		}
+		
+		// Pokud redirectujeme na Nette lazy link, nesmime pouzit jeho serializaci,
+		// protoze generuje URL pomoci Presenter::createRequest v LINK modu. 
+		// To neprenasi flash session ID. Zpravicky ale potrebujeme zachovavat.
+		// Proto musime vygenerovat pozadavek znovu
+		if(func_num_args() == 1 && $code instanceof Nette\Application\UI\Link) {
+			$link = $code;
+			
+			// Potrebujeme znat komponentu
+			if(!($link instanceof vBuilder\Application\UI\Link))
+				throw new \LogicException ("Perhaps wanted to pass vBuilder\Application\UI\Link instead of Nette one?");		
+			
+			$link->component->redirect($link->destination, $link->params);
+			
+			return ;
 		}
 		
 		if($code == 'this') $code = $this->view;
