@@ -56,9 +56,11 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 
 	protected static function & getMetadataInternal() {
 		$m1 = parent::getMetadataInternal();
-		$config = Nette\Environment::getConfig();
-		if(isset($config["security"]["user"])) {
-			$m2 = new vBuilder\Orm\ConfigMetadata((array) $config["security"]["user"]);
+
+		$config = Nette\Environment::getContext()->config;
+		
+		if($config->get('security.user') !== null) {
+			$m2 = new vBuilder\Orm\ConfigMetadata($config->get('security.user')->toArray());
 
 			$metadata = new vBuilder\Orm\MergedMetadata($m1, $m2);
 			return $metadata;
@@ -74,6 +76,11 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	 * @return string 
 	 */
 	public function getDisplayName() {
+				
+		if($this->metadata->hasField('name') && $this->metadata->hasField('surname')) {
+			return $this->name . ' ' . $this->surname;
+		}
+		
 		return $this->username;
 	}
 	
