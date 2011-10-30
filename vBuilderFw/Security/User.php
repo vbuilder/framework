@@ -56,12 +56,15 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 
 	protected static function & getMetadataInternal() {
 		$m1 = parent::getMetadataInternal();
-
-		$config = Nette\Environment::getContext()->config;
 		
-		if($config->get('security.user') !== null) {
-			$m2 = new vBuilder\Orm\ConfigMetadata($config->get('security.user')->toArray());
-
+		// NESMIM POUZIT NAS CONFIG, PROTOZE JE ZAVISLY NA UZIVATELI!
+		//	=> infinite loop
+		//$config = Nette\Environment::getContext()->config->getGlobalScope();
+		
+		$config = Nette\Environment::getConfig();
+		if(isset($config["security"]["user"])) {
+			$m2 = new vBuilder\Orm\ConfigMetadata((array) $config["security"]["user"]);
+			
 			$metadata = new vBuilder\Orm\MergedMetadata($m1, $m2);
 			return $metadata;
 		}
