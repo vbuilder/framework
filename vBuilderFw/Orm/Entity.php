@@ -740,6 +740,11 @@ class Entity extends vBuilder\Object {
 		} elseif(Nette\Utils\Strings::compare($type, "String")) {
 			$data = (String) $data;
 			return $data;
+			
+		// Boolean
+		} elseif(Nette\Utils\Strings::compare($type, "Boolean")) {
+			$data = (bool) $data;
+			return $data;
 		
 		// OneToOne
 		} elseif(Nette\Utils\Strings::compare($type, "OneToOne")) {
