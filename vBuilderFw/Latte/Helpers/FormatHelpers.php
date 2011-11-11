@@ -46,5 +46,9 @@ class FormatHelpers {
 
 		return number_format($bytes, ($c ? 1 : 0), ",", " ")." ".$unim[$c];
 	}
+	
+	public static function stripBetweenTags($str) {
+		return trim(preg_replace("#\\>[ \t\r\n]+\\<#", "><", $str));
+	}
 
 }

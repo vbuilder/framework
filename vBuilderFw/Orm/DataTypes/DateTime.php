@@ -24,7 +24,8 @@
 namespace vBuilder\Orm\DataTypes;
 
 use vBuilder,
-	 Nette;
+		Nette,
+		Nette\Utils\Strings;
 
 /**
  * Date and time, subclassed from Nette\dibi
@@ -52,6 +53,23 @@ class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 			$this->entity->data->{$this->fieldName} = $data->format('Y-m-d H:i:s');
 			$this->setTimestamp($data->getTimestamp());
 			$this->setTimezone($data->getTimezone());
+			return ;
+		}
+		
+		elseif(is_int($data) || intval($data) == $data) {
+			$this->setTimestamp(intval($data));
+			$this->entity->data->{$this->fieldName} = $this->format('Y-m-d H:i:s');
+			return ;
+			
+		} elseif(is_string($data)) {
+			if(($matches = Strings::match($data, '#^[0-4]{4}-[0-9]{2}-[0-9]{2}$#')) !== false) {
+				$this->setTimestamp(strtotime($data));
+				$this->entity->data->{$this->fieldName} = $this->format('Y-m-d H:i:s');
+				
+			} else {
+				throw new Nette\InvalidArgumentException("Unsupported string format " . var_export($data, true) . " for " . get_called_class());
+			}
+			
 			return ;
 		}
 		
