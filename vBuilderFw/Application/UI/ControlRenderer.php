@@ -234,15 +234,15 @@ class ControlRenderer extends vBuilder\Object {
 		$template->baseUri = $template->baseUrl = rtrim($this->context->httpRequest->getUrl()->getBaseUrl(), '/');
 		$template->basePath = preg_replace('#https?://[^/]+#A', '', $template->baseUrl);
 		
-		if ($presenter instanceof Presenter) {
-			$template->setCacheStorage($presenter->getContext()->templateCacheStorage);
-			$template->user = $presenter->getUser();
-			$template->netteHttpResponse = $presenter->getHttpResponse();
-			$template->netteCacheStorage = $presenter->getContext()->cacheStorage;
+		if ($presenter instanceof Nette\Application\UI\Presenter) {
+			$template->setCacheStorage($this->context->templateCacheStorage);
+			$template->user = $this->context->user;
+			$template->netteHttpResponse = $this->context->httpResponse;
+			$template->netteCacheStorage = $this->context->cacheStorage;
 
 			// flash message
-			if ($presenter->hasFlashSession()) {
-				$id = $this->getParamId('flash');
+			if ($presenter->hasFlashSession()) {			
+				$id = $this->control->getParamId('flash');
 				$template->flashes = $presenter->getFlashSession()->$id;
 			}
 		}
