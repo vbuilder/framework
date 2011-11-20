@@ -74,6 +74,8 @@ class EntityCollection extends Collection {
 	}
 	
 	public function save(IRepository $repository = null) {	
+		if(!$this->mightNeedSave()) return ;
+	
 		if($repository === null) $repository = $this->parent->repository;
 		$repository->save($this);
 	}

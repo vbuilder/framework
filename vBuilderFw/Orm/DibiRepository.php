@@ -325,7 +325,7 @@ class DibiRepository extends BaseRepository {
 				// vazba probiha na druhem konci, proto data vyloucim z updatu.
 				// Entity se musi ulozi az POTOM, co se ulozi tato entita (aby znaly jeji ID).
 				elseif($type == 'OneToMany') {
-					if($entity->{$curr} instanceOf Collection && $entity->{$curr}->count())
+					if($entity->{$curr} instanceOf Collection && $entity->{$curr}->mightNeedSave())
 						$needToSaveEvenWithoutData = true;
 					
 					$externalFields[] = $curr;
@@ -359,7 +359,7 @@ class DibiRepository extends BaseRepository {
 				}
 
 				// Data se nezmenila
-				else {
+				/* else {
 					// Nevim jestli je to takhle uplne idealni, sice insert ignore ... on duplicate key update
 					// setri zamykani tabulky, ale zese je treba overovat, jestli se neco neposralo
 					// a pokud jo, tak nemam zadny chybovy report
@@ -372,7 +372,7 @@ class DibiRepository extends BaseRepository {
 					$result = $query->fetch();
 					if($result === false)
 						throw new EntityException('Error saving entity. Missing mandatory fields?', EntityException::SAVE_FAILED);
-				}
+				} */
 			}
 			
 			// KONEC ULOZENI ENTITY -----------------------------------------------

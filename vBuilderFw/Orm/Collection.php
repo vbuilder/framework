@@ -103,6 +103,16 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 		throw new Nette\NotImplementedException('Not implemented yet');
 	}
 
+	/**
+	 * Returns true if collection might need to be saved
+	 */
+	public function mightNeedSave() {
+		// Pokud data nebyla nactena ani nebyla pridana zadna nova entita
+		// nebudeme se ani pokouset o save
+		
+		return count($this->data) > 0;
+	}
+
 	// General access functions =================================================
 
 	/**
