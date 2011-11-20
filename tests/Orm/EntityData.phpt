@@ -92,16 +92,16 @@ class TestEntityMetadata implements IEntityMetadata {
 // Testovaci entita
 class TestEntityData extends EntityData {
 	
-	function __construct(array $data = array()) {
+	function __construct(array $data, $repo) {
 		$metadata = new TestEntityMetadata();
 		
-		parent::__construct($metadata, $data);
+		parent::__construct($metadata, $data, $repo);
 	}
 	
 }
 
 // =============================================================================
-$ed = new TestEntityData;
+$ed = new TestEntityData(array(), $context->repository);
 
 // Test na nenacteny field
 Assert::null($ed->id);
@@ -173,8 +173,8 @@ $ed->id = 345;
 Assert::equal($changedFields, array());
 
 // Test data sharingu ruznych instanci entity ------------
-$e = new TestEntityData(array('id' => 1, 'name' => 'Lorem ipsum', 'number' => 13));
-$e2 = new TestEntityData(array('id' => 1));
+$e = new TestEntityData(array('id' => 1, 'name' => 'Lorem ipsum', 'number' => 13), $context->repository);
+$e2 = new TestEntityData(array('id' => 1), $context->repository);
 
 Assert::same($e2->name, $e->name);
 
@@ -199,13 +199,13 @@ Assert::same($e->name, 'Novy zaznam');
 Assert::same($e->number, 13);
 
 // Test zaznamu bez repozitare ---------------------------
-$e3 = new TestEntityData(array('name' => 'A', 'number' => 13));
+$e3 = new TestEntityData(array('name' => 'A', 'number' => 13), $context->repository);
 Assert::same($e3->number, 13);
 
 // Umisteni zaznamu do repozitare (simulace auto-increment ID)
 $e3->mergeData(array('id' => 3));
 $e3->performSaveMerge();
-$e4 = new TestEntityData(array('id' => 3));
+$e4 = new TestEntityData(array('id' => 3), $context->repository);
 Assert::same($e4->number, $e3->number);
 
 // Test udrzovani dat
