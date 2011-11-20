@@ -341,7 +341,26 @@ class DibiRepository extends BaseRepository {
 			$addtionalDataToMerge = array();
 			$action = null;
 			if(count($updateData) > 0 || $needToSaveEvenWithoutData) {
-				$this->db->query('INSERT IGNORE ', $entity->metadata->getTableName(), $allTableFields, '%if', $updateData, ' ON DUPLICATE KEY UPDATE %a', $updateData);
+				$insertData = $allTableFields;
+				$now = new \DateTime;
+			
+				// Automaticke casy vytvoreni / modifikace
+				foreach($fields as $curr) {
+					$type = $entity->metadata->getFieldType($curr);
+					
+					if($type == 'CreatedDateTime') {
+						$insertData[$entity->metadata->getFieldColumn($curr)] = $now->format('Y-m-d H:i:s');
+					} elseif($type == 'ModifiedDateTime') {
+						$insertData[$entity->metadata->getFieldColumn($curr)] = $now->format('Y-m-d H:i:s');
+						$updateData[$entity->metadata->getFieldColumn($curr)] = $now->format('Y-m-d H:i:s');
+					}
+				}
+				
+				$mergeAutoDateTime = function () {
+					
+				};
+			
+				$this->db->query('INSERT IGNORE ', $entity->metadata->getTableName(), $insertData, '%if', $updateData, ' ON DUPLICATE KEY UPDATE %a', $updateData);
 
 				// Provedl se INSERT
 				if($this->db->affectedRows() == 1) {
@@ -356,6 +375,18 @@ class DibiRepository extends BaseRepository {
 				// Provedl se UPDATE
 				elseif($this->db->affectedRows() == 2) {
 					$action = 'update';
+					
+					// Merge data modifikace
+					foreach($fields as $curr) {
+						$type = $entity->metadata->getFieldType($curr);
+						
+						if($type == 'ModifiedDateTime') {
+							$entity->data->mergeData(array(
+								$entity->metadata->getFieldColumn($curr) => $now->format('Y-m-d H:i:s')
+							));	
+						}
+					}
+					
 				}
 
 				// Data se nezmenila

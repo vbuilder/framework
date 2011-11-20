@@ -77,7 +77,7 @@ class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 	}
 	
 	public static function acceptedDataTypes() {
-		return array("DateTime", "Timestamp");
+		return array("DateTime", "Timestamp", 'CreatedDateTime', 'ModifiedDateTime');
 	}
 
 	public function  __toString() {
