@@ -483,8 +483,8 @@ class DibiRepository extends BaseRepository {
 			
 			// Zavolani eventu
 			if($entity instanceof ActiveEntity) {
-				if($action == 'create')	$entity->onCreate($this);
-				elseif($action == 'update') $entity->onUpdate($this);
+				if($action == 'create')	$entity->onCreate($entity);
+				elseif($action == 'update') $entity->onUpdate($entity);
 				$entity->onPostSave($entity);
 			}
 			
