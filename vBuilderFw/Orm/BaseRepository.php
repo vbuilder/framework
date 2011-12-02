@@ -34,7 +34,8 @@ use vBuilder, Nette, dibi;
 abstract class BaseRepository extends vBuilder\Object implements IRepository {
 	
 	/** @var Nette\DI\IContainer DI */
-	protected $context;
+	protected $_context;
+	private $_context2;
 
 	/**
 	 * Constructor
@@ -42,12 +43,18 @@ abstract class BaseRepository extends vBuilder\Object implements IRepository {
 	 * @param Nette\DI\IContainer DI
 	 */
 	public function __construct(Nette\DI\IContainer $context) {
-
-		// Aby vsechny mnou vytvorene tridy mely me jako repozitar
-		$this->context = clone $context;
-		$this->context->removeService('repository');
-		$this->context->addService('repository', $this);
+		$this->_context = $context;
+	}
 	
+	public function getContext() {
+		if(!isset($this->_context2)) {
+			// Aby vsechny mnou vytvorene tridy mely me jako repozitar
+			$this->_context2 = clone $this->_context;
+			$this->_context2->removeService('repository');
+			$this->_context2->addService('repository', $this);
+		}
+		
+		return $this->_context2;
 	}
 	
 	/**
