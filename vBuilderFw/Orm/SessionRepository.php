@@ -60,7 +60,7 @@ class SessionRepository extends BaseRepository {
 
 		$array = array();
 		$classes = $processSubclasses
-		? array_merge(array($entityName), $this->context->robotLoader->getAllChildrenOf($entityName))
+		? array_merge(array($entityName), vBuilder\Utils\ClassInfo::getAllChildrenOf($entityName))
 		: array($entityName);
 		
 		foreach($classes as $entityName) {

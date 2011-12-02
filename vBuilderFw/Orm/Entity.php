@@ -137,7 +137,7 @@ use vBuilder,
  *	- String
  *	- Integer
  *
- * **Warning: When adding new data type class you have to clear RobotLoader cache!**
+ * **Warning: When adding new data type class you have to clear RobotLoader (ClassInfo) cache!**
  *
  * Another important thing is, that when subclassing your function takes precedence.
  *  So you can always implement your getters. But caching of your own implementation is not
@@ -813,57 +813,22 @@ class Entity extends vBuilder\Object {
 	private static function searchForOrmClasses(Nette\DI\Container $container) {
 		self::$_dataTypesImplementations = array();
 		self::$_behaviorImplementations = array();
-		
-		if($container->hasService('robotLoader') && $container->robotLoader instanceOf vBuilder\Loaders\RobotLoader) {
-			$dataTypeClasses = $container->robotLoader->getAllClassesImplementing('vBuilder\\Orm\\IDataType');
-			$behaviorClasses = $container->robotLoader->getAllClassesImplementing('vBuilder\\Orm\\IBehavior');
-			
-			foreach($dataTypeClasses as $className) 
-				self::$_dataTypesImplementations = \array_merge((array) self::$_dataTypesImplementations, \array_fill_keys($className::acceptedDataTypes(), $className));
-			
-			
-			foreach($behaviorClasses as $className) {
-				if(Nette\Utils\Strings::startsWith($className, 'vBuilder\\Orm\\Behaviors'))
-					self::$_behaviorImplementations[mb_substr($className, 23)] = $className;
-				else
-					self::$_behaviorImplementations[$className] = $className;
-			}
 
-			return ;
-		} 
-
-		// Pouze pro zpetnou kompatibilitu s Nettim robot loaderem ---------------		
-		
-		$loaders = Nette\Loaders\AutoLoader::getLoaders();
-		$classes = array();
-		if(count($loaders) > 0) {
-			foreach($loaders as $loader) {
-				if($loader instanceof Nette\Loaders\RobotLoader) {
-					$classes = \array_keys($loader->getIndexedClasses());
-					break;
-				}
-			}
+		$dataTypeClasses = vBuilder\Utils\ClassInfo::getAllClassesImplementing('vBuilder\\Orm\\IDataType');
+		$behaviorClasses = vBuilder\Utils\ClassInfo::getAllClassesImplementing('vBuilder\\Orm\\IBehavior');
+			
+		foreach($dataTypeClasses as $className) 
+			self::$_dataTypesImplementations = \array_merge((array) self::$_dataTypesImplementations, \array_fill_keys($className::acceptedDataTypes(), $className));
+			
+			
+		foreach($behaviorClasses as $className) {
+			if(Nette\Utils\Strings::startsWith($className, 'vBuilder\\Orm\\Behaviors'))
+				self::$_behaviorImplementations[mb_substr($className, 23)] = $className;
+			else
+				self::$_behaviorImplementations[$className] = $className;
 		}
 
-		if(count($classes) == 0)
-			$classes = get_declared_classes();
-
-		foreach($classes as $className) {
-			// Protoze je to vyrazne rychlejsi nez overovat interface pro vsechny
-			if(Nette\Utils\Strings::startsWith($className, 'vBuilder\\Orm\\DataTypes')) {
-				$class = new Nette\Reflection\ClassType($className);
-
-				if($class->implementsInterface('vBuilder\\Orm\\IDataType'))
-					self::$_dataTypesImplementations = \array_merge((array) self::$_dataTypesImplementations, \array_fill_keys($className::acceptedDataTypes(), $className));
-			}
-			
-			elseif(Nette\Utils\Strings::startsWith($className, 'vBuilder\\Orm\\Behaviors')) {
-				$class = new Nette\Reflection\ClassType($className);
-				
-				if($class->implementsInterface('vBuilder\\Orm\\IBehavior'))
-					self::$_behaviorImplementations[mb_substr($className, 23)] = $className;
-			}
-		}
-	}
+		return ;
+	} 
 	
 }
