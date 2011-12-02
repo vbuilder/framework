@@ -242,7 +242,7 @@ class ControlRenderer extends vBuilder\Object {
 
 			// flash message
 			if ($presenter->hasFlashSession()) {			
-				$id = $this->control->getParamId('flash');
+				$id = $this->control->getParameterId('flash');
 				$template->flashes = $presenter->getFlashSession()->$id;
 			}
 		}
