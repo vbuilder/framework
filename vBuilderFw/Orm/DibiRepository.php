@@ -415,13 +415,16 @@ class DibiRepository extends BaseRepository {
 				if($entity->metadata->getFieldType($curr) == 'OneToOne') {
 					if($entity->metadata->getFieldMappedBy($curr) !== null && (get_class($entity) == $entity->metadata->getFieldMappedBy($curr) || is_subclass_of(get_class($entity), $entity->metadata->getFieldMappedBy($curr)) ) ) {
 						
+						
+						// Zakomentovano! Bylo to tu jen pro sanity check a zpusobovalo to vynucene nacteni target entity => vyjimka, pokud neexistovaly
+						/* 
 						// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
 						// pri nacteni z DB pouze ID)
 						$targetEntity = $entity->{$curr};
 						if($targetEntity !== null) {
 							if($targetEntity->hasChanged())
 								throw new Nette\NotImplementedException("Saving of reversed OneToOne entities is currently not implemented");
-						}
+						} */
 						
 					}
 					
