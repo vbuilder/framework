@@ -34,6 +34,14 @@ require_once __DIR__ . '/Loaders/RobotLoader.php';
  * @since Aug 2, 2011
  */
 class Configurator extends Nette\Configurator {
+	
+	/**
+	 * @return Security\Sha1SaltedHashProvider
+	 */
+	public static function createServicePasswordHashProvider(Nette\DI\Container $container) {
+		$service = new Security\Sha1SaltedHashProvider;
+		return $service;
+	}
 		
 	/**
 	 * @return DibiConnection
@@ -60,18 +68,7 @@ class Configurator extends Nette\Configurator {
 	 * @return vBuilder\Config\IConfig
 	 */
 	public static function createServiceConfig(Nette\DI\Container $container) {
-		$user = $container->user;
-		$userConfig = new Config\DbUserConfig($container, $user->isLoggedIn() ? $user->getId() : null);
-				
-		$user->onLoggedIn[] = function () use ($userConfig, $user) {
-			$userConfig->setUserId($user->getId());
-		};
-		
-		$user->onLoggedOut[] = function () use ($userConfig) {
-			$userConfig->setUserId(null);
-		};
-		
-		return $userConfig;
+		return Config\DbUserConfig::createService($container);
 	}
 	
 	/**

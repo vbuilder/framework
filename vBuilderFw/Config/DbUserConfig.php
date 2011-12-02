@@ -37,6 +37,21 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 	/** @var int|null user id */
 	private $userId;
 	
+	public static function createService(Nette\DI\IContainer $context) {
+		$user = $context->user;
+		$userConfig = new self($context, $user->isLoggedIn() ? $user->getId() : null);
+				
+		$user->onLoggedIn[] = function () use ($userConfig, $user) {
+			$userConfig->setUserId($user->getId());
+		};
+		
+		$user->onLoggedOut[] = function () use ($userConfig) {
+			$userConfig->setUserId(null);
+		};
+		
+		return $userConfig;
+	}
+	
 	/**
 	 * Constructor
 	 * 

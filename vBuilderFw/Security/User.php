@@ -192,7 +192,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	 * @return boolean true if password matches
 	 */
 	public function checkPassword($password) {
-		$hasher = Nette\Environment::getService("vBuilder\\Security\\IPasswordHashProvider");
+		$hasher = $this->context->passwordHashProvider;
 		return $hasher->checkPassword($password, $this->data->password);
 	}
 
@@ -202,7 +202,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	 * @param string password in plain text
 	 */
 	public function setPassword($newPassword) {
-		$hasher = Nette\Environment::getService("vBuilder\\Security\\IPasswordHashProvider");
+		$hasher = $this->context->passwordHashProvider;
 		$this->data->password = $hasher->hashPassword($newPassword);
 	}
 
