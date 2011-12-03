@@ -277,7 +277,7 @@ class Control extends Nette\Application\UI\Control {
 			if(!($link instanceof vBuilder\Application\UI\Link))
 				throw new \LogicException ("Perhaps wanted to pass vBuilder\Application\UI\Link instead of Nette one?");		
 			
-			$link->component->redirect($link->destination, $link->params);
+			$link->component->redirect($link->destination, $link->getParameters());
 			
 			return ;
 		}
