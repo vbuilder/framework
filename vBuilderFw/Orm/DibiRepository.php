@@ -340,6 +340,12 @@ class DibiRepository extends BaseRepository {
 			// Pokud jsou k ulozeni nejaka TABULKOVA data, ulozim je
 			$addtionalDataToMerge = array();
 			$action = null;
+			
+			/* if($needToSaveEvenWithoutData)
+				d("Saving even without update data (forced save)");
+			else
+				d("Trying to save with update date", $updateData); */
+			
 			if(count($updateData) > 0 || $needToSaveEvenWithoutData) {
 				$insertData = $allTableFields;
 				$now = new \DateTime;
