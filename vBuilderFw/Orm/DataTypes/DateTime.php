@@ -52,7 +52,10 @@ class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 		if($data instanceof \DateTime) {
 			$this->entity->data->{$this->fieldName} = $data->format('Y-m-d H:i:s');
 			$this->setTimestamp($data->getTimestamp());
-			$this->setTimezone($data->getTimezone());
+			
+			// @ - Bug #45543 - https://bugs.php.net/bug.php?id=45543
+			if($data->getTimezone() !== false) @$this->setTimezone($data->getTimezone());
+			
 			return ;
 		}
 		
