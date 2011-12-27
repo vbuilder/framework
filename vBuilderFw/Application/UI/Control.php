@@ -131,16 +131,27 @@ class Control extends Nette\Application\UI\Control {
 	final public function getRenderer() {
 		if(isset($this->_renderer)) return $this->_renderer;
 		
-		$renderer = $this->createRenderer();
-		if($renderer instanceof ControlRenderer) {
-			$this->_renderer = $renderer;
-			return $this->_renderer;
-		} else 
-			throw new \LogicException(get_called_class() . "::createRenderer() has to return child of vBuilder\Application\UI\ControlRenderer.");
+		// The factory doesn't have to exist as long as there's the renderer class
+		if (method_exists($this, 'createRendererr')) {
+			$renderer = $this->createRenderer();
+			if(!($renderer instanceof ControlRenderer)) {
+				throw new \LogicException(get_called_class() . "::createRenderer() has to return a descendant of vBuilder\Application\UI\ControlRenderer.");
+			}
+		} elseif (class_exists($className = $this->formatRendererName(get_class($this))) && is_subclass_of($className, 'vBuilder\Application\UI\ControlRenderer')) {
+			$renderer = new $className($this);
+		} else {
+			$renderer = $this->createDefaultRenderer();
+		}
+		$this->_renderer = $renderer;
+		return $this->_renderer;
 	}
 	
-	protected function createRenderer() {
+	protected function createDefaultRenderer() {
 		return new ControlRenderer($this);
+	}
+	
+	protected function formatRendererName($controlName) {
+		return $controlName . 'Renderer';
 	}
 	
 	// </editor-fold>	
