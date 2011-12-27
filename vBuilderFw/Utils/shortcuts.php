@@ -86,7 +86,7 @@ function dt(array $var) {
 }
 
 function d() {
-	Debug::$maxDepth = 10;
+	Debug::$maxDepth = 5;
 	foreach (func_get_args() as $m) {
 		if($m instanceof \DibiResult) {
 			dt($m->fetchAll());
