@@ -132,7 +132,7 @@ class Control extends Nette\Application\UI\Control {
 		if(isset($this->_renderer)) return $this->_renderer;
 		
 		// The factory doesn't have to exist as long as there's the renderer class
-		if (method_exists($this, 'createRendererr')) {
+		if (method_exists($this, 'createRenderer')) {
 			$renderer = $this->createRenderer();
 			if(!($renderer instanceof ControlRenderer)) {
 				throw new \LogicException(get_called_class() . "::createRenderer() has to return a descendant of vBuilder\Application\UI\ControlRenderer.");
