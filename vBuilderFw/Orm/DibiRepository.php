@@ -40,6 +40,11 @@ class DibiRepository extends BaseRepository {
 
 	private $_inProgressLock = array();
 	
+	
+	public static function createPersistentRepositoryServiceAlias(Nette\DI\IContainer $context) {
+		return $context->persistentRepository;
+	}
+	
 	/**
 	 * Constructor
 	 * 
