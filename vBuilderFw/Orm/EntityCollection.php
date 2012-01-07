@@ -63,8 +63,6 @@ class EntityCollection extends Collection {
 		$joinKeys = array();
 		foreach($parentMetadata->getFieldJoinPairs($this->field) as $join)
 			$ds->where("[".$targetMetadata->getFieldColumn($join[1])."] = %s", $this->parent->{$join[0]});
-		
-		
 			
 		// Nactu data (a musim zachovat soucasna)
 		foreach($ds->fetchAll() as $curr) {
