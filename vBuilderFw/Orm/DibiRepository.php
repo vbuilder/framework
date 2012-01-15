@@ -182,11 +182,14 @@ class DibiRepository extends BaseRepository {
 		
 		// Relace (OneToMany, ...)
 		// TODO: Prekontrolovat preklad nazvu sloupcu, nejak se mi to nelibi
+		// TODO: Mne taky ne, ale pokud tomu rozumim dobre, takhle by to melo byt
+		//		 Nepodarilo se mi nikde najit, jestli se tam ma takhle prilepit
+		//		 to "Id" (=jestli se to dela i pri selectu), ale jinak mi to nefunguje.
 		foreach($entity->metadata->getFields() as $curr) {
 			if($entity->metadata->getFieldType($curr) == "OneToMany") {
 				$query2 = $this->db->delete($entity->metadata->getFieldTableName($curr));
 				foreach($entity->metadata->getFieldJoinPairs($curr) as $join) {
-					$query2->where("[".$join[1]."] = %s", $entity->{$join[0]});
+					$query2->where("[".$join[1]."Id] = %s", $entity->{$join[0]});
 				}
 				
 				$query2->execute();
