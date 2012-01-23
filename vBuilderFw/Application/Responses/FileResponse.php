@@ -119,9 +119,9 @@ class FileResponse extends Nette\Application\Responses\FileResponse {
 		$httpResponse->setHeader('Content-Disposition', $this->getContentDisposition().'; filename="'.$this->getName().'"');
 
 		$filesize = $length = filesize($this->getFile());
-		$handle = fopen($this->getFile(), 'r');
+		//$handle = fopen($this->getFile(), 'r');
 
-		if($this->resuming) {
+		if(false && $this->resuming) {
 			$httpResponse->setHeader('Accept-Ranges', 'bytes');
 			$range = $httpRequest->getHeader('Range');
 			if($range !== NULL) {
@@ -149,10 +149,11 @@ class FileResponse extends Nette\Application\Responses\FileResponse {
 		}
 
 		$httpResponse->setHeader('Content-Length', $length);
-		while(!feof($handle)) {
-			echo fread($handle, 4e6);
-		}
-		fclose($handle);
+		readfile($this->getFile());
+		//while(!feof($handle)) {
+		//	echo fread($handle, 4e6);
+		//}
+		//fclose($handle);
 	}
 
 }
