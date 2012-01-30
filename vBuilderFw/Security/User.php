@@ -54,7 +54,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 		call_user_func_array(array('parent', '__construct'), func_get_args());
 	}
 
-	protected static function & getMetadataInternal() {
+	/*protected static function & getMetadataInternal() {
 		$m1 = parent::getMetadataInternal();
 		
 		// NESMIM POUZIT NAS CONFIG, PROTOZE JE ZAVISLY NA UZIVATELI!
@@ -70,7 +70,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 		}
 		
 		return $m1;
-	}
+	} */
 
 	/**
 	 * Returns user display name. It can be overloaded to contain real user name and

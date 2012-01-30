@@ -42,8 +42,8 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	 * @param Nette\Latte\Parser $parser
 	 * @return RedactionMacros
 	 */
-	static function install(Nette\Latte\Parser $parser) {
-		$me = new static($parser);
+	static function install(Nette\Latte\Compiler $compiler) {
+		$me = new static($compiler);
 
 		// TODO: Presunout webFilesGenerator do framworku!
 		foreach(array('js', 'css') as $lang) {

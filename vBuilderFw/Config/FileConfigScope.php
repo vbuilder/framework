@@ -50,7 +50,10 @@ class FileConfigScope extends ConfigScope {
 	public function load() {
 		$this->isLoaded = true;
 		foreach($this->filenames as $file) {
-			$this->data = array_merge($this->data, $this->decode($file));
+			$decoded = $this->decode($file);
+		
+			if($decoded)
+				$this->data = array_merge($this->data, $decoded);
 		}
 	}
 	

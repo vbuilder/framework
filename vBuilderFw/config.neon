@@ -1,0 +1,17 @@
+services:
+	authorizator: vBuilder\Security\Permission
+	authenticator: vBuilder\Security\Authenticator
+	
+	# Hash provider
+	# passwordHashProvider: vBuilder\Security\OldCmsHashProvider
+	passwordHashProvider: vBuilder\Security\Sha1SaltedHashProvider
+	
+	config:
+		factory: vBuilder\Config\DbUserConfig::createService(['%appDir%/config/userdefaults.neon'])		
+		
+	# vBuilder ORM repositories	
+	repository:
+		factory: vBuilder\Orm\DibiRepository::createPersistentRepositoryServiceAlias
+		
+	persistentRepository: vBuilder\Orm\DibiRepository
+	sessionRepository: vBuilder\Orm\SessionRepository

@@ -37,9 +37,9 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 	/** @var int|null user id */
 	private $userId;
 	
-	public static function createService(Nette\DI\IContainer $context) {
+	public static function createService($configFile, Nette\DI\IContainer $context) {
 		$user = $context->user;
-		$userConfig = new self($context, $user->isLoggedIn() ? $user->getId() : null);
+		$userConfig = new self($context, $user->isLoggedIn() ? $user->getId() : null, $configFile);
 				
 		$user->onLoggedIn[] = function () use ($userConfig, $user) {
 			$userConfig->setUserId($user->getId());
@@ -59,9 +59,9 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 	 * @param vBuilder\Security\User|int|null user id, if null only global config
 	 * will be loaded
 	 */
-	function __construct(Nette\DI\IContainer $context, $user = null) {		
-		$defaults = static::getDefaultsFilepath() !== null && file_exists(static::getDefaultsFilepath())
-				  ? new FileConfigScope(array(static::getDefaultsFilepath()))
+	function __construct(Nette\DI\IContainer $context, $user = null, $configFile = null) {		
+		$defaults = $configFile !== null && (is_array($configFile) || file_exists($configFile))
+				  ? new FileConfigScope((array) $configFile)
 				  : null;
 		
 		$global = new DbConfigScope($context, 'global', $defaults);
