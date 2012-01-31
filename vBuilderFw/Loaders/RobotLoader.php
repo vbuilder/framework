@@ -29,6 +29,8 @@ use vBuilder,
 /**
  * Nette robot loader extended by onRebuild event
  *
+ * @deprecated
+ *
  * @author Adam Staněk (velbloud)
  * @since Jul 28, 2011
  */

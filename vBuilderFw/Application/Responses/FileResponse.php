@@ -25,8 +25,8 @@
 namespace vBuilder\Application\Responses;
 
 use vBuilder,
-	 Nette,
-	 vBuilder\Utils\File;
+	Nette,
+	vBuilder\Utils\File;
 
 /**
  * Enhanced FileResponse by changable content disposition header, 

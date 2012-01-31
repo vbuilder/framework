@@ -1,6 +1,6 @@
 services:
 	authorizator: vBuilder\Security\Permission
-	authenticator: vBuilder\Security\Authenticator
+	authenticator: vBuilder\Security\Authenticator('vBuilder\Security\User')
 	
 	# Hash provider
 	# passwordHashProvider: vBuilder\Security\OldCmsHashProvider

@@ -85,7 +85,8 @@ function dt(array $var) {
 	echo '</tbody></tbody>';
 }
 
-function d() {
+function d10() {
+	$tmp = Debug::$maxDepth;
 	Debug::$maxDepth = 10;
 	foreach (func_get_args() as $m) {
 		if($m instanceof \DibiResult) {
@@ -94,7 +95,20 @@ function d() {
 			Debug::dump($m);
 		}
 	}
+	Debug::$maxDepth = $tmp;
+}
+
+function d() {
+	$tmp = Debug::$maxDepth;
 	Debug::$maxDepth = 3;
+	foreach (func_get_args() as $m) {
+		if($m instanceof \DibiResult) {
+			dt($m->fetchAll());
+		} else {
+			Debug::dump($m);
+		}
+	}
+	Debug::$maxDepth = $tmp;
 }
 
 function dd() {

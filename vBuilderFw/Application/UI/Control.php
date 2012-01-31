@@ -87,6 +87,15 @@ class Control extends Nette\Application\UI\Control {
 	}
 	
 	/**
+	 * Returns parameters taken from template during render
+	 *
+	 * @return array
+	 */
+	final public function getRenderParams() {
+		return $this->renderParams;
+	}
+	
+	/**
 	 * Returns ORM repository (shortcut)
 	 * 
 	 * @return vBuilder\Orm\Repository
@@ -249,12 +258,13 @@ class Control extends Nette\Application\UI\Control {
 		if (func_num_args() == 2)
 			$class = $this;
 		
-		$rc = $class->getReflection();
+		//$rc = $class->getReflection();
+		$rc = new Nette\Application\UI\PresenterComponentReflection(get_class($class));
 		if ($rc->hasMethod($method)) {
 			$rm = $rc->getMethod($method);
 			if ($rm->isPublic() && !$rm->isAbstract() && !$rm->isStatic()) {
 				$this->checkRequirements($rm);
-				if(!$dryRun) $rm->invokeNamedArgs($class, $params);
+				if(!$dryRun) $rm->invokeArgs($class, $rc->combineArgs($rm, $params));
 				return TRUE;
 			}
 		}
