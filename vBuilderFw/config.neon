@@ -1,11 +1,12 @@
 services:
-	authenticator: vBuilder\Security\Authenticator('vBuilder\Security\User')
+	authenticator: vBuilder\Security\Authenticator('vManager\Security\User')
+	authorizator: vManage\Security\Permission
 	
 	# Hash provider
 	passwordHashProvider: vBuilder\Security\Sha1SaltedHashProvider
 	
 	# User config
-	config:
+	userConfig:
 		factory: vBuilder\Config\DbUserConfig::createService(['%appDir%/config/userdefaults.neon'])		
 		
 	# vBuilder ORM repositories	
