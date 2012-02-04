@@ -15,3 +15,7 @@ services:
 		
 	persistentRepository: vBuilder\Orm\DibiRepository
 	sessionRepository: vBuilder\Orm\SessionRepository
+	
+	# Translator
+	translator: vBuilder\Localization\Translator
+		
