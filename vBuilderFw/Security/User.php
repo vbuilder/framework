@@ -48,9 +48,6 @@ use vBuilder,
 class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity {
 
 	public function __construct() {
-		$this->onCreate[] = \callback('vBuilder\Security', 'onUserCreated');
-		$this->onPostDelete[] = \callback('vBuilder\Security', 'onUserDeleted');
-
 		call_user_func_array(array('parent', '__construct'), func_get_args());
 	}
 
@@ -81,7 +78,7 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	public function getDisplayName() {
 				
 		if($this->metadata->hasField('name') && $this->metadata->hasField('surname')) {
-			return $this->name . ' ' . $this->surname;
+			return ($this->name != '' ? $this->name . ' ' : '') . $this->surname;
 		}
 		
 		return $this->username;
