@@ -58,7 +58,8 @@ class FileConfigScope extends ConfigScope {
 	}
 	
 	public function save() {
-		throw new \LogicException('This doesn\'t make sense...');
+		// Cascading save. Cannot throw exception.
+		// throw new \LogicException('This doesn\'t make sense...');
 	}
 	
 	private function decode($file) {
