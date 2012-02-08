@@ -1,0 +1,10 @@
+<title>{if $metadata->effectiveTitle}{$metadata->effectiveTitle}{else}{$control->getPresenter(TRUE)->context->httpRequest->getUrl()->getHost()}{/if}</title>
+
+<meta http-equiv="Content-Type" content="{$metadata->contentType}; charset={$metadata->encoding}">
+
+<meta name="Description" content="{$metadata->description}" n:if="$metadata->description" />
+<meta name="Keywords" content="{$metadata->keywordString}" n:if="count($metadata->keywords)" />
+
+<meta name="Author" content="{$metadata->author}" n:if="$metadata->author" />
+
+<meta name="Robots" content="{$metadata->robots}" n:if="$metadata->robots" />
