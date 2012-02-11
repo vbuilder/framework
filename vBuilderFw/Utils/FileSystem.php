@@ -61,4 +61,56 @@ class FileSystem {
 		self::createDirIfNotExists($dirpath);
 	}
 	
+	/**
+	 * Finds files matching given base path while trying multiple extensions
+	 *
+	 * @param string absolute base path (file name path without extension)
+	 * @param array of extensions (if empty all possible extensions will be matched)
+	 *
+	 * @return array of absolute file paths
+	 */
+	static function findFilesWithBaseName($basePath, $extensions = array()) {
+		$pi = pathinfo($basePath);
+		$files = array();
+		
+		foreach(Nette\Utils\Finder::findFiles($pi['basename'] . '.*')->in($pi['dirname']) as $file) {
+			$matched = count($extensions) == 0;
+			foreach($extensions as $curr) {
+				if(mb_strtolower($curr) == mb_strtolower($file->getExtension())) {
+					$matched = true;
+					break;
+				}
+			}
+		
+			if(!$matched) continue;
+			
+			$files[] = $file->getPathname();
+		}
+		
+		return $files;
+	}
+	
+	/**
+	 * Tries to delete all of given files
+	 *
+	 * @param array of absolute file paths
+	 *
+	 * @return int number of deleted files
+	 * @throws Nette\IOException if file has been found, but can't unlink it during the permission violation
+	 */
+	static function tryDeleteFiles(array $files) {
+		$success = 0;
+	
+		foreach($files as $path) {
+			if(file_exists($path)) {
+				if(!unlink($path))
+					throw new Nette\IOException("Failed to delete " . var_export($path, true));
+				
+				$success++;
+			}
+		}
+		
+		return $success;
+	}
+	
 }
