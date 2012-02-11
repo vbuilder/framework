@@ -76,7 +76,11 @@ class FileSystem {
 		foreach(Nette\Utils\Finder::findFiles($pi['basename'] . '.*')->in($pi['dirname']) as $file) {
 			$matched = count($extensions) == 0;
 			foreach($extensions as $curr) {
-				if(mb_strtolower($curr) == mb_strtolower($file->getExtension())) {
+				// Podporovano az od PHP 5.3.6
+				// $ext = $file->getExtension();
+				$ext = pathinfo($file->getFilename(), PATHINFO_EXTENSION);
+			
+				if(mb_strtolower($curr) == mb_strtolower($ext)) {
 					$matched = true;
 					break;
 				}
