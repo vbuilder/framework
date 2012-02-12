@@ -18,4 +18,7 @@ services:
 	
 	# Translator
 	translator: vBuilder\Localization\Translator
+	
+	# Page metadata
+	metadata: vBuilder\Application\MetaDataProvider
 		
