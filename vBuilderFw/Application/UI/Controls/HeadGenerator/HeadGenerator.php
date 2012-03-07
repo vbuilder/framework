@@ -36,9 +36,12 @@ use vBuilder,
  */
 class HeadGenerator extends Nette\Application\UI\Control {
 
-	public function render() {
+	public function render($params) {
 		$this->template->metadata = $this->getPresenter(true)->context->metadata;
 		$this->template->metadata->freeze();
+		
+		if(isset($params['gaAccount']))
+			$this->template->gaAccount = $params['gaAccount'];
 		
 		echo $this->template;
 	}

@@ -69,7 +69,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		if($option[mb_strlen($option) - 1]  == '!')
 			return $writer->write('$context->metadata->{mb_substr(%node.word, 0, -1)} = %node.args;');
 		
-		return $writer->write('{ if(!$context->metadata->{%node.word}) $context->metadata->{%node.word} = %node.args; }');
+		return $writer->write('{ if(!$context->metadata->{%node.word} && $context->metadata->{%node.word} !== false) $context->metadata->{%node.word} = %node.args; }');
 	}
 
 }
