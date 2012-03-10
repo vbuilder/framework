@@ -70,7 +70,7 @@ class DibiRepository extends BaseRepository {
 		
 		$class = self::getEntityClass($entityName);
 		// TODO: Dodelat genericke entity z configu
-		if($class === false) throw new EntityException("Entity '$entity' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
+		if($class === false) throw new EntityException("Entity '$entityName' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
 		
 		$metadata = $class::getMetadata();
 
