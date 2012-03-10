@@ -1,6 +1,5 @@
 services:
-	authenticator: vBuilder\Security\Authenticator('vManager\Security\User')
-	authorizator: vManage\Security\Permission
+	authenticator: vBuilder\Security\Authenticator('vBuilder\Security\User')
 	
 	# Hash provider
 	passwordHashProvider: vBuilder\Security\Sha1SaltedHashProvider
