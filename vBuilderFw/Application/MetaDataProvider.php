@@ -76,12 +76,13 @@ class MetaDataProvider extends Nette\FreezableObject {
 	 * Sets page title. Title should not be empty nor longer than MAX_LENGTH_TITLE chars,
 	 * the E_USER_NOTICE is triggered otherwise.
 	 *
-	 * @param string page title
+	 * @param string|false page title
 	 *
 	 * @return MetaDataProvider fluent
 	 */
 	public function setTitle($title) {
 		$this->updating();
+		if($title === false) { $this->_title = false; return $this; }
 	
 		$title = Strings::simplify($title);
 	
@@ -195,12 +196,13 @@ class MetaDataProvider extends Nette\FreezableObject {
 	 * Sets page description. The description is automatically stripped
 	 * from all HTML tags and truncated to MAX_LENGTH_DESCRIPTION chars. 
 	 *
-	 * @param string page title
+	 * @param string|false page description
 	 *
 	 * @return MetaDataProvider fluent
 	 */
 	public function setDescription($description) {
 		$this->updating();
+		if($description === false) { $this->_description = false; return $this; }
 	
 		$description = strip_tags($description);
 		$description = Strings::simplify($description);
@@ -278,12 +280,13 @@ class MetaDataProvider extends Nette\FreezableObject {
 	/**
 	 * Sets page author
 	 *
-	 * @param string author's name
+	 * @param string|false author's name
 	 * @return MetaDataProvider fluent
 	 */
 	public function setAuthor($name) {
 		$this->updating();
-	
+		if($name === false) { $this->_author = false; return $this; }
+		
 		$this->_author = Strings::simplify($name);
 		return $this;
 	}
