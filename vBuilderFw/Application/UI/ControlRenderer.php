@@ -230,7 +230,7 @@ class ControlRenderer extends vBuilder\Object {
 
 		// default parameters
 		$template->renderer = $this;
-		$template->control = $this->control;
+		$template->control = $template->_control = $this->control;
 		$template->presenter = $template->_presenter = $presenter;
 		$template->context = $this->context;
 		$template->baseUri = $template->baseUrl = rtrim($this->context->httpRequest->getUrl()->getBaseUrl(), '/');
