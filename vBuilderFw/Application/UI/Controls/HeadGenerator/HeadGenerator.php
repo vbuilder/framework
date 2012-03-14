@@ -1,14 +1,6 @@
 <?php
 
 /**
- * Test of Sh1SaltedHashProvider hashing algorithm
- *
- * @author Adam Staněk (V3lbloud)
- * @since Feb 11, 2011
- *
- * @package    vBuilder\Security
- * @subpackage UnitTests
- *
  * This file is part of vBuilder Framework (vBuilder FW).
  * 
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
@@ -29,19 +21,38 @@
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use vBuilder\Test\Assert;
+namespace vBuilder\Application\UI\Controls;
 
-require __DIR__ . '/../bootstrap.php';
+use vBuilder,
+		Nette,
+		Nette\Application\UI\Form,
+		Nette\Application\UI\Link;
 
-$db = $context->connection;
-$db->loadFile(__DIR__ . '/Users.sql');
+/**
+ * Control for generating HTML head tags from page meta data
+ *
+ * @author Adam Staněk (velbloud)
+ * @since Feb 7, 2011
+ */
+class HeadGenerator extends Nette\Application\UI\Control {
 
-$user = $context->repository->get('vBuilder\Security\User', 1);
-$user->setBypassSecurityCheck();
-$user->load();
+	public function render($params = array()) {
+		$context = $this->getPresenter(true)->context;
+	
+		$this->template->metadata = $context->metadata;
+		$this->template->metadata->freeze();
+		
+		if(isset($params['gaAccount']))
+			$this->template->gaAccount = $params['gaAccount'];
+		
+		echo $this->template;
+	}
 
-$serialized = serialize($user);
-$user2 = unserialize($serialized);
-
-Assert::same($user2->id, $user->id);
-Assert::same($user2->name, $user->name);
+	protected function createTemplate($class = NULL) {
+		$template = parent::createTemplate();
+		$template->setFile(__DIR__ . '/Templates/default.latte');
+		
+		return $template;
+	}
+	 
+}

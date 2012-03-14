@@ -79,3 +79,27 @@ Assert::arrayEqual(array(
 	 array('id' => 3, 'name' => 'Green'),
 	 array('id' => 3, 'name' => 'Blue')
 ), $relatedEntities);
+
+// --------------
+
+$e1->name = 'D';
+$e1->save();
+
+$found = false;
+$entities = $db->query("SELECT * FROM [".TestEntity::getMetadata()->getTableName()."]")->fetchAll();
+foreach($entities as $curr) {
+	if($curr['name'] == $e1->name) {
+		$found = $curr['id'];
+		break;
+	}
+}
+
+if($found === false) Assert::fail('Main entity save failed');
+
+$relatedEntities = $db->query("SELECT * FROM [".OneToManyEntity::getMetadata()->getTableName()."] WHERE [id] = %i", $found)->fetchAll();
+Assert::arrayEqual(array(
+	 array('id' => 3, 'name' => 'Red'),
+	 array('id' => 3, 'name' => 'Green'),
+	 array('id' => 3, 'name' => 'Blue')
+), $relatedEntities);
+

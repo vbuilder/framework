@@ -25,38 +25,36 @@ namespace vBuilder;
 
 use Nette;
 
-require_once __DIR__ . '/../vBuilderFw/Configurator.php';
-
 /**
  * Test configurator
  *
  * @author Adam Staněk (velbloud)
  * @since Aug 2, 2011
  */
-class TestConfigurator extends Configurator {
+class TestConfigurator {
 			
 	/**
 	 * @return DibiConnection
 	 */
-	public static function createServiceConnection(Nette\DI\Container $container) {
+	public static function createServiceConnection($params, Nette\DI\Container $container) {
 		$config = $container->params['database'];
-		if(!isset($config['database']) || empty($config['database']))
+		if(!isset($params['database']) || empty($params['database']))
 			throw new Nette\InvalidArgumentException("Database name has to be set.");
 		
-		if(isset($config['testDatabase'])) {
-			if($config['testDatabase'] == $config['database'])
+		if(isset($params['testDatabase'])) {
+			if($params['testDatabase'] == $params['database'])
 				throw new \LogicException("It's not possible to use same database for application and for test. Please change testDatabase directive in your config file.");
 
-			$appDb = $config['database'];
-			$testDb = $config['testDatabase'];
+			$appDb = $params['database'];
+			$testDb = $params['testDatabase'];
 			
-			unset($config['testDatabase']);
+			unset($params['testDatabase']);
 		} else {
-			$appDb = $config['database'];
+			$appDb = $params['database'];
 			$testDb = 'test';
 		}
 		
-		$connection = new \DibiConnection($config);
+		$connection = new \DibiConnection($params);
 		
 		// Vytvorim testovaci tabulky podle hlavni database
 		$tables = $connection->query('SHOW TABLES');

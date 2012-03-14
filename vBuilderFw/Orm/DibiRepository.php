@@ -40,6 +40,11 @@ class DibiRepository extends BaseRepository {
 
 	private $_inProgressLock = array();
 	
+	
+	public static function createPersistentRepositoryServiceAlias(Nette\DI\IContainer $context) {
+		return $context->persistentRepository;
+	}
+	
 	/**
 	 * Constructor
 	 * 
@@ -65,7 +70,7 @@ class DibiRepository extends BaseRepository {
 		
 		$class = self::getEntityClass($entityName);
 		// TODO: Dodelat genericke entity z configu
-		if($class === false) throw new EntityException("Entity '$entity' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
+		if($class === false) throw new EntityException("Entity '$entityName' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
 		
 		$metadata = $class::getMetadata();
 
@@ -176,13 +181,27 @@ class DibiRepository extends BaseRepository {
 		if($this->db->affectedRows() == 0) return false;
 		
 		// Relace (OneToMany, ...)
-		// TODO: Prekontrolovat preklad nazvu sloupcu, nejak se mi to nelibi
 		foreach($entity->metadata->getFields() as $curr) {
 			if($entity->metadata->getFieldType($curr) == "OneToMany") {
-				$query2 = $this->db->delete($entity->metadata->getFieldTableName($curr));
-				foreach($entity->metadata->getFieldJoinPairs($curr) as $join) {
-					$query2->where("[".$join[1]."] = %s", $entity->{$join[0]});
+				$boundEntity = $entity->metadata->getFieldEntityName($curr);
+				
+				// Entity based OneToMany
+				if($boundEntity) {
+					$m = $boundEntity::getMetadata();
+				
+					$query2 = $this->db->delete($m->getTableName());
+					foreach($entity->metadata->getFieldJoinPairs($curr) as $join) {
+						$query2->where("[".$m->getFieldColumn($join[1])."] = %s", $entity->{$join[0]});
+					}
 				}
+				
+				// Simple OneToMany
+				else {
+					$query2 = $this->db->delete($entity->metadata->getFieldTableName($curr));
+					foreach($entity->metadata->getFieldJoinPairs($curr) as $join) {
+						$query2->where("[".$join[1]."] = %s", $entity->{$join[0]});
+					}
+				}				
 				
 				$query2->execute();
 			}
@@ -340,6 +359,12 @@ class DibiRepository extends BaseRepository {
 			// Pokud jsou k ulozeni nejaka TABULKOVA data, ulozim je
 			$addtionalDataToMerge = array();
 			$action = null;
+			
+			/* if($needToSaveEvenWithoutData)
+				d("Saving even without update data (forced save)");
+			else
+				d("Trying to save with update date", $updateData); */
+			
 			if(count($updateData) > 0 || $needToSaveEvenWithoutData) {
 				$insertData = $allTableFields;
 				$now = new \DateTime;

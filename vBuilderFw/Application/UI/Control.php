@@ -87,6 +87,15 @@ class Control extends Nette\Application\UI\Control {
 	}
 	
 	/**
+	 * Returns parameters taken from template during render
+	 *
+	 * @return array
+	 */
+	final public function getRenderParams() {
+		return $this->renderParams;
+	}
+	
+	/**
 	 * Returns ORM repository (shortcut)
 	 * 
 	 * @return vBuilder\Orm\Repository
@@ -131,16 +140,27 @@ class Control extends Nette\Application\UI\Control {
 	final public function getRenderer() {
 		if(isset($this->_renderer)) return $this->_renderer;
 		
-		$renderer = $this->createRenderer();
-		if($renderer instanceof ControlRenderer) {
-			$this->_renderer = $renderer;
-			return $this->_renderer;
-		} else 
-			throw new \LogicException(get_called_class() . "::createRenderer() has to return child of vBuilder\Application\UI\ControlRenderer.");
+		// The factory doesn't have to exist as long as there's the renderer class
+		if (method_exists($this, 'createRenderer')) {
+			$renderer = $this->createRenderer();
+			if(!($renderer instanceof ControlRenderer)) {
+				throw new \LogicException(get_called_class() . "::createRenderer() has to return a descendant of vBuilder\Application\UI\ControlRenderer.");
+			}
+		} elseif (class_exists($className = $this->formatRendererName(get_class($this))) && is_subclass_of($className, 'vBuilder\Application\UI\ControlRenderer')) {
+			$renderer = new $className($this);
+		} else {
+			$renderer = $this->createDefaultRenderer();
+		}
+		$this->_renderer = $renderer;
+		return $this->_renderer;
 	}
 	
-	protected function createRenderer() {
+	protected function createDefaultRenderer() {
 		return new ControlRenderer($this);
+	}
+	
+	protected function formatRendererName($controlName) {
+		return $controlName . 'Renderer';
 	}
 	
 	// </editor-fold>	
@@ -238,12 +258,13 @@ class Control extends Nette\Application\UI\Control {
 		if (func_num_args() == 2)
 			$class = $this;
 		
-		$rc = $class->getReflection();
+		//$rc = $class->getReflection();
+		$rc = new Nette\Application\UI\PresenterComponentReflection(get_class($class));
 		if ($rc->hasMethod($method)) {
 			$rm = $rc->getMethod($method);
 			if ($rm->isPublic() && !$rm->isAbstract() && !$rm->isStatic()) {
 				$this->checkRequirements($rm);
-				if(!$dryRun) $rm->invokeNamedArgs($class, $params);
+				if(!$dryRun) $rm->invokeArgs($class, $rc->combineArgs($rm, $params));
 				return TRUE;
 			}
 		}
@@ -277,7 +298,7 @@ class Control extends Nette\Application\UI\Control {
 			if(!($link instanceof vBuilder\Application\UI\Link))
 				throw new \LogicException ("Perhaps wanted to pass vBuilder\Application\UI\Link instead of Nette one?");		
 			
-			$link->component->redirect($link->destination, $link->params);
+			$link->component->redirect($link->destination, $link->getParameters());
 			
 			return ;
 		}

@@ -42,15 +42,34 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	 * @param Nette\Latte\Parser $parser
 	 * @return RedactionMacros
 	 */
-	static function install(Nette\Latte\Parser $parser) {
-		$me = new static($parser);
+	static function install(Nette\Latte\Compiler $compiler) {
+		$me = new static($compiler);
 
 		// TODO: Presunout webFilesGenerator do framworku!
 		foreach(array('js', 'css') as $lang) {
 			$me->addMacro('add' . ucfirst($lang), '$context->webFilesGenerator->addFile(%node.args, \'' . $lang . '\');');
 		}
 		
+		$me->addMacro('meta', array($me, 'macroMeta'));
+		
 		return $me;
+	}
+	
+	/**
+	 * {meta ...}
+	 * 
+	 * @param MacroNode $node
+	 * @param type $writer
+	 * @return string 
+	 */
+	function macroMeta(MacroNode $node, $writer) {
+		// TODO: podpora pro veci jako addKeywords
+		
+		$option = mb_substr($node->args, 0, mb_strpos($node->args, ' '));
+		if($option[mb_strlen($option) - 1]  == '!')
+			return $writer->write('$context->metadata->{mb_substr(%node.word, 0, -1)} = %node.args;');
+		
+		return $writer->write('{ if(!$context->metadata->{%node.word} && $context->metadata->{%node.word} !== false) $context->metadata->{%node.word} = %node.args; }');
 	}
 
 }

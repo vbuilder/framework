@@ -40,9 +40,22 @@ class Authenticator implements Nette\Security\IAuthenticator {
 	/** @var Nette\DI\IContainer DI */
 	protected $context;
 	
-	public function __construct(Nette\DI\IContainer $context) {
+	/** @var string user entity class */
+	protected $entityName;
+	
+	public function __construct($userClass, Nette\DI\IContainer $context) {
 		$this->context = $context;
+		$this->entityName = $userClass;
 	}
+	
+	/**
+	 * Returns name of user entity class
+	 *
+	 * @return string
+	 */
+	public function getUserClass() {
+		return $this->entityName;
+	}	
 	
 	/**
 	 * Performs an authentication against data model.
@@ -54,7 +67,7 @@ class Authenticator implements Nette\Security\IAuthenticator {
 	 * @throws AuthenticationException
 	 */
 	public function authenticate(array $credentials) {
-		$entity = Security::getUserClassName();
+		$entity = $this->entityName;
 				
 		$user = $this->context->repository->findAll($entity)->where('[username] = %s', $credentials[self::USERNAME])->fetch();
 

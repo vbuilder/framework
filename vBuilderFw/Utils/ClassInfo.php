@@ -69,9 +69,8 @@ class Classinfo {
 	}
 	
 	private static function getAllClassesHelper($cacheKey, $cb) {
-		// TODO: Cache from DI
-		$cacheStorage = new Nette\Caching\Storages\FileStorage(TEMP_DIR);
-		$cache = new Nette\Caching\Cache($cacheStorage, 'Nette.RobotLoader');
+		global $container;
+		$cache = new Nette\Caching\Cache($container->cacheStorage, 'Nette.RobotLoader');
 		
 		if(isset($cache[$cacheKey])) {
 			return $cache[$cacheKey];

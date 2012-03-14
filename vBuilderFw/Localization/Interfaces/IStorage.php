@@ -3,7 +3,7 @@
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
  * 
- * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
+ * Copyright (c) 2012 V3Net.cz, s.r.o <info@v3net.cz>
  * 
  * For more information visit http://www.vbuilder.cz
  * 
@@ -21,31 +21,30 @@
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace vBuilder;
+namespace vBuilder\Localization;
 
 use Nette;
 
 /**
- * Security static class for global access
+ * Localization storage interface
  *
- * @author Adam Staněk (V3lbloud)
- * @since Mar 4, 2011
+ * Based on Nella project translator edited for better integration
+ * @author	Patrik Votoček
+ *
+ * @see http://nella-project.org
+ * @see https://raw.github.com/nella/framework/master/Nella/Localization/IStorage.php
  */
-class Security extends Object {
-	
-	public static $onUserCreated = array();
-	public static $onUserDeleted = array();
+interface IStorage
+{
+	/**
+	 * @param Dictionary
+	 * @param string
+	 */
+	public function save(Dictionary $dictionary, $lang);
 	
 	/**
-	 * Returns class name of effective User data class
-	 * 
-	 * @return string 
+	 * @param string
+	 * @return Dictionary
 	 */
-	static function getUserClassName() {
-		$securityConfig = Nette\Environment::getConfig('security');
-		return isset($securityConfig['user']['entity'])
-				? $securityConfig['user']['entity']
-				: 'vBuilder\Security\User';
-	}
-	
+	public function load($lang, Dictionary $dictionary);
 }

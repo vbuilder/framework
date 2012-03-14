@@ -1,17 +1,9 @@
 <?php
 
 /**
- * Test of Sh1SaltedHashProvider hashing algorithm
- *
- * @author Adam Staněk (V3lbloud)
- * @since Feb 11, 2011
- *
- * @package    vBuilder\Security
- * @subpackage UnitTests
- *
  * This file is part of vBuilder Framework (vBuilder FW).
  * 
- * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
+ * Copyright (c) 2012 V3Net.cz, s.r.o <info@v3net.cz>
  * 
  * For more information visit http://www.vbuilder.cz
  * 
@@ -29,19 +21,23 @@
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-use vBuilder\Test\Assert;
+namespace vBuilder\Localization;
 
-require __DIR__ . '/../bootstrap.php';
+use Nette;
 
-$db = $context->connection;
-$db->loadFile(__DIR__ . '/Users.sql');
-
-$user = $context->repository->get('vBuilder\Security\User', 1);
-$user->setBypassSecurityCheck();
-$user->load();
-
-$serialized = serialize($user);
-$user2 = unserialize($serialized);
-
-Assert::same($user2->id, $user->id);
-Assert::same($user2->name, $user->name);
+/**
+ * Translator adapter
+ * 
+ * Based on Nella project translator edited for better integration
+ * @author	Patrik Votoček
+ *
+ * @see http://nella-project.org
+ * @see https://github.com/nella/framework/blob/master/Nella/Localization/ITranslator.php
+ */
+interface ITranslator extends Nette\Localization\ITranslator
+{
+	/**
+	 * @return array
+	 */
+	public function getDictionaries();
+}

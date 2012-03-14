@@ -251,9 +251,15 @@ class EntityData extends vBuilder\Object {
 	 */
 	public function __set($name, $value) {
 		if($this->metadata->hasField($name)) {
-			if( (!isset($this->newData) || !array_key_exists($name, $this->newData) && (!array_key_exists($name, $this->data) || $this->data[$name] !== $value))
-					  || (!isset($this->newData) || !array_key_exists($name, $this->newData) || $this->newData[$name] !== $value) ) {
-				
+			if(isset($this->newData) && array_key_exists($name, $this->newData))
+				$current = $this->newData[$name];
+			elseif(array_key_exists($name, $this->data))
+				$current = $this->data[$name];
+			else
+				$current = null;
+			
+		
+			if( $current !== $value || $current === null ) {				
 				$this->newData[$name] = $value;
 				$this->onFieldChanged($name);
 			}

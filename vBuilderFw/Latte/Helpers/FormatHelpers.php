@@ -35,6 +35,14 @@ class FormatHelpers {
 		return str_replace(" ", "\xc2\xa0", number_format($value, $decimals ? 2 : 0, ",", " "))."\xc2\xa0Kč";
 	}
 	
+	public static function formatNumericValue($n, $unit = null) {
+		if($n == '')
+			return '-';
+			
+		return str_replace(" ", "\xc2\xa0", number_format ($n, 1, ',', ' '))
+				. ($unit != '' ? "\xc2\xa0" . $unit : '');
+	}
+	
 	public static function fileSize($bytes) {
 		$unim = array("B", "KB", "MB", "GB", "TB", "PB");
 		$c = 0;
@@ -49,6 +57,52 @@ class FormatHelpers {
 	
 	public static function stripBetweenTags($str) {
 		return trim(preg_replace("#\\>[ \t\r\n]+\\<#", "><", $str));
+	}
+	
+	public static function monthShortcut($date) {
+		$month = $date->format('n');
+		
+		// TODO: Lokalizace
+		switch($month) {
+			case  1: return 'Led';
+			case  2: return 'Úno';
+			case  3: return 'Bře';
+			case  4: return 'Dub';
+			case  5: return 'Kvě';
+			case  6: return 'Čvn';
+			case  7: return 'Čvc';
+			case  8: return 'Srp';
+			case  9: return 'Zář';
+			case 10: return 'Říj';
+			case 11: return 'Lis';
+			case 12: return 'Pro';
+		
+			default:
+				return $month;		
+		}
+	}
+	
+	public static function month($date) {
+		$month = $date->format('n');
+		
+		// TODO: Lokalizace
+		switch($month) {
+			case  1: return 'Leden';
+			case  2: return 'Únor';
+			case  3: return 'Březen';
+			case  4: return 'Duben';
+			case  5: return 'Květen';
+			case  6: return 'Červen';
+			case  7: return 'Červenec';
+			case  8: return 'Srpen';
+			case  9: return 'Září';
+			case 10: return 'Říjen';
+			case 11: return 'Listopad';
+			case 12: return 'Prosinec';
+		
+			default:
+				return $month;		
+		}
 	}
 
 }

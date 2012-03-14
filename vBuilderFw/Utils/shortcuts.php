@@ -85,8 +85,9 @@ function dt(array $var) {
 	echo '</tbody></tbody>';
 }
 
-function d() {
-	Debug::$maxDepth = 5;
+function d10() {
+	$tmp = Debug::$maxDepth;
+	Debug::$maxDepth = 10;
 	foreach (func_get_args() as $m) {
 		if($m instanceof \DibiResult) {
 			dt($m->fetchAll());
@@ -94,10 +95,85 @@ function d() {
 			Debug::dump($m);
 		}
 	}
+	Debug::$maxDepth = $tmp;
+}
+
+function d() {
+	$tmp = Debug::$maxDepth;
 	Debug::$maxDepth = 3;
+	foreach (func_get_args() as $m) {
+		if($m instanceof \DibiResult) {
+			dt($m->fetchAll());
+		} else {
+			Debug::dump($m);
+		}
+	}
+	Debug::$maxDepth = $tmp;
 }
 
 function dd() {
 	call_user_func_array('d', func_get_args());
 	die;
+}
+
+// -----------------------
+
+/**
+ * Translates the given string.
+ *
+ * @param string|array	message or messages
+ * @return int|array	count or variables
+ */
+function __($message, $count = NULL)
+{
+	return Nette\Environment::getService('translator')
+		->translate($message, $count);
+}
+
+/**
+ * Translates the given string with plural.
+ *
+ * @deprecated
+ * @param string
+ * @param string
+ * @param int plural form (positive number)
+ * @return string
+ */
+function _n($single, $plural, $number)
+{
+	// trigger_error(__FUNCTION__ . '() is deprecated; use __(array(\$single, \$plural), \$number) instead.', E_USER_DEPRECATED);
+	return Nette\Environment::getService('translator')
+		->translate(array($single, $plural), $number);
+}
+
+/**
+ * Translates the given string with vsprintf.
+ *
+ * @deprecated
+ * @param string
+ * @param array for vsprintf
+ * @return string
+ */
+function _x($message, array $args)
+{
+	// trigger_error(__FUNCTION__ . '() is deprecated; use __(\$message, $args) instead.', E_USER_DEPRECATED);
+	return Nette\Environment::getService('translator')
+		->translate($message, $args);
+}
+
+/**
+ * Translates the given string with plural and vsprintf.
+ *
+ * @deprecated
+ * @param string
+ * @param string
+ * @param int plural form (positive number)
+ * @param array for vsprintf
+ * @return string
+ */
+function _nx($single, $plural, $number, array $args)
+{
+	// trigger_error(__FUNCTION__ . '() is deprecated; use __(array(\$single, \$plural), array(\$number, $args[0], $args[1], ...) instead.', E_USER_DEPRECATED);
+	return Nette\Environment::getService('translator')
+		->translate(array($single, $plural), array_merge(array($number), $args));
 }
