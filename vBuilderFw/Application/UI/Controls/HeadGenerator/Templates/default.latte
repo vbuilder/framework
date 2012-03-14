@@ -7,7 +7,12 @@
 
 <meta name="Author" content="{$metadata->author}" n:if="$metadata->author" />
 
+{if !$isInDevelopmentMode}
 <meta name="Robots" content="{$metadata->robots}" n:if="$metadata->robots" />
+{else}
+	<!-- Indexing turned of because of the development mode. Production values: {$metadata->robots} -->
+	<meta name="Robots" content="noindex,nofollow" />
+{/if}
 
 <script type="text/javascript" n:if="isset($gaAccount)">
 	var _gaq = _gaq || [];

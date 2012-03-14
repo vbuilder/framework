@@ -36,9 +36,14 @@ use vBuilder,
  */
 class HeadGenerator extends Nette\Application\UI\Control {
 
+	public $onBeforeRender = array();
+
 	public function render($params = array()) {
 		$context = $this->getPresenter(true)->context;
-	
+		
+		$this->onBeforeRender($context->metadata);
+
+		$this->template->isInDevelopmentMode = !isset($context->parameters['productionMode']) || $context->parameters['productionMode'] !== true;
 		$this->template->metadata = $context->metadata;
 		$this->template->metadata->freeze();
 		
