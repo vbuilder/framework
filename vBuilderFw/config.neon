@@ -1,8 +1,10 @@
 services:
-	authenticator: vBuilder\Security\Authenticator('vBuilder\Security\User')
+	authenticator:
+		class: vBuilder\Security\Authenticator('vBuilder\Security\User')
 	
 	# Hash provider
-	passwordHashProvider: vBuilder\Security\Sha1SaltedHashProvider
+	passwordHashProvider:
+		class: vBuilder\Security\Sha1SaltedHashProvider
 	
 	# User config
 	userConfig:
@@ -12,12 +14,17 @@ services:
 	repository:
 		factory: vBuilder\Orm\DibiRepository::createPersistentRepositoryServiceAlias
 		
-	persistentRepository: vBuilder\Orm\DibiRepository
-	sessionRepository: vBuilder\Orm\SessionRepository
+	persistentRepository:
+		class: vBuilder\Orm\DibiRepository
+		
+	sessionRepository:
+		class: vBuilder\Orm\SessionRepository
 	
 	# Translator
-	translator: vBuilder\Localization\Translator
+	translator:
+		class: vBuilder\Localization\Translator
 	
 	# Page metadata
-	metadata: vBuilder\Application\MetaDataProvider
+	metadata:
+		class: vBuilder\Application\MetaDataProvider
 		
