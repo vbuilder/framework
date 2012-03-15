@@ -63,7 +63,7 @@ class MetaDataProvider extends Nette\FreezableObject {
 	protected $_keywords = array();
 
 	/** @var string page robots setting */
-	protected $_robots = 'index, follow';
+	protected $_robots;
 
 	/** @var Nette\DI\IContainer DI context container */
 	protected $context;
@@ -324,18 +324,7 @@ class MetaDataProvider extends Nette\FreezableObject {
 	 * @return string
 	 */
 	public function getRobots() {
-		return $this->_robots ?: $this->getDefaultRobots();
-	}
-	
-	/**
-	 * Returns default page robot setting
-	 *
-	 * @param string
-	 */
-	protected function getDefaultRobots() {
-		return $this->context->parameters['productionMode']
-					? 'index, follow'
-					: 'noindex, nofollow';
+		return $this->_robots;
 	}
 	
 	// TODO: dodelat ---------------------
