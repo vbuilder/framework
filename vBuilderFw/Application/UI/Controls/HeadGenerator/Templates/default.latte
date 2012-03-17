@@ -16,6 +16,11 @@
 <meta name="Robots" content="noindex,nofollow" />
 {/if}
 
+<meta name="canonical" content="{$metadata->canonicalUrl}" n:if="$metadata->canonicalUrl" />
+
+<link rel="prev" href="{$metadata->prevUrl}" n:if="$metadata->prevUrl" />
+<link rel="next" href="{$metadata->nextUrl}" n:if="$metadata->nextUrl" />
+
 {if isset($gaAccount)}
 {if $isInDevelopmentMode}
 <!-- Google analytics reporting is disabled in development mode -->

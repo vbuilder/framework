@@ -36,7 +36,7 @@ use vBuilder,
 class MetaDataProvider extends Nette\FreezableObject {
 
 	const MAX_LENGTH_TITLE = 63;
-	const MAX_LENGTH_DESCRIPTION = 160;
+	const MAX_LENGTH_DESCRIPTION = 150;
 	const MAX_LENGTH_KEYWORDS = 256;
 	
 	const MAX_NUM_KEYWORDS = 10;
@@ -64,6 +64,15 @@ class MetaDataProvider extends Nette\FreezableObject {
 
 	/** @var string page robots setting */
 	protected $_robots;
+	
+	/** @var string url of prefered canonical page */
+	protected $_canonicalUrl;
+	
+	/** @var string url of next page */
+	protected $_nextUrl;
+	
+	/** @var string url of previous page */
+	protected $_prevUrl;
 
 	/** @var Nette\DI\IContainer DI context container */
 	protected $context;
@@ -326,6 +335,67 @@ class MetaDataProvider extends Nette\FreezableObject {
 	public function getRobots() {
 		return $this->_robots;
 	}
+	
+	/**
+	 * Returns URL of prefered canonical page
+	 *
+	 * @param string
+	 */
+	public function getCanonicalUrl() {
+		return $this->_canonicalUrl;
+	}
+	
+	/**
+	 * Sets URL of prefered canonical page
+	 *
+	 * @param string url
+	 * @return MetaDataProvider fluent
+	 */
+	public function setCanonicalUrl($url) {
+		$this->_canonicalUrl = $url;
+		return $this;
+	}
+	
+	/**
+	 * Returns URL of prefered canonical page
+	 *
+	 * @param string
+	 */
+	public function getPrevUrl() {
+		return $this->_prevUrl;
+	}
+	
+	/**
+	 * Sets URL of prefered canonical page
+	 *
+	 * @param string url
+	 * @return MetaDataProvider fluent
+	 */
+	public function setPrevUrl($url) {
+		$this->_prevUrl = $url;
+		return $this;
+	}
+	
+	/**
+	 * Returns URL of prefered canonical page
+	 *
+	 * @param string
+	 */
+	public function getNextUrl() {
+		return $this->_nextUrl;
+	}
+	
+	/**
+	 * Sets URL of prefered canonical page
+	 *
+	 * @param string url
+	 * @return MetaDataProvider fluent
+	 */
+	public function setNextUrl($url) {
+		$this->_nextUrl = $url;
+		return $this;
+	}
+	
 	
 	// TODO: dodelat ---------------------
 	
