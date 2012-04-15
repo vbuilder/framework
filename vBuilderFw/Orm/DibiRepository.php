@@ -318,7 +318,7 @@ class DibiRepository extends BaseRepository {
 							$targetEntity = $entity->{$curr};
 							if($targetEntity !== null) {
 								if(!($targetEntity instanceof ActiveEntity))
-									throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
+									throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity. " . get_class($targetEntity) . ' given.');
 
 								$this->save($targetEntity);
 								
