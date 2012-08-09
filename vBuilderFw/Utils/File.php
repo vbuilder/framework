@@ -73,4 +73,32 @@ class File {
 		return self::isValidMimeType($mime) ? $mime : "application/octet-stream";
 	}
 	
+	/**
+	 * @param string $file path to a file or just filename
+	 */
+	public static function isImage($file) {
+		$extension = pathinfo($file, PATHINFO_EXTENSION);
+		if (file_exists($file)) {
+			$mime = static::getMimeType($file);
+			$byMime = Strings::startsWith($mime, 'image');
+		} else {
+			if (!$extension) {
+				return false;
+			}
+			// we only have the filename and therefore we can only use the extension.
+			// we will not care about mime-type
+			$byMime = true;
+		}
+		$byExtension = in_array(Strings::lower($extension), array (
+			'jpg',
+			'png',
+			'bmp',
+			'gif'
+		));
+		return $byMime && $byExtension;
+	}
+	
+	public static function getExtension($filename) {
+		return pathinfo($filename, PATHINFO_EXTENSION);
+	}
 }
