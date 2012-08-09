@@ -55,12 +55,17 @@ class Control extends Nette\Application\UI\Control {
 	 */
 	function render($params = array()) {
 		$this->renderCalled = true;
-		$this->renderParams = $params;
+		$this->renderParams = (array) $params;
 		
 		// Pokud jsme neprosli skrz ::signalRecieved - default action, etc.
 		if(!$this->actionHandled)
 			$this->tryCall($this->formatActionMethod($this->view), $this->params, $this);
 		
+		// Predani render parametru primo do sablony
+		foreach($this->renderParams as $k=>$v) {
+			if(!isset($this->renderer->template->$k))
+				$this->renderer->template->$k = $v;
+		}		
 		
 		// render<View> on renderer instance
 		$this->tryCall($this->formatRenderMethod($this->view), $this->params, $this->renderer);
@@ -84,6 +89,23 @@ class Control extends Nette\Application\UI\Control {
 	 */
 	final public function getView() {
 		return $this->view;
+	}
+		
+	/**
+	 * Returns renderer parameter or array of all
+	 *
+	 * @param string parametr name
+	 * @param mixed default value (if parameter does not exist)
+	 *
+	 * @return array|mixed
+	 */
+	final public function getRenderParam($param = NULL, $default = NULL) {
+		if($param == NULL)
+			return $this->renderParams;
+		elseif(array_key_exists($param, $this->renderParams))
+			return $this->renderParams[$param];
+		else
+			return $default;
 	}
 	
 	/**
