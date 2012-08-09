@@ -63,4 +63,97 @@ class Strings extends Nette\Utils\Strings {
 		return $trim ? trim($simplified) : $simplified;
 	}
 	
+	/**
+	 * Creates parametrized string
+	 * Ex. something:123,abcd,a b aa \, d,something=true
+	 *
+	 * @param string base string
+	 * @param array of parameters
+	 * @return string
+	 */
+	public static function intoParameterizedString($key, $params = array()) {
+		$key = str_replace(':', '\\:', $key);
+		if(count($params) == 0) return $key;
+		
+		$p = array();
+		foreach($params as $k => $v) {
+			if(is_bool($v)) {
+				$v = $v ? 'true' : 'false';
+			}
+		
+			if(!is_int($k)) {
+				$p[] = str_replace(array('\\', ',', '='), array('\\\\', '\\,', '\\='), $k)
+					   . '=' .
+					   str_replace(array('\\', ',', '='), array('\\\\', '\\,', '\\='), $v);
+			} else {
+				$p[] = str_replace(array('\\', ',', '='), array('\\\\', '\\,', '\\='), $v);
+			}
+		}
+		
+		return $key . ':' . implode($p, ',');
+	}
+	
+	/**
+	 * Parses string coded by Strings::intoParameterizedString
+	 * Usage: list($key, $parameters) = Strings::parseParametrizedString($str);
+	 *
+	 * @param string
+	 * @return array ($key, array($parameters))
+	 */
+	public static function parseParametrizedString($str) {
+		$escaped = false;
+		$parsed = array('');
+		$associative = false;
+		$key = 0;
+		
+		for($i = 0; $i < strlen($str); $i++) {
+			if(!$escaped) {
+				if($str[$i] == '\\') {
+					$escaped = true;
+				} elseif($str[$i] == ':') {
+					$key++;
+					$parsed[$key] = '';
+					
+				} elseif($str[$i] == '=' && count($parsed) > 1) {
+					$tmp = $parsed[$key];
+					unset($parsed[$key]);
+					$key = $tmp;
+					$parsed[$key] = '';
+					
+				} elseif($str[$i] == ',' && count($parsed) > 1) {
+					$parsed[$key] = self::parseToBool($parsed[$key], $parsed[$key]);
+				
+					$key = count($parsed);
+					$parsed[$key] = '';
+					
+				} else {
+					$parsed[$key] .= $str[$i];
+				}
+			} else {
+				$escaped = false;	
+				$parsed[$key] .= $str[$i];
+			}
+		}
+		
+		$parsed[$key] = self::parseToBool($parsed[$key], $parsed[$key]);
+		
+		return count($parsed) > 1
+				? array($parsed[0], array_slice($parsed, 1))
+				: array($parsed[0], array());
+	}
+	
+	/**
+	 * Parses TRUE or FALSE strings into their boolean representation
+	 *
+	 * @param string
+	 * @param mixed value, which will be returned if given string can't be parsed into boolean
+	 * @return bool
+	 */
+	public static function parseToBool($str, $onFailValue = NULL) {
+		if(strcasecmp($str, 'true') == 0) return true;
+		elseif(strcasecmp($str, 'false') == 0) return false;
+
+		return $onFailValue;
+	}
+	
 }
