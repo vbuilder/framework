@@ -310,7 +310,7 @@ class DibiRepository extends BaseRepository {
 				// Po ulozeni svazane entity si musim vzit jeji ID a pridat ho do dat k ulozeni.
 				if($type == 'OneToOne') {
 					if($entity->metadata->getFieldMappedBy($curr) === null || (get_class($entity) != $entity->metadata->getFieldMappedBy($curr) && !is_subclass_of(get_class($entity), $entity->metadata->getFieldMappedBy($curr)) )) {						
-						
+
 						// Ukladam jen non-NULL sloupce
 						if(isset($entity->data->{$curr})) {
 							// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
@@ -438,7 +438,20 @@ class DibiRepository extends BaseRepository {
 				
 				// Reverzni OneToOne relace
 				if($entity->metadata->getFieldType($curr) == 'OneToOne') {
+				
 					if($entity->metadata->getFieldMappedBy($curr) !== null && (get_class($entity) == $entity->metadata->getFieldMappedBy($curr) || is_subclass_of(get_class($entity), $entity->metadata->getFieldMappedBy($curr)) ) ) {
+						
+						
+						// Pro ukladani reverzni vazby, ale zpusobuje mnohonasobne ulozeni kolekce
+						/*$targetEntity = $entity->{$curr};
+												
+						$pairs = $entity->metadata->getFieldJoinPairs($curr);
+						list($entityField, $targetField) = $pairs[0];
+						
+						$targetEntity->{$targetField} = $entity->$entityField;
+						
+						$this->save($targetEntity); */
+						
 						
 						
 						// Zakomentovano! Bylo to tu jen pro sanity check a zpusobovalo to vynucene nacteni target entity => vyjimka, pokud neexistovaly
