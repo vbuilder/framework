@@ -45,7 +45,6 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	static function install(Nette\Latte\Compiler $compiler) {
 		$me = new static($compiler);
 
-		// TODO: Presunout webFilesGenerator do framworku!
 		foreach(array('js', 'css') as $lang) {
 			$me->addMacro('add' . ucfirst($lang), '$context->webFilesGenerator->addFile(%node.args, \'' . $lang . '\');');
 		}
