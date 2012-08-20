@@ -35,6 +35,11 @@ class FormatHelpers {
 		return str_replace(" ", "\xc2\xa0", number_format($value, $decimals ? 2 : 0, ",", " "))."\xc2\xa0Kč";
 	}
 	
+	public static function postalCode($value) {
+		$s = preg_replace("#\s+#", "", $value);
+		return mb_substr($s, 0, 3) . "\xc2\xa0" . mb_substr($s, 0, 3);
+	}
+	
 	public static function formatNumericValue($n, $unit = null) {
 		if($n == '')
 			return '-';
