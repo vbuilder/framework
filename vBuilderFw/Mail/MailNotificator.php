@@ -74,7 +74,11 @@ class MailNotificator extends vBuilder\EventListener {
 	 */
 	protected function createMessage() {
 		$message = new Nette\Mail\Message;
-		$message->setFrom('info@' . $this->context->httpRequest->getUrl()->getHost());
+		
+		// CLI
+		if($this->context->httpRequest->getUrl()->getHost() != "")
+			$message->setFrom('info@' . $this->context->httpRequest->getUrl()->getHost());
+			
 		return $message;
 	}
 	
