@@ -53,6 +53,8 @@ class WebFilesGenerator extends Nette\Object {
 	 */
 	function __construct(Nette\DI\IContainer $context) {
 		$this->context = $context;
+		
+		Nette\Diagnostics\Debugger::addPanel(new vBuilder\Diagnostics\WebFilesBar);
 	}
 	
 	/**
