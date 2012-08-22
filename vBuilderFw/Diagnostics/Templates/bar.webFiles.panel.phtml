@@ -1,0 +1,92 @@
+<?php
+
+namespace vBuilder\Diagnostics;
+
+use vBuilder,
+	vBuilder\Application\WebFilesGenerator,
+	Nette,
+	Nette\Utils\Strings;
+
+$context = Nette\Environment::getContext();
+$webFiles = $context->webFilesGenerator;
+$cssFiles = $webFiles->getFiles(WebFilesGenerator::STYLESHEET);
+$jsFiles = $webFiles->getFiles(WebFilesGenerator::JAVASCRIPT);
+
+function dumpFiles($files) {
+	if(count($files) == $files) {
+		echo "No files";
+		return ;
+	}
+	
+	
+	echo '<table>';
+	
+	foreach($files as $id=>$file) {
+		echo "<tr>";
+		
+		if(is_scalar($file)) {
+			if(Strings::startsWith($file, $_SERVER["DOCUMENT_ROOT"]))
+					$file = mb_substr($file, strlen($_SERVER["DOCUMENT_ROOT"]) + 1);
+			
+			echo "<td>$file</td>";
+		}
+		
+		elseif(is_object($file)) {
+			echo "<td style=\"color: green;\">";
+			
+			if($file instanceof vBuilder\Redaction\Files\BaseFile) {
+				echo $file->getUniqId();
+			} else {
+				echo get_class($file);
+			}
+			
+			echo "</td>";;
+		}
+
+		echo "</tr>";
+	}
+	
+	echo '</table>';
+}
+
+?>
+<style>
+
+	#nette-debug .nette-DumpPanel h2 {
+		font: 11pt/1.5 sans-serif;
+		margin: 0;
+		padding: 2px 8px;
+		background: #3484d2;
+		color: white;
+	}
+
+	#nette-debug .nette-DumpPanel table {
+		width: 100%;
+	}
+
+	#nette-debug .nette-DumpPanel a {
+		color: #333;
+		background: transparent;
+	}
+
+	#nette-debug .nette-DumpPanel a abbr {
+		font-family: sans-serif;
+		color: #999;
+	}
+
+	#nette-debug .nette-DumpPanel pre .php-array, #nette-debug .nette-DumpPanel pre .php-object {
+		color: #c16549;
+	}
+
+</style>
+
+
+<h1>Web files</h1>
+
+<div class="nette-inner nette-DumpPanel">
+	 <h2>CSS files<?php if(!$webFiles->hasBeenGenerated(WebFilesGenerator::STYLESHEET)) echo " - cached"; ?></h2>
+	 <?php dumpFiles($cssFiles); ?>
+	 
+	 <h2 style="margin-top: 20px;">JS files<?php if(!$webFiles->hasBeenGenerated(WebFilesGenerator::JAVASCRIPT)) echo " - cached"; ?></h2>
+	 <?php dumpFiles($jsFiles); ?>
+</div>
