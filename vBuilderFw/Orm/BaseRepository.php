@@ -118,7 +118,10 @@ abstract class BaseRepository extends vBuilder\Object implements IRepository {
 					
 				// Obycejny join
 				} else {
-					$member->{$join[1]} = $collection->parent->{$join[0]};
+					// \Nette\Diagnostics\Debugger::log("ASSERT: " . $member->{$join[1]} . " != " . $collection->parent->{$join[0]});
+				
+					if($member->{$join[1]} != $collection->parent->{$join[0]})
+						$member->{$join[1]} = $collection->parent->{$join[0]};
 				}
 				
 			}
