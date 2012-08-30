@@ -69,7 +69,7 @@ class ActiveEntity extends Entity implements Nette\Security\IResource {
 	public $onPostDelete = array();
 	
 	/** @var int state of entity */
-	private $state = ActiveEntity::STATE_NEW;
+	protected $state = ActiveEntity::STATE_NEW;
 	
 	/**
 	 * Constructor of active record Entity. Passess arguments to Entity.
