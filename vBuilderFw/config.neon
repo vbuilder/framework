@@ -23,6 +23,8 @@ services:
 	# Translator
 	translator:
 		class: vBuilder\Localization\Translator
+		setup:
+			- addDictionary('app', '%appDir%')
 	
 	# Page metadata
 	metadata:
@@ -31,4 +33,7 @@ services:
 	# Web files generator (Css, Js, ...)
 	webFilesGenerator:
 		class: vBuilder\Application\WebFilesGenerator
+		
+parameters:
+	languages: ['cs']
 		
