@@ -9,10 +9,14 @@
 
 <meta name="Author" content="{$metadata->author}" n:if="$metadata->author" />
 
-{if !$isInDevelopmentMode}
+{if $isInProductionMode}
 <meta name="Robots" content="{$metadata->robots}" n:if="$metadata->robots" />
 {else}
+{if $isInDevelopmentMode}
 <!-- Indexing turned off because of the development mode. Production values: {$metadata->robots} -->
+{else}
+<!-- Indexing turned off while the site is under construction. Production values: {$metadata->robots} -->
+{/if}
 <meta name="Robots" content="noindex,nofollow" />
 {/if}
 
@@ -22,8 +26,12 @@
 <link rel="next" href="{$metadata->nextUrl}" n:if="$metadata->nextUrl" />
 
 {if isset($gaAccount)}
+{if !$isInProductionMode}
 {if $isInDevelopmentMode}
 <!-- Google analytics reporting is disabled in development mode -->
+{else}
+<!-- Google analytics reporting is disabled while the site is under construction -->
+{/if}
 <!-- {/if}<script type="text/javascript">
 	var _gaq = _gaq || [];
 	_gaq.push(['_setAccount', '{$gaAccount}']);
@@ -34,7 +42,7 @@
 		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
 		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 	})();
-</script>{if $isInDevelopmentMode} -->{/if}
+</script>{if !$isInProductionMode} -->{/if}
 {/if}
 
 {if $isInDevelopmentMode}<!-- HeadGenerator END _____________________________________________________ -->{/if}
