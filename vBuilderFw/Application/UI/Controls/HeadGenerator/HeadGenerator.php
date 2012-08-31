@@ -44,9 +44,8 @@ class HeadGenerator extends Nette\Application\UI\Control {
 		$this->onBeforeRender($context->metadata);
 
 		$this->template->isInDevelopmentMode = !isset($context->parameters['productionMode']) || $context->parameters['productionMode'] !== true;
-		$this->template->isUnderConstruction = isset($context->parameters['constructionMode']) && $context->parameters['constructionMode'] == true;
-		$this->template->isInProductionMode = !$this->template->isInDevelopmentMode && !$this->template->isInDevelopmentMode;
-		
+		$this->template->isUnderConstruction = isset($context->parameters['underConstruction']) && $context->parameters['underConstruction'] == true;
+		$this->template->isInProductionMode = !$this->template->isInDevelopmentMode && !$this->template->isUnderConstruction;
 		
 		$this->template->metadata = $context->metadata;
 		$this->template->metadata->freeze();

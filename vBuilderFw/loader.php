@@ -16,6 +16,8 @@ Nette\Diagnostics\Debugger::addPanel(new vBuilder\Diagnostics\OrmSessionBar);
 
 $container->application->onRequest[] = function (Application $app, Request $request) use ($container) {
 	
+	$runningTestMode = false;
+	
 	// Forwardy (jako je napr. presmerovani na error presenter neresim)
 	if($request->method != Request::FORWARD) {
 
@@ -31,6 +33,8 @@ $container->application->onRequest[] = function (Application $app, Request $requ
 			// Akceptovany jsou domeny koncici na test.*.* nebo .bilahora.v3net.cz
 			if(!Strings::match($host, '#^(.+?\.)?test\.[^\.]+\.[^\.]+$#') && !Strings::match($host, '#\.bilahora\.v3net\.cz$#')) {
 				throw new vBuilder\Application\UnderConstructionException();
+			} else {
+				$runningTestMode = true;
 			}
 		}
 		
@@ -50,4 +54,23 @@ $container->application->onRequest[] = function (Application $app, Request $requ
 		}
 	}
 	
+	// Test panel (in production mode) - inicializuju ho pri zpracovani requestu aplikace,
+	// takze mam jistotu ze nejsem poustenej z konzole.
+	
+	if($runningTestMode) {
+		$ajaxDetected = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+		
+		if(!$ajaxDetected) {
+			register_shutdown_function(function () {
+				
+				// Render test bar
+				$bar = new Nette\Diagnostics\Bar;
+				$bar->addPanel(new vBuilder\Diagnostics\TestBar);
+				echo $bar->render();					
+					
+			});
+		}
+	}
+	
 };
+
