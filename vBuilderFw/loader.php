@@ -22,17 +22,31 @@ $container->application->onRequest[] = function (Application $app, Request $requ
 		// Pokud jsem v development modu, tak je vse OK	
 		if(!$container->parameters['productionMode']) return ;
 	
+		$host = $container->httpRequest->url->host;
 		
 		// Pokud jsem v produkcnim rezimu, musim zkontrolovat, jestli stranka neni ve vystavbe
 		if(isset($container->parameters['underConstruction']) && $container->parameters['underConstruction'] == true) {
 			
 			// Pokud je stranka ve vystavbe a nejsem na testovaci domene, vyhodim vyjimku
 			// Akceptovany jsou domeny koncici na test.*.* nebo .bilahora.v3net.cz
-			$host = $container->httpRequest->url->host;
-			$host = 'a';
 			if(!Strings::match($host, '#^(.+?\.)?test\.[^\.]+\.[^\.]+$#') && !Strings::match($host, '#\.bilahora\.v3net\.cz$#')) {
 				throw new vBuilder\Application\UnderConstructionException();
 			}
+		}
+		
+		// Pokud nejsem v produkcnim rezimu, musim se postarat o zpetny redirect (nemsi existovat 2 URL se stejnym obsahem)
+		else {
+		
+			if($matches = Strings::match($host, '#^(.+?\.)?test\.([^\.]+\.[^\.]+)$#')) {
+				$newHost = $matches[1] . $matches[2];
+				
+				$url = clone $container->httpRequest->url;
+				$url->host = $newHost;
+				
+				$container->httpResponse->redirect($url);
+				exit;
+			}
+			
 		}
 	}
 	
