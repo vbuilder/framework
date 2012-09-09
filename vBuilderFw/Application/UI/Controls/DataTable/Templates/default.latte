@@ -1,0 +1,64 @@
+<div id="dt-{$control->getUniqueId()}" class="dataTables_wrapper">
+	<table class="display">
+		<tbody>
+			
+		</tbody>
+		<thead>
+			<tr>
+				<th n:foreach="$columns as $col">{$col->caption()}</th>
+			</tr>
+		</thead>
+		<tfoot>
+		</tfoot>
+	</table>
+</div>
+<script type="text/javascript">
+	$(function () {
+		var controlBlock = $("#dt-" + {$control->getUniqueId()}),
+			table = controlBlock.children("TABLE"),
+			url = {link //getData};
+		
+		// @see http://datatables.net/usage/options
+			table.dataTable({
+			"bServerSide": true,
+			"sAjaxSource": url,
+			"bJQueryUI": true,
+			"sPaginationType": "full_numbers",
+			
+			"aoColumns": [
+				{foreach $columns as $col}
+					{ "sClass": {$col->name()} },
+				{/foreach}
+			],
+			
+			// TODO: sorting
+			"bSort": false,
+			
+			// TODO: filtering
+			"bFilter": false,
+			
+			// TODO: change page size
+			"bLengthChange": false,
+			
+			"bPaginate": true,
+			
+			// TODO: deferred loading
+			// "iDeferLoading": [ 57, 100 ],
+			
+			// Only one of the "bProcessing" and "sDom" working?
+			//"bProcessing": true,
+			//"sDom": '<""f>t<"F"lp>'
+			"sDom": '<""f>t<"F"p>',
+			
+			"oLanguage": {
+				"oPaginate": {
+					"sNext": "Další",
+					"sPrevious": "Předchozí",
+					"sFirst": "První stránka",
+					"sLast": "Poslední stránka"
+				}
+			}
+		});
+	});
+	
+</script>
