@@ -27,7 +27,7 @@
 			
 			"aoColumns": [
 				{foreach $columns as $col}
-					{ "sClass": {$col->name()} },
+					{ "sClass": {$col->name()} }{if !$iterator->last},{/if}{* IE nesnasi carku na konci *}
 				{/foreach}
 			],
 			
