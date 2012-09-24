@@ -21,31 +21,33 @@
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace vBuilder;
+namespace vBuilder\Diagnostics;
 
-use Nette;
+use vBuilder,
+	Nette;
 
 /**
- * Security static class for global access
+ * Test mode bar
  *
- * @author Adam Staněk (V3lbloud)
- * @since Mar 4, 2011
+ * @author Adam Staněk (velbloud)
+ * @since Aug 31, 2012
  */
-class Security extends Object {
-	
-	public static $onUserCreated = array();
-	public static $onUserDeleted = array();
+class TestBar implements Nette\Diagnostics\IBarPanel {
 	
 	/**
-	 * Returns class name of effective User data class
-	 * 
-	 * @return string 
+	 * Renders HTML code for custom tab.
+	 * @return string
 	 */
-	static function getUserClassName() {
-		$securityConfig = Nette\Environment::getConfig('security');
-		return isset($securityConfig['user']['entity'])
-				? $securityConfig['user']['entity']
-				: 'vBuilder\Security\User';
+	public function getTab() {
+		return 'Test mode';
+	}
+
+	/**
+	 * Renders HTML code for custom panel.
+	 * @return string
+	 */
+	public function getPanel() {
+		return '';
 	}
 	
 }

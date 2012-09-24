@@ -43,14 +43,20 @@ require_once __DIR__ . '/TestLib/BlueScreen.php';
 require_once __DIR__ . '/TestLib/GreenScreen.php';
 require_once __DIR__ . '/TestLib/Assert.php';
 require_once __DIR__ . '/TestLib/TestException.php';
+require_once __DIR__ . '/TestConfigurator.php';
 
-// Configurator
-if(!isset($configurator)) {
-	require_once __DIR__ . '/TestConfigurator.php';
-	$configurator = new vBuilder\TestConfigurator;
-	Nette\Environment::setConfigurator($configurator);
-	$context = $configurator->container;
-}
+// Configure application
+$configurator = new Nette\Config\Configurator;
+$configurator->setCacheDirectory(TEMP_DIR)
+	->addParameters(array(
+		'tempDir' => TEMP_DIR
+	));
+
+// Enable RobotLoader - this will load all classes automatically
+$configurator->createRobotLoader()
+	->addDirectory(APP_DIR)
+	->addDirectory(LIBS_DIR)
+	->register();
 
 // configure environment
 error_reporting(E_ALL | E_STRICT);
@@ -91,7 +97,5 @@ if (extension_loaded('xdebug')) {
 	TestHelpers::startCodeCoverage(__DIR__ . '/coverage.dat');
 }
 
-
-
-// Load configuration from config.neon file
-Nette\Environment::loadConfig();
+// Create Dependency Injection container from config.neon file
+$context = $configurator->loadConfig(APP_DIR . '/config.neon', 'test');

@@ -58,6 +58,9 @@ class SessionRepository extends BaseRepository {
 		
 	public function findAll($entityName, $processSubclasses = false) {
 
+		// Pozor, s novym Nette uz nepouzivame vlastni RobotLoader, 
+		// takze se nacachovane tridy automaticky neinvaliduji.
+		// 	=> Pri pridani nove tridy SMAZAT CACHE!
 		$array = array();
 		$classes = $processSubclasses
 		? array_merge(array($entityName), vBuilder\Utils\ClassInfo::getAllChildrenOf($entityName))
@@ -160,7 +163,7 @@ class SessionRepository extends BaseRepository {
 	 * @param Entity $entity 
 	 */
 	public function saveEntity(Entity $entity) {
-		//d('---- SaveEntity called -----');
+		//d('---- SaveEntity for ' . get_class($entity) . ' called -----');
 		$entities = isset($this->session[get_class($entity)]) ? $this->session[get_class($entity)] : array();
 			
 		if($entity instanceof ActiveEntity) $entity->onPreSave($entity);
@@ -198,7 +201,7 @@ class SessionRepository extends BaseRepository {
 		
 		if($entity instanceof ActiveEntity) $entity->onPostSave($entity);
 		
-		//d($this->session[get_class($entity)]);
+		// d($this->session[get_class($entity)]);
 	}
 
 	/**

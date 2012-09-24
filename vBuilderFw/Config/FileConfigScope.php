@@ -50,12 +50,16 @@ class FileConfigScope extends ConfigScope {
 	public function load() {
 		$this->isLoaded = true;
 		foreach($this->filenames as $file) {
-			$this->data = array_merge($this->data, $this->decode($file));
+			$decoded = $this->decode($file);
+		
+			if($decoded)
+				$this->data = array_merge($this->data, $decoded);
 		}
 	}
 	
 	public function save() {
-		throw new \LogicException('This doesn\'t make sense...');
+		// Cascading save. Cannot throw exception.
+		// throw new \LogicException('This doesn\'t make sense...');
 	}
 	
 	private function decode($file) {

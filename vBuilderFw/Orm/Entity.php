@@ -345,9 +345,16 @@ class Entity extends vBuilder\Object {
 	 * @return void
 	 */
 	public function __wakeup() {
+		global $container;
+		
+		if(!isset($container))
+			throw new Nette\InvalidStateException("Container is not created yet. Please make sure session is started AFTER container creation (nette.session.autoStart = false).");
+		
+		$this->context = $container;
+	
 		// Bacha neni to context z parentu, muzou chybet nejake sluzby!
 		// ORM, ale vyuziva jen connection a repository, takze by melo byt vse Ok
-		$this->context = Nette\Environment::getContext();
+		// $this->context = Nette\Environment::getContext();
 		$this->metadata = static::getMetadata();
 		
 		// Chovani
@@ -797,7 +804,7 @@ class Entity extends vBuilder\Object {
 		
 		// Nactu implementace chovani entit
 		if(self::$_behaviorImplementations === null)
-			self::searchForOrmClasses($this->context);  
+			self::searchForOrmClasses();  
 		
 		if(!isset(self::$_behaviorImplementations[$behaviorName]))
 			throw new EntityException("Entity behavior '$behaviorName' was not defined", EntityException::ENTITY_BEHAVIOR_NOT_DEFINED);
@@ -807,10 +814,8 @@ class Entity extends vBuilder\Object {
 	
 	/**
 	 * Searches for all data type and behavior implementations
-	 * 
-	 * @param Nette\DI\Container DI
 	 */
-	private static function searchForOrmClasses(Nette\DI\Container $container) {
+	private static function searchForOrmClasses() {
 		self::$_dataTypesImplementations = array();
 		self::$_behaviorImplementations = array();
 

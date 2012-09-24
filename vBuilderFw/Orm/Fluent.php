@@ -137,7 +137,31 @@ class Fluent extends \DibiFluent {
 	 * @return array
 	 */
 	public function fetchAssoc($assoc) {
-		return $this->query($this->_export())->fetchAssoc($assoc);
+		// Dibi implementace fetchAssoc s ORM nefunguje, protoze nepodporuje array access
+		// return $this->query($this->_export())->fetchAssoc($assoc);
+		
+		// Quick 'n' dirty:
+		
+		if(!is_scalar($assoc))
+			throw new Nette\NotImplementedException("Current implementation of " . get_called_class() . "::fetchAssoc does not support non-scalar parameters");
+					
+		$dibiResult = $this->query($this->_export());
+					
+		$dibiResult->seek(0);
+		$row = $dibiResult->fetch();
+		if (!$row) return array();  // empty result set
+				
+		if(!$row->getMetadata()->hasField($assoc))
+			throw new Nette\InvalidArgumentException(get_class($row) . " does not have any field " . var_export($assoc, true));
+		
+		$resultset = array();
+		
+		do {
+			$resultset[$row->{$assoc}] = $row;
+			
+		} while ($row = $dibiResult->fetch());
+		
+		return $resultset;
 	}
 
 	/**

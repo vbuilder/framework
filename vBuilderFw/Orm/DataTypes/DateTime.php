@@ -42,7 +42,7 @@ class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 		$this->entity = $entity;
 		$this->fieldName = $fieldName;
 		
-		$data = $entity->data->{$fieldName};
+		$data = isset($entity->data->{$fieldName}) ? $entity->data->{$fieldName} : null;
 		if(is_numeric($data)) $data = date('Y-m-d H:i:s', $data);
 		
 		parent::__construct($data);
@@ -52,7 +52,10 @@ class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 		if($data instanceof \DateTime) {
 			$this->entity->data->{$this->fieldName} = $data->format('Y-m-d H:i:s');
 			$this->setTimestamp($data->getTimestamp());
-			$this->setTimezone($data->getTimezone());
+			
+			// @ - Bug #45543 - https://bugs.php.net/bug.php?id=45543
+			if($data->getTimezone() !== false) @$this->setTimezone($data->getTimezone());
+			
 			return ;
 		}
 		

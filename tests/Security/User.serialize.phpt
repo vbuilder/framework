@@ -37,6 +37,7 @@ $db = $context->connection;
 $db->loadFile(__DIR__ . '/Users.sql');
 
 $user = $context->repository->get('vBuilder\Security\User', 1);
+$user->setBypassSecurityCheck();
 $user->load();
 
 $serialized = serialize($user);

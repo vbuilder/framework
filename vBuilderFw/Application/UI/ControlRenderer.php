@@ -224,25 +224,27 @@ class ControlRenderer extends vBuilder\Object {
 		$template = $class ? new $class : new Nette\Templating\FileTemplate;
 		$presenter = $this->getPresenter(FALSE);
 		$template->onPrepareFilters[] = callback($this, 'templatePrepareFilters');
-		$template->registerHelperLoader('Nette\Templating\DefaultHelpers::loader');
+		$template->registerHelperLoader('Nette\Templating\Helpers::loader');
+
+		$template->registerHelper('stripBetweenTags', 'vBuilder\Latte\Helpers\FormatHelpers::stripBetweenTags');
 
 		// default parameters
 		$template->renderer = $this;
-		$template->control = $this->control;
-		$template->presenter = $presenter;
+		$template->control = $template->_control = $this->control;
+		$template->presenter = $template->_presenter = $presenter;
 		$template->context = $this->context;
 		$template->baseUri = $template->baseUrl = rtrim($this->context->httpRequest->getUrl()->getBaseUrl(), '/');
 		$template->basePath = preg_replace('#https?://[^/]+#A', '', $template->baseUrl);
 		
 		if ($presenter instanceof Nette\Application\UI\Presenter) {
-			$template->setCacheStorage($this->context->templateCacheStorage);
+			$template->setCacheStorage($this->context->{'nette.templateCacheStorage'});
 			$template->user = $this->context->user;
 			$template->netteHttpResponse = $this->context->httpResponse;
-			$template->netteCacheStorage = $this->context->cacheStorage;
+			$template->netteCacheStorage = $this->context->getByType('Nette\Caching\IStorage');
 
 			// flash message
 			if ($presenter->hasFlashSession()) {			
-				$id = $this->control->getParamId('flash');
+				$id = $this->control->getParameterId('flash');
 				$template->flashes = $presenter->getFlashSession()->$id;
 			}
 		}
@@ -262,7 +264,7 @@ class ControlRenderer extends vBuilder\Object {
 	public function templatePrepareFilters($template, &$engine = null) {
 		if(!$engine) $engine = new Nette\Latte\Engine;
 		
-		vBuilder\Latte\Macros\SystemMacros::install($engine->parser);
+		vBuilder\Latte\Macros\SystemMacros::install($engine->compiler);
 		$template->registerFilter($engine);
 	}
 	

@@ -1,0 +1,39 @@
+services:
+	authenticator:
+		class: vBuilder\Security\Authenticator('vBuilder\Security\User')
+	
+	# Hash provider
+	passwordHashProvider:
+		class: vBuilder\Security\Sha1SaltedHashProvider
+	
+	# User config
+	userConfig:
+		factory: vBuilder\Config\DbUserConfig::createService(['%appDir%/config/userdefaults.neon'])		
+		
+	# vBuilder ORM repositories	
+	repository:
+		factory: vBuilder\Orm\DibiRepository::createPersistentRepositoryServiceAlias
+		
+	persistentRepository:
+		class: vBuilder\Orm\DibiRepository
+		
+	sessionRepository:
+		class: vBuilder\Orm\SessionRepository
+	
+	# Translator
+	translator:
+		class: vBuilder\Localization\Translator
+		setup:
+			- addDictionary('app', '%appDir%')
+	
+	# Page metadata
+	metadata:
+		class: vBuilder\Application\MetaDataProvider
+		
+	# Web files generator (Css, Js, ...)
+	webFilesGenerator:
+		class: vBuilder\Application\WebFilesGenerator
+		
+parameters:
+	languages: ['cs']
+		

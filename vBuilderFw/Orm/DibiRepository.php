@@ -40,6 +40,11 @@ class DibiRepository extends BaseRepository {
 
 	private $_inProgressLock = array();
 	
+	
+	public static function createPersistentRepositoryServiceAlias(Nette\DI\IContainer $context) {
+		return $context->persistentRepository;
+	}
+	
 	/**
 	 * Constructor
 	 * 
@@ -48,7 +53,7 @@ class DibiRepository extends BaseRepository {
 	public function __construct(Nette\DI\IContainer $context) {
 		parent::__construct($context);
 		
-		$this->db = $this->context->connection;
+		$this->db = $this->context->database->connection;
 	}
 	
 	/**
@@ -65,7 +70,7 @@ class DibiRepository extends BaseRepository {
 		
 		$class = self::getEntityClass($entityName);
 		// TODO: Dodelat genericke entity z configu
-		if($class === false) throw new EntityException("Entity '$entity' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
+		if($class === false) throw new EntityException("Entity '$entityName' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
 		
 		$metadata = $class::getMetadata();
 
@@ -176,13 +181,27 @@ class DibiRepository extends BaseRepository {
 		if($this->db->affectedRows() == 0) return false;
 		
 		// Relace (OneToMany, ...)
-		// TODO: Prekontrolovat preklad nazvu sloupcu, nejak se mi to nelibi
 		foreach($entity->metadata->getFields() as $curr) {
 			if($entity->metadata->getFieldType($curr) == "OneToMany") {
-				$query2 = $this->db->delete($entity->metadata->getFieldTableName($curr));
-				foreach($entity->metadata->getFieldJoinPairs($curr) as $join) {
-					$query2->where("[".$join[1]."] = %s", $entity->{$join[0]});
+				$boundEntity = $entity->metadata->getFieldEntityName($curr);
+				
+				// Entity based OneToMany
+				if($boundEntity) {
+					$m = $boundEntity::getMetadata();
+				
+					$query2 = $this->db->delete($m->getTableName());
+					foreach($entity->metadata->getFieldJoinPairs($curr) as $join) {
+						$query2->where("[".$m->getFieldColumn($join[1])."] = %s", $entity->{$join[0]});
+					}
 				}
+				
+				// Simple OneToMany
+				else {
+					$query2 = $this->db->delete($entity->metadata->getFieldTableName($curr));
+					foreach($entity->metadata->getFieldJoinPairs($curr) as $join) {
+						$query2->where("[".$join[1]."] = %s", $entity->{$join[0]});
+					}
+				}				
 				
 				$query2->execute();
 			}
@@ -291,7 +310,7 @@ class DibiRepository extends BaseRepository {
 				// Po ulozeni svazane entity si musim vzit jeji ID a pridat ho do dat k ulozeni.
 				if($type == 'OneToOne') {
 					if($entity->metadata->getFieldMappedBy($curr) === null || (get_class($entity) != $entity->metadata->getFieldMappedBy($curr) && !is_subclass_of(get_class($entity), $entity->metadata->getFieldMappedBy($curr)) )) {						
-						
+
 						// Ukladam jen non-NULL sloupce
 						if(isset($entity->data->{$curr})) {
 							// Bacha na to, ze to nesmim brat z dat (kvuli tomu, ze tam muze bejt
@@ -299,7 +318,7 @@ class DibiRepository extends BaseRepository {
 							$targetEntity = $entity->{$curr};
 							if($targetEntity !== null) {
 								if(!($targetEntity instanceof ActiveEntity))
-									throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity.");
+									throw new \LogicException("Can't save OneToMany entity for field '$curr'. Data object is not instance of ActiveEntity. " . get_class($targetEntity) . ' given.');
 
 								$this->save($targetEntity);
 								
@@ -340,6 +359,12 @@ class DibiRepository extends BaseRepository {
 			// Pokud jsou k ulozeni nejaka TABULKOVA data, ulozim je
 			$addtionalDataToMerge = array();
 			$action = null;
+			
+			/* if($needToSaveEvenWithoutData)
+				d("Saving even without update data (forced save)");
+			else
+				d("Trying to save with update date", $updateData); */
+			
 			if(count($updateData) > 0 || $needToSaveEvenWithoutData) {
 				$insertData = $allTableFields;
 				$now = new \DateTime;
@@ -413,7 +438,20 @@ class DibiRepository extends BaseRepository {
 				
 				// Reverzni OneToOne relace
 				if($entity->metadata->getFieldType($curr) == 'OneToOne') {
+				
 					if($entity->metadata->getFieldMappedBy($curr) !== null && (get_class($entity) == $entity->metadata->getFieldMappedBy($curr) || is_subclass_of(get_class($entity), $entity->metadata->getFieldMappedBy($curr)) ) ) {
+						
+						
+						// Pro ukladani reverzni vazby, ale zpusobuje mnohonasobne ulozeni kolekce
+						/*$targetEntity = $entity->{$curr};
+												
+						$pairs = $entity->metadata->getFieldJoinPairs($curr);
+						list($entityField, $targetField) = $pairs[0];
+						
+						$targetEntity->{$targetField} = $entity->$entityField;
+						
+						$this->save($targetEntity); */
+						
 						
 						
 						// Zakomentovano! Bylo to tu jen pro sanity check a zpusobovalo to vynucene nacteni target entity => vyjimka, pokud neexistovaly

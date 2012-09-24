@@ -1,0 +1,48 @@
+{if $isInDevelopmentMode}<!-- HeadGenerator START ___________________________________________________ -->{/if}
+
+<title>{if $metadata->effectiveTitle}{$metadata->effectiveTitle}{else}{$control->getPresenter(TRUE)->context->httpRequest->getUrl()->getHost()}{/if}</title>
+
+<meta http-equiv="Content-Type" content="{$metadata->contentType}; charset={$metadata->encoding}">
+
+<meta name="Description" content="{$metadata->description}" n:if="$metadata->description" />
+<meta name="Keywords" content="{$metadata->keywordString}" n:if="count($metadata->keywords)" />
+
+<meta name="Author" content="{$metadata->author}" n:if="$metadata->author" />
+
+{if $isInProductionMode}
+<meta name="Robots" content="{$metadata->robots}" n:if="$metadata->robots" />
+{else}
+{if $isInDevelopmentMode}
+<!-- Indexing turned off because of the development mode. Production values: {$metadata->robots} -->
+{else}
+<!-- Indexing turned off while the site is under construction. Production values: {$metadata->robots} -->
+{/if}
+<meta name="Robots" content="noindex,nofollow" />
+{/if}
+
+<meta name="canonical" content="{$metadata->canonicalUrl}" n:if="$metadata->canonicalUrl" />
+
+<link rel="prev" href="{$metadata->prevUrl}" n:if="$metadata->prevUrl" />
+<link rel="next" href="{$metadata->nextUrl}" n:if="$metadata->nextUrl" />
+
+{if isset($gaAccount)}
+{if !$isInProductionMode}
+{if $isInDevelopmentMode}
+<!-- Google analytics reporting is disabled in development mode -->
+{else}
+<!-- Google analytics reporting is disabled while the site is under construction -->
+{/if}
+<!-- {/if}<script type="text/javascript">
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', '{$gaAccount}']);
+	_gaq.push(['_trackPageview']);
+			
+	(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	})();
+</script>{if !$isInProductionMode} -->{/if}
+{/if}
+
+{if $isInDevelopmentMode}<!-- HeadGenerator END _____________________________________________________ -->{/if}
