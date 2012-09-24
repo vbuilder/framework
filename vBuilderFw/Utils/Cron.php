@@ -29,9 +29,9 @@ use vBuilder, Nette, vBuilder\CronException;
  * Class for maintaining scheduled tasks. For use simple set up cron script to run
  * Cron::run() method **every hour**. This class takes care of emitting propper triggers.
  * 
- * Class checks, that only one cron job is running at the same time,
- * so operations are atomic safe and script is also protected against DoS attacks
- * thanks to last time call checking.
+ * Class insures that only one cron job is running at the time so operations are atomic safe.
+ * Script is also protected against DoS attacks, thanks to last time call checking, 
+ * although it's always better to limit calls only for local access or command-line runs.
  * 
  * Handlers can be registred as:
  * <code>
@@ -64,7 +64,7 @@ class Cron extends vBuilder\Object {
 	
 	/**
 	 * This function is meant to be called **hourly** by cron.
-	 * It calls all registred handlers and it also takes care of emiting trigger
+	 * It calls all registred handlers and it also takes care of emitting trigger
 	 * signals for longer periods of time than on hourly basis (daily, weekly, ...).
 	 * 
 	 * @param \DateTime forced date time (for testing purposes only)
