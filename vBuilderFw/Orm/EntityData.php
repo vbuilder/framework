@@ -292,7 +292,7 @@ class EntityData extends vBuilder\Object {
 	 */
 	public function isKeySet($name) {
 		if($this->metadata->hasField($name)) {
-			return array_key_exists($name, $this->newData) || array_key_exists($name, $this->data);
+			return array_key_exists($name, (array) $this->newData) || array_key_exists($name, (array) $this->data);
 		}
 		
 		return false;
