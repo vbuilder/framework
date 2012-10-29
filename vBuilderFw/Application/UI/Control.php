@@ -55,7 +55,7 @@ class Control extends Nette\Application\UI\Control {
 	 */
 	function render($params = array()) {
 		$this->renderCalled = true;
-		$this->renderParams = (array) $params;
+		$this->renderParams = is_array($params) ? $params : array($params);
 		
 		// Pokud jsme neprosli skrz ::signalRecieved - default action, etc.
 		if(!$this->actionHandled)
