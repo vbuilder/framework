@@ -46,7 +46,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		$me = new static($compiler);
 
 		foreach(array('js', 'css') as $lang) {
-			$me->addMacro('add' . ucfirst($lang), '$context->webFilesGenerator->addFile(%node.args, \'' . $lang . '\');');
+			$me->addMacro('add' . ucfirst($lang), '$context->webFilesGenerator->addFile(%node.args, \'' . $lang . '\', array(dirname($template->getFile()), WWW_DIR));');
 		}
 		
 		$me->addMacro('meta', array($me, 'macroMeta'));
