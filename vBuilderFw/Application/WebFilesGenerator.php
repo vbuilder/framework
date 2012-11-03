@@ -23,7 +23,8 @@
 namespace vBuilder\Application;
 
 use vBuilder,
-	Nette;
+	Nette,
+	Nette\Utils\Strings;
 
 /**
  * Helper model for generation of CSS and JS web files
@@ -121,15 +122,15 @@ class WebFilesGenerator extends Nette\Object {
 	 * 
 	 * @param string|BaseFile|array file(s) to stack
 	 * @param string file type
+	 * @param array of string used only for files with relative file path
 	 */
-	public function addFile($file, $type) {		
+	public function addFile($file, $type, array $basePath = array()) {		
 		if(isset($this->generated[$type]))
 			throw new Nette\InvalidStateException("Web file of type '$type' has been already generated. Cannot add another file to stack.");
 		
 		$files = is_array($file) ? $file : array($file);
 		foreach($files as $file) {
 
-			// Podpora pro CMS:
 			// Soubory prilozene ke strance (Redakce: vBuilder\Redaction\DocumentFiles)
 			if($file instanceOf vBuilder\Redaction\Files\BaseFile) {
 				$lastMod = $file->getLastModificationTime()->format('U');
@@ -138,11 +139,23 @@ class WebFilesGenerator extends Nette\Object {
 
 			// Obycejne soubory
 			else {
-				if(!file_exists($file))
+				if(Strings::startsWith($file, '/'))
+					$path = $file;
+				else {
+					foreach($basePath as $prefix) {
+						$path = Strings::endsWith($prefix, '/') ? $prefix : $prefix . '/';
+						$path .= $file;
+						
+						if(file_exists($path)) break;
+					}
+				}
+
+				if(!file_exists($path)) 
 					throw new Nette\InvalidArgumentException("File '$file' does not exist");
 
-				$lastMod = filemtime($file);
-				$id = $file;
+				$lastMod = filemtime($path);
+				$id = $path;
+				$file = $path;
 			}
 
 			// Ulozim cas posledni zmeny		
