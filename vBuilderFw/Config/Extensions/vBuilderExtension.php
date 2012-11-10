@@ -33,14 +33,28 @@ use Nette;
  */
 class vBuilderExtension extends Nette\Config\CompilerExtension {
 
-	public function afterCompile(Nette\Utils\PhpGenerator\ClassType $class) {
-		$initialize = $class->methods['initialize'];
-				
-		$initialize->addBody('$langFallback = (array) (isset($this->parameters[\'languages\']) ? $this->parameters[\'languages\'] : array(\'cs\') );');
-		$initialize->addBody('$this->parameters[\'lang\'] = $this->httpRequest->detectLanguage($langFallback);');
-		$initialize->addBody('if($this->parameters[\'lang\'] == NULL) $this->parameters[\'lang\'] = isset($langFallback[0]) ? $langFallback[0] : \'cs\';');
+	public function loadConfiguration() {
+		$container = $this->getContainerBuilder();
 		
-		$initialize->addBody('if($this->hasService(\'translator\')) $this->translator->setLang($this->parameters[\'lang\']);');
+		// Default language fallback list
+		if(!isset($container->parameters['languages']))
+			$container->parameters['languages'] = array('cs');
+			
+		// Default language is the first on the fallback list
+		if(!isset($container->parameters['lang']))
+			$container->parameters['lang'] = reset($container->parameters['languages']);
+	}
+
+	public function beforeCompile() {
+		$container = $this->getContainerBuilder();
+	
+		// Translator gets the language from container parameters
+		$container->getDefinition('translator')
+			->addSetup('$service->lang = $this->?[\'lang\']', 'parameters');
+			
+		// Detect language on HTTP request
+		$container->getDefinition('httpRequest')
+			->addSetup('if(($lang = $service->detectLanguage(?*)) != NULL) { $this->parameters[\'lang\'] = $lang; if($this->isCreated(\'translator\')) $translator->setLang($lang); }', array(array('%languages%')));
 	}
 
 }
