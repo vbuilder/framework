@@ -56,7 +56,7 @@ class DbConfigScope extends ConfigScope {
 	 */
 	function __construct(Nette\DI\IContainer $context, $name, $fallback = null) {
 		$this->context = $context;
-		$this->db = $this->context->connection;
+		$this->db = $this->context->database->connection;
 		
 		// Scope name
 		if($name !== null) $this->setScopeName($name);		
