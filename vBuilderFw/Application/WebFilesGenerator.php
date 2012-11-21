@@ -150,7 +150,7 @@ class WebFilesGenerator extends Nette\Object {
 					}
 				}
 
-				if(!file_exists($path)) 
+				if(!isset($path) || !file_exists($path)) 
 					throw new Nette\InvalidArgumentException("File '$file' does not exist");
 
 				$lastMod = filemtime($path);
