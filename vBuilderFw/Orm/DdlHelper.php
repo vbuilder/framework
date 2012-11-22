@@ -99,7 +99,7 @@ class DdlHelper {
 			$cName = $metadata->getFieldColumn($fName);
 
 			// New columns
-			if(!isset($columns[$cName]) || TRUE) {
+			if(!isset($columns[$cName])) {
 				$ddl .= "ALTER TABLE `" . $metadata->getTableName() . "` ";
 				$ddl .= "ADD COLUMN ";
 				$ddl .= self::getFieldDefinition($metadata, $fName);
@@ -148,9 +148,22 @@ class DdlHelper {
 	 * @return string
 	 */
 	private static function trFieldType($type) {
-		switch($type) {
+		switch(strtolower($type)) {
 			case "integer":
 				return "int";
+				
+			case "float":
+				return "float";
+				
+			case "datetime":
+				return "datetime";
+				
+			case "date":
+				return "date";
+			
+			case "text":
+			case "redactiontemplate":
+				return "text";
 
 			default:
 				return "varchar(256)";
