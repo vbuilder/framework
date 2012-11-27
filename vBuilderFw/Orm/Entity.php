@@ -471,7 +471,10 @@ class Entity extends vBuilder\Object {
 					
 		// Float
 		} elseif(Nette\Utils\Strings::compare($type, "Float")) {
-			$this->data->$fieldName = (float) $value;
+			if(is_string($value))
+				$this->data->$fieldName = vBuilder\Utils\Strings::parseToFloat($value);
+			else
+				$this->data->$fieldName = (float) $value;
 						
 		// String
 		} elseif(Nette\Utils\Strings::compare($type, "String")) {
