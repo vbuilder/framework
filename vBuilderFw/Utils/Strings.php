@@ -164,7 +164,8 @@ class Strings extends Nette\Utils\Strings {
 	 * If given string does not contain any number $onFailValue is returned.
 	 *
 	 * Tested for: "1,231.123", "-13", "1,22", "0", "", "+13.22",
-	 *		"123,122,123", "123 122,123", "some garbage 11.3 some other garbage"
+	 *		"123,122,123", "123 122,123", "some garbage 11.3 some other garbage",
+	 *		".12", ",12", "123.123.123", "123.123,12"
 	 * 
 	 * @param string
 	 * @param mixed value, which will be returned if given string can't be parsed into float
@@ -175,14 +176,16 @@ class Strings extends Nette\Utils\Strings {
 
 		if(preg_match_all("/([^0-9]+)?([0-9]+)/", $str, $matches)) {
 		
-			$sgn = strpos(array_shift($matches[1]), '-') !== FALSE ? -1 : 1;
+			$sgn = strpos($matches[1][0], '-') !== FALSE ? -1 : 1;
 			$point = -1;
+			$commaCount = 0;
+			$dotCount = 0;
 			foreach($matches[1] as $key=>$sep) {
-				if(strpos($sep, '.') !== FALSE) {
-					$point = $key + 1;
-					break;
-				} elseif(strpos($sep, ',') !== FALSE)
-					$point = $point == -1 ? $key + 1 : -2;
+				if(strpos($sep, '.') !== FALSE) 
+					$point = ++$dotCount < 2 ? $key : -1;
+					
+				elseif(strpos($sep, ',') !== FALSE)
+					$point = ++$commaCount < 2 ? $key : -1;
 			}
 			
 			$nStr = '';
