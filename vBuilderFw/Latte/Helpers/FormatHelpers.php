@@ -37,7 +37,7 @@ class FormatHelpers {
 	
 	public static function postalCode($value) {
 		$s = preg_replace("#\s+#", "", $value);
-		return mb_substr($s, 0, 3) . "\xc2\xa0" . mb_substr($s, 0, 3);
+		return mb_substr($s, 0, 3) . "\xc2\xa0" . mb_substr($s, 3);
 	}
 	
 	public static function formatNumericValue($n, $unit = null) {
