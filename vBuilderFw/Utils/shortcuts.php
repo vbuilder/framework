@@ -11,18 +11,19 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 use Nette\Diagnostics\Debugger as Debug,
-	 Nette\Utils\Html,
-	 Nette\Environment;
+	Nette\Utils\Html,
+	Nette\Environment,
+	vBuilder\Diagnostics\Helpers;
 
 /**
  * Prints out debug message to standard output
@@ -76,7 +77,7 @@ function dt(array $var) {
 		
 		foreach($row as $col) {
 			echo "<td style=\"border: 1px solid #dddddd; padding: 3px 10px;\">\n";
-			Debug::dump($col);
+			d($col);
 			echo "</td>\n";
 		}
 		echo '</tr>';
@@ -85,33 +86,48 @@ function dt(array $var) {
 	echo '</tbody></tbody>';
 }
 
+
 function d10() {
 	$tmp = Debug::$maxDepth;
 	Debug::$maxDepth = 10;
-	foreach (func_get_args() as $m) {
-		if($m instanceof \DibiResult) {
-			dt($m->fetchAll());
-		} else {
-			Debug::dump($m);
-		}
-	}
+
+	call_user_func_array('d', func_get_args());
+
 	Debug::$maxDepth = $tmp;
 }
 
+
 function d() {
-	$tmp = Debug::$maxDepth;
-	Debug::$maxDepth = 3;
+
+	if(Debug::$productionMode)
+		return ;
+
 	foreach (func_get_args() as $m) {
-		if($m instanceof \DibiResult) {
-			dt($m->fetchAll());
+		if(!Debug::$consoleMode && ($m instanceof \DibiResult || $m instanceof \vBuilder\Orm\Fluent)) {
+			if($m instanceof \DibiResult)
+				dt($m->fetchAll());
+			else {
+				$m->test();
+				$data = array();
+				foreach($m->fetchAll() as $entity) {
+					$data[] = $entity->data->getAllData();
+				}
+				
+				dt($data);
+			}
 		} else {
-			Debug::dump($m);
+
+			$d = '<pre class="nette-dump">' . Helpers::htmlDump($m) . '</pre>';
+			if(Debug::$consoleMode) $d = htmlspecialchars_decode(strip_tags($d), ENT_NOQUOTES);
+			echo $d;
 		}
 	}
-	Debug::$maxDepth = $tmp;
 }
 
 function dd() {
+	if(Debug::$productionMode)
+		return ;
+
 	call_user_func_array('d', func_get_args());
 	die;
 }
