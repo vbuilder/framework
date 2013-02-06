@@ -38,7 +38,7 @@ use vBuilder,
  * @Column(username, type="string")
  * @Column(password, type="string")
  * @Column(email, type="string")
- * @Column(registrationTime, type="DateTime")
+ * @Column(registrationTime, type="CreatedDateTime")
  * @Column(roles, type="OneToMany", table="security_userRoles", joinOn="id=user")
  * @Column(lastLoginInfo, type="OneToOne", entity="vBuilder\Security\LastLoginInfo", mappedBy="vBuilder\Security\User", joinOn="id=userId")
  *
