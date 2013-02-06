@@ -74,7 +74,7 @@ class Authenticator implements Nette\Security\IAuthenticator {
 		if($user !== false) {
 			if($user->checkPassword($credentials[self::PASSWORD])) {
 				$remoteAddr = $this->context->httpRequest->getRemoteAddress();
-				$this->context->connection->query(
+				$this->context->database->connection->query(
 					'INSERT INTO ['.LastLoginInfo::getMetadata()->getTableName().'] ([userId], [time], [ip], [time2], [ip2]) VALUES(' .
 					'%i', $user->getId(), ', NOW(), %s', $remoteAddr, ', NULL, NULL) ' .
 					'ON DUPLICATE KEY UPDATE [time2] = [time], [ip2] = [ip], [time] = NOW(), [ip] = %s', $remoteAddr

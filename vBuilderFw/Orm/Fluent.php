@@ -52,7 +52,7 @@ class Fluent extends \DibiFluent {
 		$this->rowClass = $rowClass;
 		$this->context = $context;
 		
-		parent::__construct($this->context->connection);
+		parent::__construct($this->context->database->connection);
 	}
 
 	/**
