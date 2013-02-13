@@ -50,7 +50,8 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		}
 		
 		$me->addMacro('meta', array($me, 'macroMeta'));
-		$me->addMacro('test', array($me, 'macroTest'), array($me, 'macroEndTest'));
+		$me->addMacro('iftest', array($me, 'macroTest'), array($me, 'macroEndTest'));
+		$me->addMacro('ifTest', array($me, 'macroTest'), array($me, 'macroEndTest'));
 		
 		return $me;
 	}
