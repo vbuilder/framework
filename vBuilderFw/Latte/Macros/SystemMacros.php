@@ -50,6 +50,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		}
 		
 		$me->addMacro('meta', array($me, 'macroMeta'));
+		$me->addMacro('test', array($me, 'macroTest'), array($me, 'macroEndTest'));
 		
 		return $me;
 	}
@@ -69,6 +70,16 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 			return $writer->write('$context->metadata->{mb_substr(%node.word, 0, -1)} = %node.args;');
 		
 		return $writer->write('{ if(!$context->metadata->{%node.word} && $context->metadata->{%node.word} !== false) $context->metadata->{%node.word} = %node.args; }');
+	}
+
+	function macroTest(MacroNode $node, $writer) {
+		// isset($context->parameters['productionMode']) && $context->parameters['productionMode'] === false
+
+		return $writer->write('{ if(Nette\Diagnostics\Debugger::$productionMode === false):');
+	}
+
+	function macroEndTest(MacroNode $node, $writer) {
+		return $writer->write('endif; }');
 	}
 
 }
