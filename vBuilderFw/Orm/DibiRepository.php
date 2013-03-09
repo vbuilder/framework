@@ -522,16 +522,35 @@ class DibiRepository extends BaseRepository {
 			}
 			
 			
-			// Zavolani eventu
+			// Zavolani eventu -------------------
 			if($entity instanceof ActiveEntity) {
 				if($action == 'create')	$entity->onCreate($entity);
 				elseif($action == 'update') $entity->onUpdate($entity);
 				$entity->onPostSave($entity);
 			}
 			
-			// Commitnuti dat
+			// Cache update ----------------------
+			foreach($entity->data->getChangedData() as $fieldName => $value) {
+				if($entity->metadata->hasFieldProperty($fieldName, 'cached')) {
+					$cacheSetData = array($fieldName);
+					foreach($entity->metadata->getIdFields() as $idFieldName)
+						$cacheSetData[] = $entity->{$idFieldName};
+						
+					$cacheSetData[] = $value;
+					
+					call_user_func_array(
+						array($this->cache(get_class($entity)), 'set'),
+						$cacheSetData
+					);
+				}
+			}
+			
+			// Commitnuti dat --------------------
 			$this->db->commit();
+			
+			// Update dat v ramci entiy -----------
 			$entity->data->performSaveMerge();
+			
 		} catch(\Exception $e) {
 			$this->db->rollback();
 			throw $e;
