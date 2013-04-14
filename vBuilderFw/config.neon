@@ -40,4 +40,8 @@ services:
 		
 parameters:
 	languages: ['cs']
+
+	security:
+		password:
+			minLength: 6
 		
