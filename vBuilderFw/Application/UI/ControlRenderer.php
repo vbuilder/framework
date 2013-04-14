@@ -113,11 +113,6 @@ class ControlRenderer extends vBuilder\Object {
 				if(file_exists($file)) {					
 					$this->template->setFile($file);
 					
-					// Automaticky extend
-					if(!isset($this->template->_extends) && $file != $this->getDefaultTemplateFile() && file_exists($this->getDefaultTemplateFile())) {
-						$this->template->_extends = $this->getDefaultTemplateFile();
-					}
-					
 					$this->template->render();
 					return ;
 				}
@@ -257,15 +252,47 @@ class ControlRenderer extends vBuilder\Object {
 	}
 	
 	/**
-	 * Descendant can override this method to customize template compile-time filters.
+	 * Compilation time templating filters
+	 * 
 	 * @param  Nette\Templating\Template
 	 * @return void
 	 */
-	public function templatePrepareFilters($template, &$engine = null) {
-		if(!$engine) $engine = new Nette\Latte\Engine;
+	final public function templatePrepareFilters($template) {
+
+		// We cannot use Nette\Latte\Engine class directly, because we need our UIMacros patch
+		// $this->getPresenter()->getContext()->nette->createLatte()
+
+		$parser = new Nette\Latte\Parser;
+		$compiler = new Nette\Latte\Compiler;
+		$compiler->defaultContentType = Nette\Latte\Compiler::CONTENT_XHTML;
+
+		$this->lattePrepareMacros($compiler, $template);
+
+		$template->registerFilter(function ($s) use ($compiler, $parser) {
+			return $compiler->compile($parser->parse($s));
+		});
+	}
+
+	/**
+	 * Prepares Latte macros
+	 * 
+	 * @param  Nette\Latte\Compiler
+	 * @return void
+	 */
+	protected function lattePrepareMacros(Nette\Latte\Compiler $compiler, Nette\Templating\Template $template) {
+		Nette\Latte\Macros\CoreMacros::install($compiler);
+		$compiler->addMacro('cache', new Nette\Latte\Macros\CacheMacro($compiler));
 		
-		vBuilder\Latte\Macros\SystemMacros::install($engine->compiler);
-		$template->registerFilter($engine);
+		// Must be before UIMacros
+		vBuilder\Latte\Macros\SystemMacros::install($compiler);
+
+		// Auto-extend for templates
+		if($template instanceof Nette\Templating\FileTemplate && $template->getFile() != "" && $template->getFile() != $this->getDefaultTemplateFile() && file_exists($this->getDefaultTemplateFile())) {
+			vBuilder\Latte\Macros\UIMacros::installWithAutoExtend($compiler, $this->getDefaultTemplateFile());
+		} else
+			vBuilder\Latte\Macros\UIMacros::install($compiler);
+
+		Nette\Latte\Macros\FormMacros::install($compiler);
 	}
 	
 }

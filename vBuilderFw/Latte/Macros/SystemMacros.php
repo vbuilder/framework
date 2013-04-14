@@ -24,9 +24,10 @@
 namespace vBuilder\Latte\Macros;
 
 use vBuilder,
-		Nette,
-		Nette\Latte\MacroNode,
-		Nette\Latte\ParseException;
+	Nette,
+	Nette\Latte\MacroNode,
+	Nette\Latte\ParseException,
+	Nette\Latte\MacroTokenizer;
 
 /**
  * System macros
@@ -35,6 +36,8 @@ use vBuilder,
  * @since Aug 2, 2011
  */
 class SystemMacros extends Nette\Latte\Macros\MacroSet {
+
+	protected $_prolog = array();
 
 	/**
 	 * Installs redactions macros to parser
@@ -45,9 +48,8 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	static function install(Nette\Latte\Compiler $compiler) {
 		$me = new static($compiler);
 
-		foreach(array('js', 'css') as $lang) {
-			$me->addMacro('add' . ucfirst($lang), '$context->webFilesGenerator->addFile(%node.args, \'' . $lang . '\', array(dirname($template->getFile()), WWW_DIR));');
-		}
+		$me->addMacro('addCss', array($me, 'macroWebFile'));
+		$me->addMacro('addJs', array($me, 'macroWebFile'));
 		
 		$me->addMacro('meta', array($me, 'macroMeta'));
 		$me->addMacro('iftest', array($me, 'macroTest'), array($me, 'macroEndTest'));
@@ -55,7 +57,40 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		
 		return $me;
 	}
+
+	function finalize() {
+		// ($prolog, $epilog)
+		return array(implode($this->_prolog, "\n"), '');
+	}
 	
+	/**
+	 * {addCss ...}
+	 * {addJs ...}
+	 * 
+	 * @param MacroNode $node
+	 * @param type $writer
+	 * @return string 
+	 */
+	function macroWebFile(MacroNode $node, $writer) {
+
+		$lang = lcfirst(mb_substr($node->name, 3));
+		$cmd = '$context->webFilesGenerator->addFile('
+			. $node->args . ', '
+			. "'$lang', "
+			. 'array(dirname($template->getFile()), WWW_DIR)'
+			. ');';
+
+		
+		// ---------
+
+		// Pokud se macro vyskytuje bez nejakeho parent bloku musime ho zapsat v prologu,
+		// protoze jinak by se nemuselo vubec zavolat kvuli dedicnosti sablon
+		if($node->parentNode == NULL) {
+			$this->_prolog[] = $cmd;
+		} else 
+			$writer->write($cmd);
+	}
+
 	/**
 	 * {meta ...}
 	 * 
@@ -65,12 +100,37 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	 */
 	function macroMeta(MacroNode $node, $writer) {
 		// TODO: podpora pro veci jako addKeywords
-		
-		$option = mb_substr($node->args, 0, mb_strpos($node->args, ' '));
-		if($option[mb_strlen($option) - 1]  == '!')
-			return $writer->write('$context->metadata->{mb_substr(%node.word, 0, -1)} = %node.args;');
-		
-		return $writer->write('{ if(!$context->metadata->{%node.word} && $context->metadata->{%node.word} !== false) $context->metadata->{%node.word} = %node.args; }');
+
+		$cmd = '';
+		$force = false;
+		$symbol = false;
+
+		foreach($node->tokenizer->tokens as $token) {
+			if($symbol)
+				$cmd .= $token['value'];
+			elseif($token['value'] == '!')
+				$force = true;
+			elseif($token['type'] == MacroTokenizer::T_SYMBOL) {
+				if(!$force)
+					$cmd .= 'if(!$context->metadata->{"' . $token['value'] . '"} && $context->metadata->{"' . $token['value'] . '"} !== false) ';
+
+				$cmd .= '$context->metadata->{"' . $token['value'] . '"} =';
+
+				$symbol = true;
+			}
+		}
+
+		$cmd .= ';';
+		if(!$force) $cmd = "{ $cmd }";
+				
+		// ---------
+
+		// Pokud se macro vyskytuje bez nejakeho parent bloku musime ho zapsat v prologu,
+		// protoze jinak by se nemuselo vubec zavolat kvuli dedicnosti sablon
+		if($node->parentNode == NULL) {
+			$this->_prolog[] = $cmd;
+		} else 
+			$writer->write($cmd);
 	}
 
 	function macroTest(MacroNode $node, $writer) {

@@ -48,20 +48,47 @@ class Presenter extends Nette\Application\UI\Presenter {
 			$this->setLayout(false);
 		}
 	}
-	
+		
 	/**
-	 * Latte template filters and macros definition
+	 * Compilation time templating filters
 	 * 
-	 * @param Template $template 
+	 * @param  Nette\Templating\Template
+	 * @return void
 	 */
-	public function templatePrepareFilters($template) {
-		$engine = new Nette\Latte\Engine;
-		
-		vBuilder\Latte\Macros\SystemMacros::install($engine->compiler);
-		
-		$template->registerFilter($engine);
+	final public function templatePrepareFilters($template) {
+
+		// We cannot use Nette\Latte\Engine class directly, because we need our SystemMacros
+		// to be declared befor UIMacros
+		// $this->getPresenter()->getContext()->nette->createLatte()
+
+		$parser = new Nette\Latte\Parser;
+		$compiler = new Nette\Latte\Compiler;
+		$compiler->defaultContentType = Nette\Latte\Compiler::CONTENT_XHTML;
+
+		$this->lattePrepareMacros($compiler, $template);
+
+		$template->registerFilter(function ($s) use ($compiler, $parser) {
+			return $compiler->compile($parser->parse($s));
+		});
 	}
-	
+
+	/**
+	 * Prepares Latte macros
+	 * 
+	 * @param  Nette\Latte\Compiler
+	 * @return void
+	 */
+	protected function lattePrepareMacros(Nette\Latte\Compiler $compiler, Nette\Templating\Template $template) {
+		Nette\Latte\Macros\CoreMacros::install($compiler);
+		$compiler->addMacro('cache', new Nette\Latte\Macros\CacheMacro($compiler));
+		
+		// Must be before UIMacros
+		vBuilder\Latte\Macros\SystemMacros::install($compiler);
+
+		vBuilder\Latte\Macros\UIMacros::install($compiler);
+		Nette\Latte\Macros\FormMacros::install($compiler);
+	}
+
 	/**
 	 * Magic template factory - docasne reseni
 	 * @param string $file Filename relatice to the dir. If not set, "default" will be used
