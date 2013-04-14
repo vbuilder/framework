@@ -13,7 +13,7 @@ $args = new CliArgsParser;
 $args->setNumRequiredArgs(1, 1);
 $args->setArgumentHelp('entity name');
 
-$entities = ClassInfo::getAllChildrenOf(ENTITY_CLASS);
+$entities = $context->classInfo->getAllChildrenOf(ENTITY_CLASS);
 
 // -----------------------------------------------------------------------------
 

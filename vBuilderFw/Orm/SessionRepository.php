@@ -63,7 +63,7 @@ class SessionRepository extends BaseRepository {
 		// 	=> Pri pridani nove tridy SMAZAT CACHE!
 		$array = array();
 		$classes = $processSubclasses
-		? array_merge(array($entityName), vBuilder\Utils\ClassInfo::getAllChildrenOf($entityName))
+		? array_merge(array($entityName), $this->context->classInfo->getAllChildrenOf($entityName))
 		: array($entityName);
 		
 		foreach($classes as $entityName) {

@@ -33,6 +33,10 @@ services:
 	# Web files generator (Css, Js, ...)
 	webFilesGenerator:
 		class: vBuilder\Application\WebFilesGenerator
+
+	# Class info provider
+	classInfo:
+		class: vBuilder\Application\ClassInfoProvider
 		
 parameters:
 	languages: ['cs']

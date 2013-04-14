@@ -11,28 +11,37 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace vBuilder\Utils;
+namespace vBuilder\Application;
 
-use vBuilder, Nette;
+use vBuilder,
+	vBuilder\Utils\Strings,
+	Nette;
 
 /**
- * Class info routines
+ * Provider of class information
  *
  * @author Adam Staněk (velbloud)
- * @since Dec 2, 2011
+ * @since Apr 14, 2013
  */
-class Classinfo {
-	
+class ClassInfoProvider extends Nette\Object {
+
+	/** @var Nette\DI\IContainer DI context container */
+	protected $context;
+
+	public function __construct(Nette\DI\IContainer $context) {
+		$this->context = $context;
+	}
+
 	/**
 	 * Returns all child classes of specified parent.
 	 * Results are cached along with robot cache.
@@ -40,12 +49,12 @@ class Classinfo {
 	 * @param string parent class name
 	 * @return array of fully qualified class names (with namespace)
 	 */
-	public static function getAllChildrenOf($parentClassName) {
+	public function getAllChildrenOf($parentClassName) {
 		$cacheKey = array();
 		$cacheKey[] = 'childrenOf';
 		$cacheKey[] = $parentClassName;
 		
-		return self::getAllClassesHelper($cacheKey, function ($className) use ($parentClassName) {
+		return $this->getAllClassesHelper($cacheKey, function ($className) use ($parentClassName) {
 			return is_subclass_of($className, $parentClassName);
 		});
 	}
@@ -56,21 +65,20 @@ class Classinfo {
 	 * @param string interface name
 	 * @return array of fully qualified class names (with namespace)
 	 */
-	public static function getAllClassesImplementing($interfaceName) {
+	public function getAllClassesImplementing($interfaceName) {
 		$cacheKey = array();
 		$cacheKey[] = 'implementing';
 		$cacheKey[] = $interfaceName;
 		
-		return self::getAllClassesHelper($cacheKey, function ($className) use ($interfaceName) {
+		return $this->getAllClassesHelper($cacheKey, function ($className) use ($interfaceName) {
 			$class = new Nette\Reflection\ClassType($className);
 
 			return $class->implementsInterface($interfaceName) && $interfaceName != $className;
 		});
 	}
 	
-	private static function getAllClassesHelper($cacheKey, $cb) {
-		global $container;
-		$cache = new Nette\Caching\Cache($container->cacheStorage, 'Nette.RobotLoader');
+	private function getAllClassesHelper($cacheKey, $cb) {
+		$cache = new Nette\Caching\Cache($this->context->cacheStorage, 'Nette.RobotLoader');
 		
 		if(isset($cache[$cacheKey])) {
 			return $cache[$cacheKey];
@@ -110,7 +118,5 @@ class Classinfo {
 			
 		return $classes;
 	}
-	
-	
-	
+
 }
