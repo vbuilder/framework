@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -37,7 +37,7 @@ use vBuilder,
  * @Column(id, pk, type="integer", generatedValue)
  * @Column(username, type="string")
  * @Column(password, type="string")
- * @Column(email, type="string")
+ * @Column(email, type="string", cmsName="E-mail")
  * @Column(registrationTime, type="CreatedDateTime")
  * @Column(roles, type="OneToMany", table="security_userRoles", joinOn="id=user")
  * @Column(lastLoginInfo, type="OneToOne", entity="vBuilder\Security\LastLoginInfo", mappedBy="vBuilder\Security\User", joinOn="id=userId")
@@ -50,24 +50,6 @@ class User extends vBuilder\Orm\ActiveEntity implements Nette\Security\IIdentity
 	public function __construct() {
 		call_user_func_array(array('parent', '__construct'), func_get_args());
 	}
-
-	/*protected static function & getMetadataInternal() {
-		$m1 = parent::getMetadataInternal();
-		
-		// NESMIM POUZIT NAS CONFIG, PROTOZE JE ZAVISLY NA UZIVATELI!
-		//	=> infinite loop
-		//$config = Nette\Environment::getContext()->config->getGlobalScope();
-		
-		$config = Nette\Environment::getConfig();
-		if(isset($config["security"]["user"])) {
-			$m2 = new vBuilder\Orm\ConfigMetadata((array) $config["security"]["user"]);
-			
-			$metadata = new vBuilder\Orm\MergedMetadata($m1, $m2);
-			return $metadata;
-		}
-		
-		return $m1;
-	} */
 
 	/**
 	 * Returns user display name. It can be overloaded to contain real user name and
