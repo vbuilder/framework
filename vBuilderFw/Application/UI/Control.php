@@ -324,11 +324,19 @@ class Control extends Nette\Application\UI\Control {
 			
 			return ;
 		}
-		
-		if($code == 'this') $code = $this->view;
-		elseif($destination == 'this') $destination = $this->view;
-		
-		parent::redirect($code, $destination, $args);
+
+		else if(func_num_args() < 3) {
+			$args = $destination;
+			$destination = $code;
+			$code = NULL;
+		}
+
+		if($destination == 'this') $destination = $this->view;
+
+		if($code)
+			parent::redirect($code, $destination, $args);
+		else
+			parent::redirect($destination, $args);
 	} 
 	
 	/**
