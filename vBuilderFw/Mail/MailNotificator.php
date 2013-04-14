@@ -116,8 +116,8 @@ class MailNotificator extends vBuilder\EventListener {
 		$presenter = $this->context->application->getPresenter();
 		
 		$template->onPrepareFilters[] = callback($this, 'templatePrepareFilters');
-		$template->registerHelperLoader('Nette\Templating\DefaultHelpers::loader');
-		$template->setCacheStorage($this->context->templateCacheStorage);
+		$template->registerHelperLoader('Nette\Templating\Helpers::loader');
+		$template->setCacheStorage($this->context->nette->templateCacheStorage);
 		
 		// default parameters
 		$template->mailNotificator = $this;
