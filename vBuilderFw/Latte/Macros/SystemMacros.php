@@ -88,7 +88,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		if($node->parentNode == NULL) {
 			$this->_prolog[] = $cmd;
 		} else 
-			$writer->write($cmd);
+			return $writer->write($cmd);
 	}
 
 	/**
@@ -130,7 +130,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		if($node->parentNode == NULL) {
 			$this->_prolog[] = $cmd;
 		} else 
-			$writer->write($cmd);
+			return $writer->write($cmd);
 	}
 
 	function macroTest(MacroNode $node, $writer) {
