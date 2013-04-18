@@ -374,7 +374,9 @@ class DibiRepository extends BaseRepository {
 					$type = $entity->metadata->getFieldType($curr);
 					
 					if($type == 'CreatedDateTime') {
-						$insertData[$entity->metadata->getFieldColumn($curr)] = $now->format('Y-m-d H:i:s');
+						if(!isset($insertData[$entity->metadata->getFieldColumn($curr)]))
+							$insertData[$entity->metadata->getFieldColumn($curr)] = $now->format('Y-m-d H:i:s');
+						
 					} elseif($type == 'ModifiedDateTime') {
 						$insertData[$entity->metadata->getFieldColumn($curr)] = $now->format('Y-m-d H:i:s');
 						$updateData[$entity->metadata->getFieldColumn($curr)] = $now->format('Y-m-d H:i:s');
