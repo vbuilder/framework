@@ -128,7 +128,7 @@ class CliArgsParser {
 	public function get($name) {
 		if(!isset($this->parsedArguments)) throw new Nette\InvalidStateException("Arguments has not been parsed yet");
 		
-		return isset($this->parsedOptions[$name]) ? $this->parsedOptions[$name] : false;
+		return array_key_exists($name, $this->parsedOptions) ? $this->parsedOptions[$name] : false;
 	}
 	
 	/**
@@ -170,7 +170,7 @@ class CliArgsParser {
 				}
 			} else {
 				if($needValueFor) {
-					$this->parsedOptions[$needValueFor] = $arg;
+					$this->parsedOptions[$needValueFor] = strcasecmp($arg, 'null') == 0 ? NULL : $arg;
 					$needValueFor = null;
 				} else {
 					$this->parsedArguments[] = $arg;
@@ -195,7 +195,7 @@ class CliArgsParser {
 		}
 		
 		foreach((array) $this->options as $key => $option) {
-			if($option['required'] && !isset($this->parsedOptions[$key])) {
+			if($option['required'] && !array_key_exists($key, $this->parsedOptions)) {
 				$this->errorMsg = "Missing required option '$key'";
 				return false;
 			}
