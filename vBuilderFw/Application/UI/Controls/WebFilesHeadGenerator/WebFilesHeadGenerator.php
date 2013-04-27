@@ -42,6 +42,12 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 	/** @var string rendered HTML of created HEAD tags */
 	private $_renderedHtml;
 
+	/** @var array of Nette\Utils\Html */
+	private $_renderedAddtionalElements = array();
+
+	/** @var array of Nette\Utils\Html */
+	private $_addtionalElements = array();
+
 	/**
 	  * Returns DI context container
 	  *
@@ -61,15 +67,25 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 	}
 	
 	/**
+	 * Adds addtional HTML element to head
+	 * 
+	 * @param Nette\Utils\Html $el
+	 * @return  WebFilesHeadGenerator fluent interface
+	 */
+	public function addEl(Nette\Utils\Html $el) {
+		return $this->_addtionalElements[] = $el;
+	}
+
+	/**
 	 * Renders HTML and returns it as a string
 	 *
 	 * @return string
 	 */
-	private function renderToString() {
+	public function renderToString() {
 		$webFiles = $this->context->webFilesGenerator;
-		$output = '';
+		$output = '<!-- Generated web files -->';
 
-		// CSS ---------
+		// CSS ------------------------
 		$this->_renderedHash[WebFilesGenerator::STYLESHEET] = $webFiles->getHash(WebFilesGenerator::STYLESHEET);
 		if($this->_renderedHash[WebFilesGenerator::STYLESHEET] !== null) {
 			$lastModSuffix = $webFiles->getLastModification(WebFilesGenerator::STYLESHEET) !== null ? '?ver=' . $webFiles->getLastModification(WebFilesGenerator::STYLESHEET) : '';
@@ -82,7 +98,7 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 			));
 		}
 		
-		// JS -----------
+		// JS --------------------------
 		$this->_renderedHash[WebFilesGenerator::JAVASCRIPT] = $webFiles->getHash(WebFilesGenerator::JAVASCRIPT);
 		if($this->_renderedHash[WebFilesGenerator::JAVASCRIPT] !== null) {
 			$lastModSuffix = $webFiles->getLastModification(WebFilesGenerator::JAVASCRIPT) !== null ? '?ver=' . $webFiles->getLastModification(WebFilesGenerator::JAVASCRIPT) : '';
@@ -93,6 +109,16 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 			));
 			
 			$output .= "\n" . $scriptEl->startTag() . $scriptEl->endTag();
+		}
+
+		// Addtional elements -----------
+		if(count($this->_addtionalElements) > 0) {
+			$this->_renderedAddtionalElements = $this->_addtionalElements;
+
+			$output .= "\n\n<!-- Addtional header tags -->";
+			foreach($this->_addtionalElements as $el) {
+				$output .= "\n" . $el->render();
+			}
 		}
 		
 		return $output;
@@ -118,7 +144,7 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 	
 		$webFiles = $this->context->webFilesGenerator;
 		
-		if($this->_renderedHash[WebFilesGenerator::JAVASCRIPT] !== $webFiles->getHash(WebFilesGenerator::JAVASCRIPT) || $this->_renderedHash[WebFilesGenerator::STYLESHEET] !== $webFiles->getHash(WebFilesGenerator::STYLESHEET)) {
+		if($this->_renderedHash[WebFilesGenerator::JAVASCRIPT] !== $webFiles->getHash(WebFilesGenerator::JAVASCRIPT) || $this->_renderedHash[WebFilesGenerator::STYLESHEET] !== $webFiles->getHash(WebFilesGenerator::STYLESHEET) || $this->_addtionalElements != $this->_renderedAddtionalElements) {
 		
 			$renderedHtml = str_replace($this->_renderedHtml, $this->renderToString(), $renderedHtml);
 		}
