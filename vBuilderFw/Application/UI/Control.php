@@ -38,6 +38,16 @@ class Control extends Nette\Application\UI\Control {
 	private $renderCalled = false;
 	
 	/**
+	 * Array of callbacks which will be called when
+	 * this control receives any signal
+	 *
+	 * (Control $control, $signalName)
+	 * 
+	 * @var array
+	 */
+	public $onSignalReceived = array();
+
+	/**
 	 * @var array 
 	 */
 	protected $renderParams = array();
@@ -199,6 +209,8 @@ class Control extends Nette\Application\UI\Control {
 	public function signalReceived($signal) {		
 		$this->actionHandled = true;
 		
+		$this->onSignalReceived($this, $signal);
+
 		if(!$this->tryCall($this->formatHandleMethod($signal), $this->params)) {
 			$this->view = $signal;
 			
@@ -210,6 +222,15 @@ class Control extends Nette\Application\UI\Control {
 			}	
 			
 		}
+	}
+
+	/**
+	 * Returns true if this control received a signal
+	 * 
+	 * @return boolean
+	 */
+	public function isSignalReceived() {
+		return $this->actionHandled === TRUE;
 	}
 	
 	/**
