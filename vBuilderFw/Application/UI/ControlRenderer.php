@@ -107,22 +107,24 @@ class ControlRenderer extends vBuilder\Object {
 	 * @return void
 	 */
 	function render() {
-		// File templates
-		if($this->template instanceof Nette\Templating\IFileTemplate && !$this->template->getFile()) {
-			foreach($this->formatTemplateFiles() as $file) {
-				if(file_exists($file)) {					
-					$this->template->setFile($file);
-					
-					$this->template->render();
-					return ;
+		if($this->template !== FALSE) {
+			// File templates
+			if($this->template instanceof Nette\Templating\IFileTemplate && !$this->template->getFile()) {
+				foreach($this->formatTemplateFiles() as $file) {
+					if(file_exists($file)) {					
+						$this->template->setFile($file);
+						
+						$this->template->render();
+						return ;
+					}
 				}
+			
+				throw new Nette\Application\BadRequestException("Page not found. Missing template '$file'.");
 			}
-		
-			throw new Nette\Application\BadRequestException("Page not found. Missing template '$file'.");
+			
+			// Other templates
+			$this->template->render();
 		}
-		
-		// Other templates
-		$this->template->render();
 	}
 	
 	/**
@@ -205,6 +207,21 @@ class ControlRenderer extends vBuilder\Object {
 		}
 		
 		return $this->_template;
+	}
+
+	/**
+	 * Sets template
+	 * 
+	 * @param FALSE|Nette\Templating\ITemplate new template
+	 */
+	public function setTemplate($template) {
+		if($template === FALSE || $template instanceof Nette\Templating\ITemplate) {
+			 $this->_template = $template;
+			 return ;
+		}
+
+		$class = get_called_class();
+		throw new Nette\UnexpectedValueException("Invalid object given for $class::setTemplate. FALSE or implementation of Nette\\Templating\\ITemplate required.");
 	}
 	
 	/**
