@@ -199,5 +199,32 @@ class Strings extends Nette\Utils\Strings {
 		
 		return $onFailValue;
 	}
-	
+
+	/**
+	 * Generates random human readable token.
+	 * Ambiguous chars like 0 and O are ommitted.
+	 * Combines vowels with consonants and numbers.
+	 * 
+	 * @author Pavel Maca
+	 *
+	 * @param  int length
+	 * @return string
+	 */
+	public static function randomHumanToken($length = 8) {
+		$numbers = '123456789';
+		$vowels = 'aeiuy';
+		$consonants = 'bcdfghjkmnpqrstvwxz';
+		$s = '';
+		for ($i = 0; $i < $length; $i++) {
+			if(mt_rand(0, 10) % 3 === 0){
+				$group = $numbers;
+				$s .= $group{mt_rand(0, strlen($group) - 1)};
+				continue;
+			}
+			$group = $i % 2 === 0 ? $consonants : $vowels;
+			$s .= $group{mt_rand(0, strlen($group) - 1)};
+		}
+		return $s;
+	}
+
 }
