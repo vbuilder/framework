@@ -70,9 +70,10 @@ class Authenticator implements Nette\Security\IAuthenticator {
 		$entity = $this->entityName;
 				
 		$user = $this->context->repository->findAll($entity)->where('[username] = %s', $credentials[self::USERNAME])->fetch();
-		$user->setBypassSecurityCheck(true);
 
 		if($user !== false) {
+			$user->setBypassSecurityCheck(true);
+
 			if($user->checkPassword($credentials[self::PASSWORD])) {
 				$remoteAddr = $this->context->httpRequest->getRemoteAddress();
 				$this->context->database->connection->query(
