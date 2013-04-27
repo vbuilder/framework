@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -34,21 +34,7 @@ use vBuilder,
  * @since Sep 25, 2011
  */
 class Presenter extends Nette\Application\UI\Presenter {
-	
-	/**
-	 * Starts up
-	 * 
-	 * @return void
-	 */
-	protected function startup() {
-		parent::startup();
-		
-		// Defaultne vypiname layout pro AJAXovy pozadavky
-		if($this->isAjax()) {
-			$this->setLayout(false);
-		}
-	}
-		
+			
 	/**
 	 * Compilation time templating filters
 	 * 
@@ -108,13 +94,15 @@ class Presenter extends Nette\Application\UI\Presenter {
 	 * Overloaded sendTemplate for web files generation
 	 */
 	public function sendTemplate() {
+
 		// Invokes createTemplate and etc.
 		$template = $this->getTemplate();
-		
+
 		if (!$template) {
 			return;
 		}
 
+		// Basic FileTemplate loading ----------------------------------
 		if ($template instanceof Nette\Templating\IFileTemplate && !$template->getFile()) { // content template
 			$files = $this->formatTemplateFiles();
 			foreach ($files as $file) {
@@ -131,6 +119,7 @@ class Presenter extends Nette\Application\UI\Presenter {
 			}
 		}
 		
+		// Automatic layout extending by formatLayoutTemplateFiles -----
 		if ($this->layout !== FALSE) { // layout template
 			$files = $this->formatLayoutTemplateFiles();
 			foreach ($files as $file) {
@@ -147,8 +136,14 @@ class Presenter extends Nette\Application\UI\Presenter {
 				throw new Nette\FileNotFoundException("Layout not found. Missing template '$file'.");
 			}
 		}
-		
-		
+
+		if($this->isAjax()) {
+			$this->sendResponse(new Nette\Application\Responses\TextResponse($template));
+			return ;
+		}
+
+		// NON AJAX REQUESTS -----------------------
+
 		// Redering kvuli tomu, aby se zpracovaly pripadna addCss/Js makra pro generator
 		$rendered = (string) $template;
 
@@ -168,7 +163,7 @@ class Presenter extends Nette\Application\UI\Presenter {
 			
 			// Oprava pripadne zmeny CSS / JS souboru po vygenerovani hlavicky
 			$this['webFiles']->lateRenderFix($rendered);
-		}
+		}	
 		
 		$this->sendResponse(new Nette\Application\Responses\TextResponse($rendered));
 	}
