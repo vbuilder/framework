@@ -11,7 +11,7 @@
 				url: null,
 				snippet: null,
 				width: null,
-				height: null,
+				height: null
 			},
 			args = $.extend({}, defaults, args);
 
@@ -31,8 +31,8 @@
 		// Show colorbox preloading
 		$.colorbox({
 			open: true,
-			initialWidth: args.width == null ? 500 : args.width,
-			initialHeight: args.height == null ? 300 : args.height,
+			initialWidth: args.width == null ? 'auto' : args.width,
+			initialHeight: args.height == null ? 'auto' : args.height,
 			width: args.width,
 			height: args.height
 		});
@@ -117,7 +117,7 @@
 	
 		var elements = $(this),
 			defaults = {
-				url: null,
+				url: null
 			},
 			args = $.extend({}, defaults, args);
 
