@@ -119,7 +119,7 @@ class ControlRenderer extends vBuilder\Object {
 					}
 				}
 			
-				throw new Nette\Application\BadRequestException("Page not found. Missing template '$file'.");
+				throw new Nette\Application\BadRequestException("Template not found in " . implode(', ', $this->formatTemplateFiles()));
 			}
 			
 			// Other templates
