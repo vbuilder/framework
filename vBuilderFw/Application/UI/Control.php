@@ -382,9 +382,10 @@ class Control extends Nette\Application\UI\Control {
 	 */
 	public function __call($methodName, $args) {		
 		if(Nette\Utils\Strings::startsWith($methodName, 'render')) {
+			
 			// Signaly maji prednost pred view ze sablony
 			if(!$this->actionHandled) {
-				$this->changeView(strtolower(substr($methodName, 6)));
+				$this->changeView(lcfirst(substr($methodName, 6)));
 				return call_user_func_array(array($this, 'render'), $args);
 			} else {
 				$this->render();
