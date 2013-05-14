@@ -24,7 +24,8 @@
 namespace vBuilder;
 
 use vBuilder,
-		Nette\Utils\Strings;
+	Nette,
+	Nette\Utils\Strings;
 
 /**
  * Listener for vBuilder\Object events
@@ -39,7 +40,7 @@ class EventListener extends vBuilder\Object {
 	 * 
 	 * @param vBuilder\Object $object 
 	 */
-	public function register(vBuilder\Object $object) {
+	public function register(Nette\Object $object) {
 		$rc = $object->getReflection();
 		$rc2 = $this->getReflection();
 		$publicProperties = $rc->getProperties(\ReflectionProperty::IS_PUBLIC);
