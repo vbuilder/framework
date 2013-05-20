@@ -37,6 +37,10 @@ services:
 	# Class info provider
 	classInfo:
 		class: vBuilder\Application\ClassInfoProvider
+
+	# UI Region provider
+	regionProvider:
+		class: vBuilder\Application\UI\RegionProvider
 		
 parameters:
 	languages: ['cs']

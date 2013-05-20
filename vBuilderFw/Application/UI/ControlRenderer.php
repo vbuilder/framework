@@ -310,6 +310,8 @@ class ControlRenderer extends vBuilder\Object {
 			vBuilder\Latte\Macros\UIMacros::install($compiler);
 
 		Nette\Latte\Macros\FormMacros::install($compiler);
+
+		vBuilder\Latte\Macros\RegionMacros::install($compiler);
 	}
 	
 }
