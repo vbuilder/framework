@@ -31,8 +31,11 @@ $container->application->onRequest[] = function (Application $app, Request $requ
 			
 			// Pokud je stranka ve vystavbe a nejsem na testovaci domene, vyhodim vyjimku
 			// Akceptovany jsou domeny koncici na test.*.* nebo .bilahora.v3net.cz
-			if(!Strings::match($host, '#^(.+?\.)?test\.[^\.]+\.[^\.]+$#') && !Strings::match($host, '#\.bilahora\.v3net\.cz$#')) {
-				throw new vBuilder\Application\UnderConstructionException();
+			if(!Strings::match($host, '#^(.+?\.)?test\.[^\.]+\.[^\.]+$#') && !Strings::match($host, '#\.bilahora\.v3net\.cz$#')) {			
+				if(!defined('VBUILDER_CONNECTOR') || !VBUILDER_CONNECTOR)
+					throw new vBuilder\Application\UnderConstructionException();
+					
+				return ;
 			} else {
 				$runningTestMode = true;
 			}
