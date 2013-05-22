@@ -93,35 +93,102 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 
 	/**
 	 * {meta ...}
+	 *
+	 * Examples:
+	 * {meta title 'Something'}
+	 * {meta !title 'Something'}
+	 * {meta og:type 'article'}
+	 * {meta og:image[] 'http://www.myweb.tld/images/image.png'}
 	 * 
 	 * @param MacroNode $node
 	 * @param type $writer
 	 * @return string 
 	 */
 	function macroMeta(MacroNode $node, $writer) {
-		// TODO: podpora pro veci jako addKeywords
 
-		$cmd = '';
+		$key = '';
+		$value = '';
+
+		// Operator (= or [])
+		$operator = '=';
+
+		// True if key starts with ! (forcing ovewrite of existing value)
 		$force = false;
-		$symbol = false;
 
+		// 0: No symbol yet
+		// 1: Symbol found, wating for whitespace
+		// 2: Whitespace found -> everything else is a value
+		$state = 0;	
+
+		// dd($node->tokenizer->tokens);
+
+		$prev = NULL;
 		foreach($node->tokenizer->tokens as $token) {
-			if($symbol)
-				$cmd .= $token['value'];
-			elseif($token['value'] == '!')
-				$force = true;
-			elseif($token['type'] == MacroTokenizer::T_SYMBOL) {
-				if(!$force)
-					$cmd .= 'if(!$context->metadata->{"' . $token['value'] . '"} && $context->metadata->{"' . $token['value'] . '"} !== false) ';
 
-				$cmd .= '$context->metadata->{"' . $token['value'] . '"} =';
-
-				$symbol = true;
+			// Getting value (don't care about anything)
+			if($state > 1) {
+				$value .= $token['value'];
 			}
+
+			// Special characters (operators, etc...)
+			elseif($token['type'] == MacroTokenizer::T_CHAR) {
+
+				// : in a symbol
+				if($token['value'] == ':' && $state > 0) {
+					$key .= $token['value'];
+				}
+
+				elseif($token['value'] == '[' && $state > 0) {
+
+				}
+
+				elseif($token['value'] == ']' && $state > 0 && $prev['value'] == '[') {
+					$operator = '[]';
+				}
+
+				// ! before any symbol
+				elseif($token['value'] == '!' && $state == 0) {
+					$force = true;
+					
+				} else
+					throw new Nette\InvalidStateException("Invalid meta declaration: " . $node->name . " " . $node->args . $node->modifiers);
+
+			}
+
+			// Checking for the first symbol
+			elseif($token['type'] == MacroTokenizer::T_SYMBOL) {
+
+				$key .= $token['value'];
+
+				// We have found first symbol
+				if($state == 0) $state++;
+			}
+
+			// Checking for whitespace after symbol
+			if($token['type'] == MacroTokenizer::T_WHITESPACE && $state > 0) {
+				$state++;
+			}
+
+			$prev = $token;
 		}
 
-		$cmd .= ';';
-		if(!$force) $cmd = "{ $cmd }";
+
+		// Building method name
+		$keyTokens = explode(':', $key);
+		$setMethod = ($operator == '=' ? 'set' : 'add') . ucfirst($keyTokens[count($keyTokens) - 1]);
+		$getMethod = 'get' . ucfirst($keyTokens[count($keyTokens) - 1]);
+		for($i = 0; $i < count($keyTokens) - 1; $i++) {
+			$setMethod = $keyTokens[$i] . '->' . $setMethod;
+			$getMethod = $keyTokens[$i] . '->' . $getMethod;
+		}
+
+		$setMethod = '$context->metadata->' . $setMethod;
+		$getMethod = '$context->metadata->' . $getMethod;
+
+		$cmd = $setMethod . '(' . $value . ');';
+
+		if(!$force && $operator == '=')
+			$cmd = "{ if(!$getMethod() && $getMethod() !== FALSE) $cmd }";
 				
 		// ---------
 

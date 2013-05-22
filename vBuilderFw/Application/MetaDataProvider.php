@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -74,11 +74,41 @@ class MetaDataProvider extends Nette\FreezableObject {
 	/** @var string url of previous page */
 	protected $_prevUrl;
 
+	/** @var OpenGraphDataProvider|NULL */
+	protected $_og;
+
 	/** @var Nette\DI\IContainer DI context container */
 	protected $context;
 
 	public function __construct(Nette\DI\IContainer $context) {
 		$this->context = $context;
+	}
+
+	/**
+	 * Locks this object for further changes
+	 * 
+	 * @return void
+	 */
+	public function freeze() {
+		parent::freeze();
+
+		if($this->_og) $this->_og->freeze();
+	}
+
+	/**
+	 * Returns Open Graph data provider instance
+	 * 
+	 * @return OpenGraphDataProvider
+	 */
+	public function getOg() {
+		if(!$this->_og) {
+			$this->_og = new OpenGraphDataProvider($this->context);
+
+			if($this->isFrozen())
+				$this->_og->freeze();
+		}
+
+		return $this->_og;
 	}
 
 	/**
