@@ -1,11 +1,12 @@
-<div id="dt-{$control->getUniqueId()}" class="dataTables_wrapper">
+{default $jQueryUiMarkup = false}
+
+<div id="dt-{$control->getUniqueId()}">
 	<table class="display">
 		<tbody>
-			
 		</tbody>
 		<thead>
 			<tr>
-				<th n:foreach="$columns as $col">{$col->caption()}</th>
+				<th n:foreach="$columns as $col">{$col->getCaption()}</th>
 			</tr>
 		</thead>
 		<tfoot>
@@ -22,41 +23,65 @@
 			table.dataTable({
 			"bServerSide": true,
 			"sAjaxSource": url,
-			"bJQueryUI": true,
+
+			// jQuery UI compatible markup
+			"bJQueryUI": {$jQueryUiMarkup},
 			"sPaginationType": "full_numbers",
 			
 			"aoColumns": [
 				{foreach $columns as $col}
-					{ "sClass": {$col->name()} }{if !$iterator->last},{/if}{* IE nesnasi carku na konci *}
+					{ "sClass": {$col->getName()}{* Class for each cell in this column *}, "bSortable": {$col->isSortable()}, "bVisible": {$col->isVisible()} }{if !$iterator->last},{/if}{* IE nesnasi carku na konci *}
 				{/foreach}
 			],
-			
-			// TODO: sorting
-			"bSort": false,
-			
+
+			// Sorting
+			"bSort": {$isSortable},
+			"aaSorting": {$sortingColumns},
+
+			// Deffered loading
+			"aaData": {$rows},
+			"iDeferLoading": [ {$total}, {$unfilteredTotal} ],
+						
 			// TODO: filtering
 			"bFilter": false,
 			
 			// TODO: change page size
 			"bLengthChange": false,
+
+			"iDisplayLength": {$control->getRecordsPerPage()},
 			
-			"bPaginate": true,
+			"bPaginate": true,		
 			
-			// TODO: deferred loading
-			// "iDeferLoading": [ 57, 100 ],
-			
-			// Only one of the "bProcessing" and "sDom" working?
-			//"bProcessing": true,
-			//"sDom": '<""f>t<"F"lp>'
-			"sDom": '<""f>t<"F"p>',
+			// Allow display of the "Processing alert" while loading the data between pages
+			"bProcessing": true,
+
+			// How the elements should be laid out
+			//"sDom": '<""f>tr<"F"p>',
 			
 			"oLanguage": {
+				"sEmptyTable": "Nebyly nalezeny žádné záznamy",
+				"sZeroRecords": "Pro zadaná kritéria nebyly nalezeny žádné záznamy",
+				"sProcessing": "Načítám. Prosím čekejte...",
+				"sInfoThousands": " ",
+				"sInfoEmpty": "Žádné záznamy k zobrazení",
+				"sInfo": "Zobrazeny záznamy _START_ až _END_ (celkem: _TOTAL_)",
+				"sInfoFiltered": " - celkový počet nefiltrovaných záznamů: _MAX_",
 				"oPaginate": {
 					"sNext": "Další",
 					"sPrevious": "Předchozí",
 					"sFirst": "První stránka",
 					"sLast": "Poslední stránka"
 				}
+			},
+
+			"fnDrawCallback": function (o) {
+
+				// Scrolls to the top of the table on every data load (page change, etc ...)
+				var tableEl = $("TABLE#" + o.sTableId),
+					yPos = tableEl.offset().top;
+
+				if(yPos < $(window).scrollTop())
+					$('html, body').animate({ scrollTop: yPos }, 'slow');
 			}
 		});
 	});

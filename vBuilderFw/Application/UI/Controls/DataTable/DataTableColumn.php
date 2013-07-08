@@ -37,24 +37,44 @@ class DataTableColumn extends Nette\Object {
 	private $_name;
 	private $_caption;
 	private $_renderer;
+	private $_sortable = true;
+	private $_visible = true;
 
 	function __construct($name, $caption = NULL) {
 		$this->_name = $name;
 		$this->_caption = $caption;
 	}
 	
-	function name() {
+	function getName() {
 		return $this->_name;
 	}
 	
-	function caption() {
-		return $this->_caption ?: $this->name();
+	function getCaption() {
+		return $this->_caption ?: $this->_name;
 	}
 
-	function render($value) {
+	function isSortable() {
+		return $this->_sortable;
+	}
+
+	function setSortable($enabled) {
+		$this->_sortable = (bool) $enabled;
+		return $this;
+	}
+
+	function isVisible() {
+		return $this->_visible;
+	}
+
+	function setVisible($enabled) {
+		$this->_visible = (bool) $enabled;
+		return $this;
+	}
+
+	function render($value, $rowData) {
 		if($this->_renderer) {
 			$r = $this->_renderer;
-			return $r($value);
+			return $r($value, $rowData);
 		}
 
 		return $value;

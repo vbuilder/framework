@@ -37,7 +37,26 @@ use vBuilder,
 class DataTableRenderer extends vBuilder\Application\UI\ControlRenderer {
 
 	public function renderDefault() {
-		$this->template->columns = $this->control->columns();
+
+		$this->template->columns = $this->control->getColumns();
+
+		//$this->template->visibleColumns = array();
+		$this->template->sortingColumns = array();
+		foreach($this->control->getColumns() as $index => $column) {
+			//if($column->isVisible())
+				//$this->template->visibleColumns[] = $column;
+			
+			if(isset($this->control->defaultSortColumns[$column->getName()])) {
+				$this->template->sortingColumns[] = array($index, $this->control->defaultSortColumns[$column->getName()]);
+			}
+		}
+
+		// First page of records
+		$this->template->rows = $this->control->getRenderedData();
+		$this->template->total = $this->control->model->count;
+		$this->template->unfilteredTotal = $this->control->model->unfilteredCount ?: $this->control->model->count;
+
+		$this->template->isSortable = true;
 	}	
 	 
 }
