@@ -51,8 +51,13 @@ class DataTable extends vBuilder\Application\UI\Control {
 	/** @var array (columnName => direction) */
 	private $_sortColumns = array();
 
+	private $_actions = array();
+
 	/** @var number of records per page */
 	private $_recordsPerPage = 10;
+
+	/** @var Nette\Http\SessionSection */
+	protected $session;
 	
 	/**
 	 * Creates dummy table
@@ -178,13 +183,50 @@ class DataTable extends vBuilder\Application\UI\Control {
 	
 	// -------------------------------------------------------------------------
 
+	/**
+	 * This method will be called when the component (or component's parent)
+	 * becomes attached to a monitored object. Do not call this method yourself.
+	 * 
+	 * @param  Nette\ComponentModel\IComponent
+	 * @return void
+ 	 */
+	protected function attached($parent) {
+		parent::attached($parent);
+
+		// Creates session storage for each instance of DataTable
+		$context = $parent->getPresenter()->getContext();
+		$sessionSection = $context->session->getSection(strtr(__CLASS__, '\\', '.'));
+		$this->session = &$sessionSection->{$this->getUniqueId()};
+		if($this->session == NULL) $this->session = new \StdClass;
+
+		// Creates unique authorization token (CSRF prevention)
+		if(!isset($this->session->authToken))
+			$this->session->authToken = vBuilder\Utils\Strings::randomHumanToken(8);
+	}
+
+	/**
+	 * Returns authorization token
+	 * 
+	 * @return string
+	 */
+	public function getAuthToken() {
+		return $this->session->authToken;
+	}
+
+	// -------------------------------------------------------------------------
+
 	public function actionDefault() {
 		// Better to perform sanity check here than in AJAX request
 		$this->init();
 	}
 
 	public function actionGetData() {
-		$this->init();		
+		$this->init();
+
+		if($this->getParam('authToken') != $this->getAuthToken())
+			throw new Nette\Application\ForbiddenRequestException("Invalid authorization token");
+
+		// if($this->getAuthToken())
 
 		// dd($this->context->httpRequest->getQuery());
 
@@ -201,7 +243,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 			}
 		}		
 		
-		// Returned structure			
+		// Returned structure		
 		$data = array(
 			"sEcho" => intval($this->context->httpRequest->getQuery('sEcho')),
 			"iTotalRecords" => $this->model->getUnfilteredCount(),
@@ -243,6 +285,8 @@ class DataTable extends vBuilder\Application\UI\Control {
 			$trRow = &$rowData[];
 			$trRow = array();
 			
+			// TODO: Support for DT_RowId
+			// TODO: Support for DT_RowClass
 			foreach($this->_columns as $col) {
 				$value = NULL;
 				if(isset($currRow[$col->getName()])) $value = $currRow[$col->getName()];
@@ -258,6 +302,72 @@ class DataTable extends vBuilder\Application\UI\Control {
 		return $rowData;
 	}
 	
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Registers new action with callable
+	 * 
+	 * @param  string action name
+	 * @param  Callable
+	 * @return DataTable fluent interface
+	 */
+	public function registerAction($action, $callable) {
+		if(!is_callable($callable))
+			throw new Nette\InvalidArgumentException("Given action callback is not callable");
+
+		$this->_actions[$action] = $callable;
+		return $this;
+	}
+
+	/**
+	 * Handles action execution
+	 */
+	public function actionPerform() {
+		$this->init();
+
+		if($this->getParam('authToken') != $this->getAuthToken())
+			throw new Nette\Application\ForbiddenRequestException("Invalid authorization token");
+
+		if(!isset($this->_actions[$this->getParam('action')]))
+			throw new Nette\InvalidArgumentException("Action " . var_export($this->getParam('action'), true) . " not registered");
+
+		$pk = array();
+		foreach($this->_idColumns as $key => $index) {
+			$pk[$key] = $this->getParam('row' . ucfirst($key));
+			if($pk[$key] === NULL)
+				throw new Nette\InvalidArgumentException("Missing ID column " . var_export($key, true) . " for action " . var_export($this->getParam('action'), true));
+		}
+
+		$cb = $this->_actions[$this->getParam('action')];
+		$cb($pk, $this);
+	}
+
+	/**
+	 * Generates absolute URL to DataTable action.
+	 * URL contains row ID columns + authorization token as parameters.
+	 * 
+	 * @param  string action name
+	 * @param  object|array row data
+	 * @return string absolute URL
+	 */
+	public function createActionLink($action, $rowData) {
+		$args = array(
+			'action' => $action,
+			'authToken' => $this->getAuthToken()
+		);
+
+		foreach($this->_idColumns as $key => $index) {
+			
+			if(isset($rowData->{$key})) $value = $rowData->{$key};
+			elseif(isset($rowData[$key])) $value = $rowData[$key];
+			else throw new Nette\InvalidArgumentException("Missing ID column $key in given row data");
+
+			$args['row' . ucfirst($key)] = $value;
+		}
+
+		return (string) $this->link('//perform', $args);
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
