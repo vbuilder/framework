@@ -24,34 +24,36 @@
 namespace vBuilder\Application\UI\Controls\DataTable;
 
 use vBuilder,
-	Nette;
+	Nette,
+	Nette\Utils\Html;
 
 /**
- * Column representation for DataTable
+ * Button representation for DataTable
  *
  * @author Adam Staněk (velbloud)
- * @since Sep 9, 2012
+ * @since Jul 9, 2013
  */
-class Column extends Component {
+class Button extends Component {
 
-	private $_sortable;
-	
-	public function isSortable() {
-		return $this->_sortable;
-	}
+	private $_el;
 
-	public function setSortable($enabled) {
-		$this->_sortable = (bool) $enabled;
-		return $this;
-	}
-
-	public function render($value, $rowData) {
-		if($this->_renderer) {
-			$r = $this->_renderer;
-			return $r($value, $rowData);
+	public function getElement() {
+		if(!isset($this->_el)) {
+			$this->_el = Html::el('a', str_replace(" ", "\xc2\xa0", $this->getLabel()));
 		}
 
-		return $value;
+		return $this->_el;
+	}
+
+	public function render($rowData) {
+		if($this->_renderer) {
+			$r = $this->_renderer;
+			return $r($this);
+		}
+
+		$this->element->href($this->_table->createActionLink($this->getName(), $rowData));
+
+		return (string) $this->element;
 	}
 
 }

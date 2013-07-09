@@ -51,7 +51,11 @@ class DataTable extends vBuilder\Application\UI\Control {
 	/** @var array (columnName => direction) */
 	private $_sortColumns = array();
 
+	/** @var array of callbacks (actionName => callback) */
 	private $_actions = array();
+
+	/** @var array of DataTable\Button */
+	private $_buttons = array();
 
 	/** @var number of records per page */
 	private $_recordsPerPage = 10;
@@ -104,10 +108,15 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 * 
 	 * @param string name of column
 	 * @param string|null column caption (shows in table head)
+	 *
+	 * @return DataTable\Column
 	 */
 	public function addColumn($name, $caption = NULL) {
-		$col = new DataTable\DataTableColumn($name, $caption);
+		$col = new DataTable\Column($name, $caption);
+		
 		$this->_columns[] = $col;
+		$col->setTable($this);
+
 		return $col;
 	}
 	
@@ -134,6 +143,37 @@ class DataTable extends vBuilder\Application\UI\Control {
 		$this->_idColumns = $columns;
 
 		return $this;
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Adds new button to the table
+	 * 
+	 * @param string name of column
+	 * @param string|null column caption (shows in table head)
+	 * @param Callable action callback
+	 *
+	 * @return DataTable\Button
+	 */
+	public function addButton($name, $caption, $callback) {
+		$this->registerAction($name, $callback);
+
+		$button = new DataTable\Button($name, $caption);
+		
+		$this->_buttons[] = $button;
+		$button->setTable($this);
+
+		return $button;
+	}
+
+	/**
+	 * Returns registered button instances
+	 * 
+	 * @return array of DataTable\Button
+	 */
+	public function getButtons() {
+		return $this->_buttons;
 	}
 
 	// -------------------------------------------------------------------------
@@ -376,9 +416,12 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 * @internal
 	 */
 	protected function init() {
+
+		// Sanity check
 		if($this->model == NULL) throw new Nette\InvalidStateException("No data model has been set (Forget to call DataTable::setModel?)");
 		if(count($this->_columns) == 0) throw new Nette\InvalidStateException("No columns has been set (Forget to call DataTable::addColumn?)");
 
+		// Auto ID columns
 		if(count($this->_idColumns) > 0) {
 			foreach($this->_idColumns as $name => &$index) {
 				foreach($this->_columns as $index2 => $col) {
@@ -396,6 +439,19 @@ class DataTable extends vBuilder\Application\UI\Control {
 		} else {
 			foreach($this->_columns as $index => $col)
 				$this->_idColumns[$col->getName()] = $index;
+		}
+
+		// Auto column for buttons
+		if(count($this->_buttons) > 0) {
+			$table = $this;
+			$this->addColumn('buttons')->setLabel('')->setRenderer(function ($value, $rowData) use ($table) {
+				$data = '';
+
+				foreach($table->getButtons() as $button)
+					$data .= $button->render($rowData) . "\n";
+
+				return $data;
+			});
 		}
 	}
 

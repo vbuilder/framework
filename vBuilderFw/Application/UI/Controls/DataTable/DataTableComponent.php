@@ -27,31 +27,57 @@ use vBuilder,
 	Nette;
 
 /**
- * Column representation for DataTable
+ * Base component for DataTable
  *
  * @author Adam Staněk (velbloud)
- * @since Sep 9, 2012
+ * @since Jul 9, 2013
  */
-class Column extends Component {
+class Component extends Nette\Object {
 
-	private $_sortable;
-	
-	public function isSortable() {
-		return $this->_sortable;
+	private $_name;
+	private $_label;
+	private $_visible = true;
+
+	protected $_table;
+	protected $_renderer;
+
+	function __construct($name, $label = NULL) {
+		$this->_name = $name;
+		$this->_label = $label ?: $name;
 	}
 
-	public function setSortable($enabled) {
-		$this->_sortable = (bool) $enabled;
+	public function setTable(vBuilder\Application\UI\Controls\DataTable $parentTable) {
+		$this->_table = $parentTable;
+	}
+	
+	public function getName() {
+		return $this->_name;
+	}
+	
+	public function getLabel() {
+		return $this->_label;
+	}
+
+	public function setLabel($label) {
+		$this->_label = $label;
 		return $this;
 	}
 
-	public function render($value, $rowData) {
-		if($this->_renderer) {
-			$r = $this->_renderer;
-			return $r($value, $rowData);
-		}
+	public function isVisible() {
+		return $this->_visible;
+	}
 
-		return $value;
+	public function setVisible($enabled) {
+		$this->_visible = (bool) $enabled;
+		return $this;
+	}
+
+	public function setRenderer($callback) {
+		if(!is_callable($callback))
+			throw new Nette\InvalidArgumentException("Given renderer is not callable");
+
+		$this->_renderer = $callback;
+		return $this;
 	}
 
 }
