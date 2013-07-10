@@ -40,6 +40,7 @@ class Button extends Component {
 	public function getElement() {
 		if(!isset($this->_el)) {
 			$this->_el = Html::el('a', str_replace(" ", "\xc2\xa0", $this->getLabel()));
+			$this->_el->class($this->_table->getUniqueId() . "-btn" . ucfirst($this->getName()));
 		}
 
 		return $this->_el;
