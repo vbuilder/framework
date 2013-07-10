@@ -145,22 +145,38 @@ class DataTable extends vBuilder\Application\UI\Control {
 		return $this;
 	}
 
+	/**
+	 * Returns ID column names
+	 * 
+	 * @return array of string
+	 */
+	public function getIdColumns() {
+		return array_keys($this->_idColumns);
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
 	 * Adds new button to the table
+	 *
+	 * @warn Please note that if you are passing direct URL as third argument,
+	 *   it is your own responsibility to protect against CSRF.
 	 * 
 	 * @param string name of column
 	 * @param string|null column caption (shows in table head)
-	 * @param Callable action callback
+	 * @param string|Callable action callback or URL
 	 *
 	 * @return DataTable\Button
 	 */
 	public function addButton($name, $caption, $callback) {
-		$this->registerAction($name, $callback);
-
+		
 		$button = new DataTable\Button($name, $caption);
 		
+		if(is_callable($callback))
+			$this->registerAction($name, $callback);
+		else
+			$button->setUrl($callback);
+
 		$this->_buttons[] = $button;
 		$button->setTable($this);
 
@@ -373,7 +389,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 		$pk = array();
 		foreach($this->_idColumns as $key => $index) {
-			$pk[$key] = $this->getParam('row' . ucfirst($key));
+			$pk[$key] = $this->getParam('record' . ucfirst($key));
 			if($pk[$key] === NULL)
 				throw new Nette\InvalidArgumentException("Missing ID column " . var_export($key, true) . " for action " . var_export($this->getParam('action'), true));
 		}
@@ -402,7 +418,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 			elseif(isset($rowData[$key])) $value = $rowData[$key];
 			else throw new Nette\InvalidArgumentException("Missing ID column $key in given row data");
 
-			$args['row' . ucfirst($key)] = $value;
+			$args['record' . ucfirst($key)] = $value;
 		}
 
 		return (string) $this->link('//perform', $args);

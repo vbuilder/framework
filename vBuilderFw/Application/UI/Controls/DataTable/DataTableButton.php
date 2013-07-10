@@ -36,6 +36,12 @@ use vBuilder,
 class Button extends Component {
 
 	private $_el;
+	private $_url;
+
+	public function setUrl($url) {
+		$this->_url = $url;
+		return $this;
+	}
 
 	public function getElement() {
 		if(!isset($this->_el)) {
@@ -52,7 +58,18 @@ class Button extends Component {
 			return $r($this);
 		}
 
-		$this->element->href($this->_table->createActionLink($this->getName(), $rowData));
+		// Direct URL
+		if($this->_url != '') {
+			$url = new Nette\Http\Url($this->_url);
+			
+			foreach($this->_table->getIdColumns() as $key)
+				$url->appendQuery(array('record' . ucfirst($key) => $rowData->{$key}));
+
+			$this->element->href((string) $url);
+
+		// Standard action's URL
+		} else
+			$this->element->href($this->_table->createActionLink($this->getName(), $rowData));
 
 		return (string) $this->element;
 	}

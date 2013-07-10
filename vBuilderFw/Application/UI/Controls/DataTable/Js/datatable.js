@@ -3,7 +3,7 @@
  * 
  * @requires colorbox
  */
-(function($){
+(function($) {
 
 	// Draws the real content
 	function showDetail(el, args, data) {
@@ -45,7 +45,7 @@
 		if(el.children().size()) {
 			var oldBlock = el.children().first();
 			oldBlock.fadeOut({
-				duration: 300,
+				duration: 200,
 				complete: function () {
 					oldBlock.remove();
 					showNewBlock();
@@ -142,7 +142,7 @@
 				duration: 300,
 				complete: function () {
 					oTable.fnClose(nTr);
-					
+
 					if(el.data('openLabel'))
 						el.html(el.data('openLabel'));
 				}
