@@ -34,7 +34,8 @@ use vBuilder,
  */
 class Column extends Component {
 
-	private $_sortable;
+	private $_sortable = true;
+	private $_searchable = false;
 	
 	public function isSortable() {
 		return $this->_sortable;
@@ -42,6 +43,15 @@ class Column extends Component {
 
 	public function setSortable($enabled) {
 		$this->_sortable = (bool) $enabled;
+		return $this;
+	}
+
+	public function isSearchable() {
+		return $this->_searchable;
+	}
+
+	public function setSearchable($enabled) {
+		$this->_searchable = (bool) $enabled;
 		return $this;
 	}
 

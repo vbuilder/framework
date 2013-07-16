@@ -41,6 +41,13 @@ class ArrayModel extends BaseModel {
 		$this->_data = $data;
 	}
 	
+	public function setFilter(array $rules = array()) {
+
+		// TODO
+
+		return $this;
+	}
+
 	protected function getData() {
 		$this->freeze();
 		return $this->_data;
@@ -62,7 +69,7 @@ class ArrayModel extends BaseModel {
 	 */
 	public function getIterator($start, $count, array $sortingColumns = array()) {
 
-		// TODO: Support for sorting or at least throw a notice
+		// TODO: Support for sorting and filtering or at least throw a notice
 
 		return new \ArrayIterator(array_slice($this->getData(), $start, $count));
 	}

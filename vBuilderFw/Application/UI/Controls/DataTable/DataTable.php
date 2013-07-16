@@ -282,9 +282,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 		if($this->getParam('authToken') != $this->getAuthToken())
 			throw new Nette\Application\ForbiddenRequestException("Invalid authorization token");
 
-		// if($this->getAuthToken())
-
-		// dd($this->context->httpRequest->getQuery());
+		// d($this->context->httpRequest->getQuery());
 
 		// Creates array of sorting rules ordered by priority
 		// columnName => direction (asc || desc)
@@ -297,7 +295,49 @@ class DataTable extends vBuilder\Application\UI\Control {
 				if(isset($this->_columns[$columnIndex])) 
 					$sortingColumns[$this->_columns[$columnIndex]->getName()] = $direction;
 			}
-		}		
+		}
+
+		// Creates a nested array of filtering rules
+		// First level means AND operator, second OR
+		// Index 0: will be created from global search filter if any
+		// Other items are indexed by column name
+		$filter = array(array());
+
+		// Global filter
+		if(($globalFilter = $this->context->httpRequest->getQuery("sSearch")) != "") {
+			$globalFilter = array(
+				'keywords' => $globalFilter,
+				'regexp' => $this->context->httpRequest->getQuery("bRegex") == "true"
+			);
+		}
+
+		// Column filtering
+		for($i = 0; $i < count($this->_columns); $i++) {
+			if($this->context->httpRequest->getQuery("bSearchable_$i") != "true") continue;
+			
+
+			if(($keywords = $this->context->httpRequest->getQuery("sSearch_$i")) == "") {
+
+				// We use this column for global filtering only if it does not have
+				// a specified value to filter
+				if($globalFilter)
+					$filter[0][$this->_columns[$i]->getName()] = $globalFilter;
+
+				continue;
+			}
+
+			$filter[$this->_columns[$i]->getName()] = array(
+				'keywords' => $keywords,
+				'regexp' => $this->context->httpRequest->getQuery("bRegex_$i") == "true"
+			);
+		}
+
+		// In case no column is searchable and global filtering was requested
+		if(count($filter) && count($filter[0]) == 0)
+			array_shift($filter);
+
+		// Setting filter
+		$this->model->setFilter($filter);
 		
 		// Returned structure		
 		$data = array(
@@ -307,7 +347,8 @@ class DataTable extends vBuilder\Application\UI\Control {
 			"aaData" => $this->getRenderedData(
 				$this->context->httpRequest->getQuery('iDisplayStart'), 
 				$this->context->httpRequest->getQuery('iDisplayLength'),
-				$sortingColumns
+				$sortingColumns,
+				$filter
 			)
 		);
 
@@ -324,16 +365,18 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 * @param  int|null starting index
 	 * @param  int|null number of records to render
 	 * @param  array of columns to sort by
+	 * @param  array of filtering rules
 	 * 
 	 * @return array of arrays (ordered)
 	 */
-	public function getRenderedData($start = NULL, $length = NULL, array $sortingColumns = array()) {
+	public function getRenderedData($start = NULL, $length = NULL, array $sortingColumns = array(), array $filter = array()) {
 		$rowData = array();
 
 		$iterator = $this->model->getIterator(
 			intval($start) ?: 0,
 			intval($length) ?: $this->_recordsPerPage,
-			count($sortingColumns) ? $sortingColumns : $this->_sortColumns
+			count($sortingColumns) ? $sortingColumns : $this->_sortColumns,
+			$filter
 		);
 
 		while($iterator->valid()) {
@@ -460,7 +503,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 		// Auto column for buttons
 		if(count($this->_buttons) > 0) {
 			$table = $this;
-			$this->addColumn('buttons')->setLabel('')->setRenderer(function ($value, $rowData) use ($table) {
+			$this->addColumn('buttons')->setLabel('')->setSortable(false)->setRenderer(function ($value, $rowData) use ($table) {
 				$data = '';
 
 				foreach($table->getButtons() as $button)

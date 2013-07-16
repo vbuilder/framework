@@ -36,6 +36,7 @@ interface IModel extends Nette\IFreezable {
 
 	public function getCount();
 	public function getUnfilteredCount();
+	public function setFilter(array $rules = array());
 	public function getIterator($start, $count, array $sortingColumns = array());
 	
 }

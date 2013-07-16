@@ -41,13 +41,34 @@ class DibiModel extends BaseModel {
 	/** @var callable */
 	protected $_applySortingCallback;
 
+	/** @var int */
+	protected $_minFilterWordLength = 3;
+
+	/**
+	 * Construcs DataTable model over DibiFluent interface
+	 *
+	 * @warning Given fluent will not be cloned!
+	 * 
+	 * @param \DibiFluent $fluent [description]
+	 */
 	function __construct(\DibiFluent $fluent) {
-		$this->_fluent = clone $fluent;
+		$this->_fluent = $fluent;
 	}
 	
-	protected function getQueryString() {
-		$this->freeze();
-		return (string) $this->_fluent;
+	/**
+	 * Sets record filter
+	 * 
+	 * @param array of filtering rules
+	 * @return DibiModel fluent interface
+	 */
+	public function setFilter(array $rules = array()) {
+		$this->updating();
+
+		if(count($rules) > 0) {
+			$this->applyFilter($this->_fluent, $rules);
+		}
+
+		return $this;
 	}
 	
 	/**
@@ -58,8 +79,9 @@ class DibiModel extends BaseModel {
 	 * @return int
 	 */
 	public function getCount() {
-		// Calling getQueryString() will freeze the object
-		return (int) $this->_fluent->connection->query("SELECT COUNT(*) FROM (%sql) a", $this->getQueryString())->fetchSingle();
+		$this->freeze();
+
+		return (int) $this->_fluent->connection->query("SELECT COUNT(*) FROM (%sql) a", (string) $this->_fluent)->fetchSingle();
 	}
 	
 	/**
@@ -71,15 +93,110 @@ class DibiModel extends BaseModel {
 	 */
 	public function getIterator($start, $count, array $sortingColumns = array()) {
 		$this->freeze();
-
-		$fluent = $this->_fluent;
+		
+		// Sorting
 		if(count($sortingColumns) > 0) {
-			$fluent = clone $fluent;
 			foreach($sortingColumns as $column => $direction)
-				$this->applySortingRule($fluent, $column, $direction);
+				$this->applySortingRule($this->_fluent, $column, $direction);
 		}
 		
-		return new \ArrayIterator($fluent->fetchAll($start, $count));
+		return new \ArrayIterator($this->_fluent->fetchAll($start, $count));
+	}
+
+	/**
+	 * Applies filtering rule
+	 * 
+	 * @param  DibiFluent $fluent
+	 * @param  array of filtering rules
+	 * @return DibiModel fluent interface
+	 */
+	protected function applyFilter(DibiFluent &$fluent, array $rules) {	
+
+		// Each 1st level rule will be treated with AND operator
+		// OR will be used on the subsets
+		foreach($rules as $column => $rule) {
+
+			$prepared = array();
+
+			// Walk through all rule subsets
+			if(!isset($rule['keywords'])) {
+				foreach($rule as $column2 => $rule2)
+					$prepared[] = $this->prepareFilteringRule($column2, $rule2);
+				
+			} else 
+				$prepared[] = $this->prepareFilteringRule($column, $rule);
+			
+			// d($prepared);
+
+			// Prepare an array of all rules that should be ORed
+			$orRules = array();
+			$it = new \RecursiveArrayIterator($prepared);
+			foreach($it as $columnRules) {
+				foreach($columnRules as $rule) {
+					$orRules[] = $rule;
+				}
+			}
+
+			// Apply ORed rules
+			$singleConditionCounter = 0;
+			foreach($orRules as $rule) {
+				if(count($orRules) == 1)
+					$fluent->where('%n %sql %s', $rule['column'], $rule['operator'], $rule['keywords']);
+				elseif($singleConditionCounter++ == 0)
+					$fluent->where('(%n %sql %s', $rule['column'], $rule['operator'], $rule['keywords']);
+				elseif($singleConditionCounter == count($orRules))
+					$fluent->or('%n %sql %s)', $rule['column'], $rule['operator'], $rule['keywords']);
+				else
+					$fluent->or('%n %sql %s', $rule['column'], $rule['operator'], $rule['keywords']);
+			}
+		}
+
+		//$fluent->test();
+		//exit;
+
+		return $this;
+	}
+
+	/**
+	 * Returns prepared filtering rules for SQL use
+	 * 
+	 * @param  string column name
+	 * @param  array of rule options
+	 * @return array of rule tokens
+	 */
+	protected function prepareFilteringRule($column, $rule) {
+
+		$prepared = array();
+		$keywords = preg_split('/\\s+/', trim($rule['keywords']));
+
+		// If we have only single word and it is shorter than specified length
+		// we will match only strings starting with this word
+		$wordStartMatching = count($keywords) == 1 && mb_strlen($keywords[0]) < $this->_minFilterWordLength;
+
+		foreach($keywords as $keyword) {
+			
+			// We won't apply any filter on words shorter than specified length
+			// with exception of words starting with a number.
+			if(!$wordStartMatching && mb_strlen($keyword) < $this->_minFilterWordLength && ($keyword[0] < '0' || $keyword[0] > '9')) continue;
+
+			// TODO: Some lexical manipulation
+			// TODO: Regexp matching
+			
+			// Escaping for a LIKE operator
+			$keyword = str_replace(
+				array('%', 		'_'),
+				array('\\%',	'\\_'),
+				$keyword
+			);
+
+			$prepared[] = array(
+				'column' => $column,
+				'operator' => 'LIKE',	// Warning: Unescaped! Possibly unsafe for SQL injection
+				'keywords' => $wordStartMatching ? "$keyword%" : "%$keyword%"
+			);
+		}
+
+		return $prepared;
 	}
 
 	/**

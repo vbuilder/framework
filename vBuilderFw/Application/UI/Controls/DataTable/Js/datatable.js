@@ -35,8 +35,9 @@
 	function replaceContentWith(el, newContent) {
 		
 		function showNewBlock() {
-			var newBlock = $('<div style="display: none;" />').html(newContent);
-			el.append(newBlock);
+			el.html('<div style="display: none;" />');
+			var newBlock = el.children().first().html(newContent);
+			
 			newBlock.fadeIn({
 				duration: 150
 			});
@@ -138,6 +139,7 @@
 
 		// Closes the subrow
 		if(oTable.fnIsOpen(nTr)) {
+
 			$('DIV.innerDetails', $(nTr).next()[0]).slideUp({
 				duration: 300,
 				complete: function () {
@@ -145,11 +147,15 @@
 
 					if(el.data('openLabel'))
 						el.html(el.data('openLabel'));
+
+					$(nTr).removeClass('selected');
 				}
 			});	
 
 		// Opens the subrow with loading message and start the data request
 		} else {
+			$(nTr).addClass('selected');
+
 			var nDetailsRow = oTable.fnOpen(
 				nTr, // row element
 				'<div class="innerDetails" style="display: none;">' + '</div>', // HTML content of details subrow
@@ -216,5 +222,23 @@
 
 		return this;
 	};
+
+	// Helper function for alowing quick reset of all applied filters
+	// 
+	// @see http://datatables.net/forums/discussion/997/fnfilter-how-to-reset-all-filters-without-multiple-requests./p1
+	// 
+	// Usage:
+	//   oDataTable.fnResetAllFilters(); 		// Reset and redraw
+	//   oDataTable.fnResetAllFilters(false);	// Just reset the filters
+	//   
+	$.fn.dataTableExt.oApi.fnResetAllFilters = function (oSettings, bDraw/*default true*/) {
+        for(iCol = 0; iCol < oSettings.aoPreSearchCols.length; iCol++) {
+                oSettings.aoPreSearchCols[ iCol ].sSearch = '';
+        }
+        oSettings.oPreviousSearch.sSearch = '';
+ 
+        if(typeof bDraw === 'undefined') bDraw = true;
+        if(bDraw) this.fnDraw();
+	}
 
 })(jQuery);

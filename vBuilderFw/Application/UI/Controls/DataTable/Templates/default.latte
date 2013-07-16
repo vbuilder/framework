@@ -33,7 +33,7 @@
 			
 			"aoColumns": [
 				{foreach $columns as $col}
-					{ "sClass": {$col->getName()}{* Class for each cell in this column *}, "bSortable": {$col->isSortable()}, "bVisible": {$col->isVisible()} }{if !$iterator->last},{/if}{* IE nesnasi carku na konci *}
+					{ "sClass": {$col->getName()}{* Class for each cell in this column *}, "bSortable": {$col->isSortable()}, "bSearchable": {$col->isSearchable()}, "bVisible": {$col->isVisible()} }{if !$iterator->last},{/if}{* IE nesnasi carku na konci *}
 				{/foreach}
 			],
 
