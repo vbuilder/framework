@@ -41,7 +41,7 @@ class FormatHelpers {
 	}
 	
 	public static function formatNumericValue($n, $unit = null) {
-		if($n == '')
+		if($n === '' || $n === NULL)
 			return '-';
 			
 		return str_replace(" ", "\xc2\xa0", number_format ($n, 1, ',', ' '))
