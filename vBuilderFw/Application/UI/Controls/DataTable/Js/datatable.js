@@ -176,6 +176,8 @@
 			showProcessing(subrowDiv);
 			subrowDiv.slideDown({ duration: 300 });
 
+			$('html, body').animate({ scrollTop: $(nTr).offset().top }, 'slow');
+
 			if(args.closeLabel) {
 				el.data('openLabel', el.html());
 				el.html(args.closeLabel);

@@ -46,17 +46,19 @@ class DataTableRenderer extends vBuilder\Application\UI\ControlRenderer {
 			//if($column->isVisible())
 				//$this->template->visibleColumns[] = $column;
 			
-			if(isset($this->control->defaultSortColumns[$column->getName()])) {
-				$this->template->sortingColumns[] = array($index, $this->control->defaultSortColumns[$column->getName()]);
+			if(isset($this->control->effectiveSortColumns[$column->getName()])) {
+				// $sortingColumns[] = array(columnIndex, sortingMethod)
+				$this->template->sortingColumns[] = array($index, $this->control->effectiveSortColumns[$column->getName()]);
 			}
 		}
 
 		// First page of records
-		$this->template->rows = $this->control->getRenderedData();
+		$this->template->rows = $this->control->getDefferedData();
 		$this->template->total = $this->control->model->count;
 		$this->template->unfilteredTotal = $this->control->model->unfilteredCount ?: $this->control->model->count;
 
 		$this->template->isSortable = true;
+		$this->template->filter = $this->control->model->getFilter() ?: array();
 	}	
 	 
 }

@@ -46,6 +46,7 @@
 			"iDeferLoading": [ {$total}, {$unfilteredTotal} ],
 						
 			"bFilter": true,
+			{* Global filter *}{if isset($filter[0])}{? list($gSearch) = array_values($filter[0])}{if $gSearch['keywords'] != ""}"oSearch": { "sSearch": {$gSearch['keywords']}, "bRegexp": {$gSearch['regexp']} },{/if}{/if}
 			
 			// TODO: change page size
 			"bLengthChange": false,
@@ -84,6 +85,14 @@
 
 				if(yPos < $(window).scrollTop())
 					$('html, body').animate({ scrollTop: yPos }, 'slow');
+
+				// Hides pagination if there is only one page or less
+				// Explaination: SPAN contains A.paginate_button for inactive pages and A.paginate_active for active page
+				var paginationEl = tableEl.closest('.dataTables_wrapper').find('.dataTables_paginate');
+				if(paginationEl.find('SPAN .paginate_button').size() > 0)
+					paginationEl.show();
+				else
+					paginationEl.hide();
 			}
 		});
 	});

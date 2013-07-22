@@ -41,6 +41,9 @@ class DibiModel extends BaseModel {
 	/** @var callable */
 	protected $_applySortingCallback;
 
+	/** @var applied filtering fules */
+	protected $_filteringRules;
+
 	/** @var int */
 	protected $_minFilterWordLength = 3;
 
@@ -64,11 +67,21 @@ class DibiModel extends BaseModel {
 	public function setFilter(array $rules = array()) {
 		$this->updating();
 
+		$this->_filteringRules = $rules;
+
 		if(count($rules) > 0) {
 			$this->applyFilter($this->_fluent, $rules);
 		}
 
 		return $this;
+	}
+
+	/**
+	 * Returns array of applied filtering rules
+	 * @return array|null
+	 */
+	public function getFilter() {
+		return $this->_filteringRules;
 	}
 	
 	/**
@@ -99,6 +112,8 @@ class DibiModel extends BaseModel {
 			foreach($sortingColumns as $column => $direction)
 				$this->applySortingRule($this->_fluent, $column, $direction);
 		}
+
+		// TODO: Some SortingIterator for ranked search results
 		
 		return new \ArrayIterator($this->_fluent->fetchAll($start, $count));
 	}
