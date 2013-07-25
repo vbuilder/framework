@@ -42,10 +42,15 @@ class ArrayModel extends BaseModel {
 	}
 	
 	public function setFilter(array $rules = array()) {
-
 		// TODO
 
 		return $this;
+	}
+
+	public function getFilter() {
+		// TODO
+
+		return NULL;
 	}
 
 	protected function getData() {
