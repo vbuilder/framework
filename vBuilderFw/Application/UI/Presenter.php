@@ -24,6 +24,7 @@
 namespace vBuilder\Application\UI;
 
 use vBuilder,
+	vBuilder\Security\User,
 	vBuilder\Application\WebFilesGenerator,
 	Nette;
 
@@ -34,6 +35,62 @@ use vBuilder,
  * @since Sep 25, 2011
  */
 class Presenter extends Nette\Application\UI\Presenter {
+
+	/**
+	 * Checks for action requirments
+	 *
+	 * @return void
+	 */
+	public function checkRequirements($element) {
+		
+		// Nejprve se overuje pro Presenter, potom pro metodu (action*)
+		if($element instanceof Nette\Application\UI\PresenterComponentReflection) {
+			
+			// Support for PSK
+			// Note: Cannot be in startup() because checkRequirements()
+			//   usually checks for authentication and user has to be logged in
+			//   by then.
+			if($this->getParam('psk') !== NULL) {
+				if(NULL !== $this->context->user->getAuthenticator(User::AUTHN_METHOD_PSK, User::AUTHN_SOURCE_ALL, FALSE)) {
+					try {
+						$identity = $this->context->user->login(User::AUTHN_METHOD_PSK, User::AUTHN_SOURCE_ALL, $this->getParam('psk'));
+					
+					// We ignore invalid PSK and let actual requirements to handle it
+					// (display login, etc...)
+					} catch(Nette\Security\AuthenticationException $e) {
+
+					}
+				}
+			}
+		}
+
+		// Default values
+		$requireLogin = NULL;
+
+		// Parse annotations
+		$requirements = (array) $element->getAnnotation('User');
+		foreach($requirements as $key => $value) {
+
+			// User authentication as a value
+			if($value == 'loggedIn')
+				$requireLogin = TRUE;
+
+			// User authentication as a key
+			elseif($key == 'loggedIn') {
+				$requireLogin = is_bool($value) ? $value : NULL;
+				if($requireLogin === NULL) throw new Nette\InvalidArgumentException("Invalid value for annotation @User($key = ?). Please use TRUE or FALSE. " . var_export($value, TRUE) . " used.");
+			}
+
+			// Other values are not implemented
+			else {
+				throw new Nette\InvalidArgumentException("Annotation @User cannot be parsed");
+			}
+		}
+
+		// Authentication check if required
+		if($requireLogin === TRUE && !$this->getUser()->isLoggedIn())
+			throw new Nette\Application\ForbiddenRequestException;
+	}
 
 	/**
 	 * Compilation time templating filters

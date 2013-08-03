@@ -34,6 +34,13 @@ use Nette,
  */
 class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
+	/** @var Nette\DI\IContainer */
+	protected $context;
+
+	public function __construct(Nette\DI\IContainer $context) {
+		$this->context = $context;
+	}
+
 	/**
 	 * Creates IIdentity object from obtained user data
 	 *
@@ -43,25 +50,46 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 	 * @return IIdentity
 	 */
 	public function createIdentity($userData, $authenticator) {
+
+		// DB Password
 		if($authenticator instanceof Authenticators\DatabasePasswordAuthenticator) {
-			return new Nette\Security\Identity(
+			$identity = new Nette\Security\Identity(
 				$userData->{$authenticator->getColumn($authenticator::ID)},
 				array('user'),
 				$userData
 			);
 		}
 
+		// LDAP
 		elseif($authenticator instanceof Authenticators\LdapBindAuthenticator) {
 			$ldapData = LdapUtils::entriesToStructure($userData);
 
-			return new Nette\Security\Identity(
+			$identity = new Nette\Security\Identity(
 				$ldapData['dn'],
 				array('user'),
 				$ldapData
 			);
 		}
 
-		return NULL;
+		// Preshared secret
+		elseif($authenticator instanceof Authenticators\PresharedSecretAuthenticator) {
+			$identity = new Nette\Security\Identity(
+				'psk::' . $userData->key,
+				array('authenticated'), // Not user
+				$userData
+			);
+		}
+
+		// Auto-role creation
+		// (if we remove some role and create inconsistency, we have to allow user to login)
+		if($identity && ($authz = $this->context->user->getAuthorizator()) instanceof Nette\Security\Permission) {
+			foreach($identity->getRoles() as $role) {
+				if(!$authz->hasRole($role))
+					$authz->addRole($role);
+			}
+		}
+
+		return $identity;
 	}
 
 }

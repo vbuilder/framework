@@ -2,6 +2,8 @@ services:
 	# Authentication / authorization layer
 	user:
 		class: vBuilder\Security\User
+		setup:
+			- setAuthorizator(@user.authorizator.acl)
 
 	# Identity factory
 	user.identityFactory:
@@ -20,6 +22,14 @@ services:
 		class: vBuilder\Security\Authenticators\LdapBindAuthenticator(@user.identityFactory)
 		setup:
 			- setServerUrl('ldaps://ldap.v3net.cz')
+
+	# Authenticator with PSK in local DB
+	user.authenticator.dbPsk:
+		class: vBuilder\Security\Authenticators\PresharedSecretAuthenticator(@user.identityFactory)
+
+	# ACL authorizator
+	user.authorizator.acl:
+		class: vBuilder\Security\Authorizators\AclAuthorizator
 
 	# User config
 	userConfig:

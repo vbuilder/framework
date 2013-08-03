@@ -37,16 +37,16 @@ use vBuilder,
  */
 class User extends Nette\Object {
 
-	/**/ /** Authorization sources */
-	const AUTHN_SOURCE_ALL = NULL;
-	const AUTHN_SOURCE_DATABASE = 'db';
-	const AUTHN_SOURCE_LDAP = 'ldap';
-	/**/
-
 	/**/ /** Authorization methods */
 	const AUTHN_METHOD_INVALID = NULL;
 	const AUTHN_METHOD_PASSWORD = 'password';
 	const AUTHN_METHOD_PSK = 'psk';
+	/**/
+
+	/**/ /** Authorization sources */
+	const AUTHN_SOURCE_ALL = NULL;
+	const AUTHN_SOURCE_DATABASE = 'db';
+	const AUTHN_SOURCE_LDAP = 'ldap';
 	/**/
 
 	/** @var string  default role for unauthenticated user */
@@ -70,6 +70,9 @@ class User extends Nette\Object {
 	/** @var Nette\DI\NestedAccessor */
 	public $authenticator;
 
+	/** @var IAuthorizator */
+	protected $authorizator;
+
 	/** @var Nette\DI\NestedAccessor */
 	public $passwordHasher;
 
@@ -84,8 +87,14 @@ class User extends Nette\Object {
 		$this->onLoggedIn[] = function ($userService) use ($context) {
 
 			// Only for real users (no PSK, etc...s)
-			if(!$userService->isInRole('user'))
+			try {
+				if(!$userService->isInRole('user'))
+					return ;
+
+			// If role does not exist
+			} catch(Nette\InvalidStateException $e) {
 				return ;
+			} 
 
 			// TODO: Parametrized table name
 			$tableName 	= 'security_lastLoginInfo';
@@ -235,19 +244,27 @@ class User extends Nette\Object {
 	 *
 	 * @param string method (AUTHN_METHOD_*)
 	 * @param string source (AUTHN_SOURCE_*)
+	 * @param bool throw exceptions?
+	 * 
 	 * @return IAuthenticator|array of IAuthenticator
 	 * @throws AuthenticationException if there is no handler for this type
 	 */
-	public function getAuthenticator($method, $source = self::AUTHN_SOURCE_ALL) {
+	public function getAuthenticator($method, $source = self::AUTHN_SOURCE_ALL, $throw = TRUE) {
 
-		if(!isset($this->availableAuthenticators[$method]))
-			throw new Nette\InvalidArgumentException("There is no authentication handler for method " . var_export($method, TRUE));
+		if(!isset($this->availableAuthenticators[$method])) {
+			if($throw) throw new Nette\InvalidArgumentException("There is no authentication handler for method " . var_export($method, TRUE));
+		
+			return NULL;
+		}
 
 		if($source == self::AUTHN_SOURCE_ALL)
 			return $this->availableAuthenticators[$method];
 
-		if(!isset($this->availableAuthenticators[$method][$source]))
-			throw new Nette\InvalidArgumentException("There is no source " . var_export($source, TRUE) . " for authentication method " . var_export($method, TRUE) . " ");
+		if(!isset($this->availableAuthenticators[$method][$source])) {
+			if($throw) throw new Nette\InvalidArgumentException("There is no source " . var_export($source, TRUE) . " for authentication method " . var_export($method, TRUE) . " ");
+		
+			return NULL;
+		}
 
 		return $this->availableAuthenticators[$method][$source];
 	}
