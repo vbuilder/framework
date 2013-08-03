@@ -1,11 +1,26 @@
 services:
-	authenticator:
-		class: vBuilder\Security\Authenticator('vBuilder\Security\User')
-	
-	# Hash provider
-	passwordHashProvider:
-		class: vBuilder\Security\Sha1SaltedHashProvider
-	
+	# Authentication / authorization layer
+	user:
+		class: vBuilder\Security\User
+
+	# Identity factory
+	user.identityFactory:
+		class: vBuilder\Security\IdentityFactory
+
+	# Password hash provider
+	user.passwordHasher.sha1Salted:
+		class: vBuilder\Security\PasswordHashers\Sha1SaltedPasswordHasher
+
+	# Authenticator against records in local DB
+	user.authenticator.dbPassword:
+		class: vBuilder\Security\Authenticators\DatabasePasswordAuthenticator(@user.passwordHasher.sha1Salted, @user.identityFactory)
+
+	# Authenticator against LDAP (bind)
+	user.authenticator.ldapBind:
+		class: vBuilder\Security\Authenticators\LdapBindAuthenticator(@user.identityFactory)
+		setup:
+			- setServerUrl('ldaps://ldap.v3net.cz')
+
 	# User config
 	userConfig:
 		factory: vBuilder\Config\DbUserConfig::createService(['%appDir%/config/userdefaults.neon'])		

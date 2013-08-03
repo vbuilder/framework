@@ -34,7 +34,7 @@ use vBuilder,
  * @since Sep 25, 2011
  */
 class Presenter extends Nette\Application\UI\Presenter {
-			
+
 	/**
 	 * Compilation time templating filters
 	 * 
@@ -178,6 +178,16 @@ class Presenter extends Nette\Application\UI\Presenter {
 	public function createComponentWebFiles($name) {
 		$control = new Controls\WebFilesHeadGenerator($this, $name);
 		return $control;
+	}
+
+	/**
+	 * Overriden for replacement of Nette\Security\User
+	 *  with vBuilder\Security\User
+	 *
+	 * @return vBuilder\Security\User
+	 */
+	public function getUser() {
+		return $this->context->getByType('vBuilder\Security\User');
 	}
 	
 }

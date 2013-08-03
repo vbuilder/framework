@@ -11,45 +11,45 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace vBuilder\Security;
 
+use Nette;
+
 /**
  * Interface for supporting many hashing algorithms for storing passwords
  *
  * @author Adam Staněk (V3lbloud)
- * @since Feb 10, 2011
+ * @since Aug 3, 2013
  */
-interface IPasswordHashProvider {
+interface IAuthenticator extends Nette\Security\IAuthenticator {
     
-	/**
-	 * Return hashed password.
-	 * 
-	 * Warning: The password can be salted (depending on implementation).
-	 * Don't use this for checking on strings. Use checkPassword instead.
-	 * 
-	 * @param string plain text password
-	 * @return string password hash
-	 */
-	public function hashPassword($password);
+     const ID = 3;
+     const EMAIL = 4;
+
+    /**
+     * Returns name of authentication method for this handler.
+     * {@link User::AUTHN_METHOD_INVALID} 
+     *
+     * @return string
+     */
+	public function getMethod();
 
 	/**
-	 * Checks password against it's hash
-	 *
-	 * @param string test password in plain text
-	 * @param string hash of password to check against
-	 *
-	 * @return boolean true if passwords match
-	 */
-	public function checkPassword($password, $hash);
+     * Returns name of authentication source for this handler.
+     * {@link vBuilder\Security\User::AUTHN_SOURCE_ALL} 
+     *
+     * @return string
+     */
+	public function getSource();
 
 }

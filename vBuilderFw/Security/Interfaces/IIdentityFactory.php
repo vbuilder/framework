@@ -11,23 +11,37 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace vBuilder\Security;
 
+use Nette;
+
 /**
- * Custom exception for security exception handling
+ * Interface for IIdentity factory
  *
  * @author Adam Staněk (V3lbloud)
+ * @since Aug 3, 2013
  */
-class SecurityException extends \Exception {
-	const OPERATION_NOT_PERMITTED = 1;
+interface IIdentityFactory {
+
+
+	/**
+	 * Creates IIdentity object from obtained user data
+	 *
+	 * @param mixed user data
+	 * @param IAuthenticator authenticator
+	 *
+	 * @return IIdentity
+	 */
+	public function createIdentity($userData, $authenticator);
+
 }
