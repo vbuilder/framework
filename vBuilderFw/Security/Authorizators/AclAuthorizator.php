@@ -27,11 +27,85 @@ use vBuilder,
 	Nette;
 	
 /**
- * Basic ACL authorization layer
+ * Basic ACL authorization layer (proxy to Nette\Security\Permission)
  *
  * @author Adam Staněk (V3lbloud)
  * @since Aug 3, 2013
  */
-class AclAuthorizator extends Nette\Security\Permission {
+class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizator {
+
+	/** @var Nette\DI\IContainer */
+	protected $context;
+
+	/** @var Nette\Security\Permission */
+	protected $acl;
+
+	/** @var Nette\Reflection\ClassType */
+	protected $aclReflection;
+
+	/** @var array of function(AclAuthorizator $authorizator); Occurs when first query is requested (on lazy initialization) */
+	public $onInit = array();
+
+	protected $tableName = 'security_acl';
+
+	public function __construct(Nette\DI\IContainer $context) {
+		$this->context = $context;
+		$this->aclReflection = new Nette\Reflection\ClassType('Nette\\Security\\Permission');
+	}
+
+	/**
+	 * Performs ACL initialization
+	 */
+	public function init() {
+		// First thing: to avoid circular dependency
+		$this->acl = $this->aclReflection->newInstance();
+
+		// Registered initializators
+		$this->onInit($this);
+
+		// Load from DB
+		// TODO: Caching
+		// TODO: Dodelat
+		/* $db = $this->context->database->connection;
+		$rules = $db->query("SELECT * FROM %n", $this->tableName);
+
+		foreach($rules as $rule) {
+			if($rule->type == 'allow')
+				$this->acl->allow($rule->role, $rule->resource, $rule->privilege);
+			else
+				$this->acl->deny($rule->role, $rule->resource, $rule->privilege);
+		} */
+	}
+
+	/**
+	 * Performs a role-based authorization.
+	 * @param  string  role
+	 * @param  string  resource
+	 * @param  string  privilege
+	 * @return bool
+	 */
+	function isAllowed($role/*5.2* = self::ALL*/, $resource/*5.2* = self::ALL*/, $privilege/*5.2* = self::ALL*/) {
+		if(!isset($this->acl)) $this->init();
+
+		return $this->acl->isAllowed($role, $resource, $privilege);
+	}
+
+	/**
+	 * Pass calls to actual ACL class
+	 *
+	 * @param  string  method name
+	 * @param  array   arguments
+	 * @return mixed
+	 * @throws MemberAccessException
+	 */
+	public function __call($name, $args) {
+		if($this->aclReflection->hasMethod($name)) {
+			if(!isset($this->acl)) $this->init();
+
+			return $this->aclReflection->getMethod($name)->invokeArgs($this->acl, $args);
+		}
+
+		return parent::__call($name, $args);
+	}
 
 }

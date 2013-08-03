@@ -53,9 +53,10 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 		// DB Password
 		if($authenticator instanceof Authenticators\DatabasePasswordAuthenticator) {
+			$uid = $userData->{$authenticator->getColumn($authenticator::ID)};
 			$identity = new Nette\Security\Identity(
-				$userData->{$authenticator->getColumn($authenticator::ID)},
-				array('user'),
+				$uid,
+				array("user::$uid"),
 				$userData
 			);
 		}
@@ -63,29 +64,44 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 		// LDAP
 		elseif($authenticator instanceof Authenticators\LdapBindAuthenticator) {
 			$ldapData = LdapUtils::entriesToStructure($userData);
+			$uid = $ldapData['dn'];
 
 			$identity = new Nette\Security\Identity(
-				$ldapData['dn'],
-				array('user'),
+				$uid,
+				array("user::$uid"),
 				$ldapData
 			);
 		}
 
 		// Preshared secret
 		elseif($authenticator instanceof Authenticators\PresharedSecretAuthenticator) {
+			$uid = 'psk::' . $userData->key;
+
 			$identity = new Nette\Security\Identity(
-				'psk::' . $userData->key,
-				array('authenticated'), // Not user
+				$uid,
+				array($uid), // Not user
 				$userData
 			);
 		}
 
 		// Auto-role creation
 		// (if we remove some role and create inconsistency, we have to allow user to login)
-		if($identity && ($authz = $this->context->user->getAuthorizator()) instanceof Nette\Security\Permission) {
-			foreach($identity->getRoles() as $role) {
-				if(!$authz->hasRole($role))
-					$authz->addRole($role);
+		if($identity && ($authz = $this->context->user->getAuthorizator()) != NULL) {
+			if($authz instanceof Authorizators\AclAuthorizator || $authz instanceof Nette\Security\Permission) {
+				foreach($identity->getRoles() as $role) {
+					if(!$authz->hasRole($role)) {
+						// Implicit role has parent
+						if(preg_match('/^([^\\:]+)\\:\\:(.*)$/', $role, $matches)) {
+							$parentRole = $matches[1];
+							if(!$authz->hasRole($parentRole))
+								$authz->addRole($parentRole);
+
+							$authz->addRole($role, array($parentRole));
+
+						} else
+							$authz->addRole($role);
+					}
+				}
 			}
 		}
 

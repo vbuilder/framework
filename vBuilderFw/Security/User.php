@@ -32,6 +32,9 @@ use vBuilder,
 /**
  * User authorization / authentication abstraction layer
  *
+ * TODO: Support for concurrent logins by storage
+ *	(to allow PSK usage while maintaining existing logged session)
+ *
  * @author Adam Staněk (V3lbloud)
  * @since Aug 3, 2013
  */
@@ -281,7 +284,7 @@ class User extends Nette\Object {
 		}
 
 		$identity = $this->getIdentity();
-		return $identity && $identity->getRoles() ? $identity->getRoles() : array($this->authenticatedRole);
+		return $identity && $identity->getRoles() ? $identity->getRoles() : array();
 	}
 
 	/**
