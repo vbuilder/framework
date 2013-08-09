@@ -24,6 +24,7 @@
 namespace vBuilder\Security;
 
 use Nette,
+	vBuilder\Utils\Strings,
 	vBuilder\Utils\Ldap as LdapUtils;
 
 /**
@@ -56,7 +57,7 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 			$uid = $userData->{$authenticator->getColumn($authenticator::ID)};
 			$identity = new Nette\Security\Identity(
 				$uid,
-				array("user::$uid"),
+				array(Strings::intoParameterizedString('user', array($uid))),
 				$userData
 			);
 		}
@@ -68,41 +69,20 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 			$identity = new Nette\Security\Identity(
 				$uid,
-				array("user::$uid"),
+				array(Strings::intoParameterizedString('user', array($uid))),
 				$ldapData
 			);
 		}
 
 		// Preshared secret
 		elseif($authenticator instanceof Authenticators\PresharedSecretAuthenticator) {
-			$uid = 'psk::' . $userData->key;
+			$uid = Strings::intoParameterizedString('psk', array($userData->key));
 
 			$identity = new Nette\Security\Identity(
 				$uid,
 				array($uid), // Not user
 				$userData
 			);
-		}
-
-		// Auto-role creation
-		// (if we remove some role and create inconsistency, we have to allow user to login)
-		if($identity && ($authz = $this->context->user->getAuthorizator()) != NULL) {
-			if($authz instanceof Authorizators\AclAuthorizator || $authz instanceof Nette\Security\Permission) {
-				foreach($identity->getRoles() as $role) {
-					if(!$authz->hasRole($role)) {
-						// Implicit role has parent
-						if(preg_match('/^([^\\:]+)\\:\\:(.*)$/', $role, $matches)) {
-							$parentRole = $matches[1];
-							if(!$authz->hasRole($parentRole))
-								$authz->addRole($parentRole);
-
-							$authz->addRole($role, array($parentRole));
-
-						} else
-							$authz->addRole($role);
-					}
-				}
-			}
 		}
 
 		return $identity;

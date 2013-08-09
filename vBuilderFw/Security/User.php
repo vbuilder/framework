@@ -340,6 +340,15 @@ class User extends Nette\Object {
 	 */
 	public function setAuthorizator(IAuthorizator $handler) {
 		$this->authorizator = $handler;
+
+		if($handler instanceof Authorizators\AclAuthorizatorProxy) {
+			$handler->addInitCallback(function ($acl) {
+				$acl->addRole('guest');
+				$acl->addRole('user', 'guest');
+				$acl->addRole('psk', 'guest');
+			});
+		}
+
 		return $this;
 	}
 

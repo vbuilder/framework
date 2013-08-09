@@ -29,7 +29,7 @@ services:
 
 	# ACL authorizator
 	user.authorizator.acl:
-		class: vBuilder\Security\Authorizators\AclAuthorizator
+		class: vBuilder\Security\Authorizators\DatabaseAclAuthorizator
 
 	# User config
 	userConfig:
