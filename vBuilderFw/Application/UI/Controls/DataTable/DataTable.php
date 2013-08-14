@@ -432,27 +432,40 @@ class DataTable extends vBuilder\Application\UI\Control {
 		);
 
 		while($iterator->valid()) {
-			$currRow = $iterator->current();
-			$trRow = &$rowData[];
-			$trRow = array();
-			
-			// TODO: Support for DT_RowId
-			// TODO: Support for DT_RowClass
-			foreach($this->_columns as $col) {
-				$value = NULL;
-				if(isset($currRow[$col->getName()])) $value = $currRow[$col->getName()];
-				elseif(isset($currRow->{$col->getName()})) $value = $currRow->{$col->getName()};
-				else $value = NULL;
-
-				$trRow[] = $col->render($value, $currRow);
-			}
-			
+			$rowData[] = $this->getRenderedRowData($iterator->current());
 			$iterator->next();			
 		}
 
 		return $rowData;
 	}
 	
+	/**
+	 * Returns ordered array formatted for load into table
+	 *
+	 * @todo Add support for DT_RowId
+	 * @todo Add support for DT_RowClass
+	 *
+	 * @param array|object associative data
+	 * @return array
+	 */
+	public function getRenderedRowData($rowData) {
+		$trRow = array();
+
+		foreach($this->_columns as $col) {
+			$value = NULL;
+			if(isset($rowData[$col->getName()])) $value = $rowData[$col->getName()];
+			elseif(isset($rowData->{$col->getName()})) $value = $rowData->{$col->getName()};
+			else $value = NULL;
+
+			$trRow[] = $col->render($value, $rowData);
+		}
+
+		// $trRow['DT_RowId'] = NULL;
+		// $trRow['DT_RowClass'] = NULL;
+
+		return $trRow;	
+	}
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -517,6 +530,46 @@ class DataTable extends vBuilder\Application\UI\Control {
 		}
 
 		return (string) $this->link('//perform', $args);
+	}
+
+	/**
+	 * Creates data payload for AJAX response when updating a single table row
+	 *
+	 * @param array of ID values (associative)
+	 * @return array
+	 */
+	public function createUpdateRowPayload($pk) {
+		
+		$filter = array();
+		foreach($pk as $key => $val) {
+			$filter[] = array(
+				$key => array(
+					'keywords' => $val,
+					'regexp' => FALSE
+				)
+			);
+		}
+
+		$this->_model->setFilter($filter);
+		$it = $this->_model->getIterator(0, 1);
+		$rowData = $it->current();
+
+		$payload = array(
+			'aRowData' => $this->getRenderedRowData($rowData)
+		);
+
+		return $payload;
+	}
+
+	/**
+	 * Sends JSON response for row update request and terminates script
+	 *
+	 * @param array of ID values (associative)
+	 * @return void
+	 */
+	public function sendUpdateRowJsonResponse($pk) {
+		$data = $this->createUpdateRowPayload($pk);
+		$this->getPresenter(true)->sendResponse(new JsonResponse($data));
 	}
 
 	// -------------------------------------------------------------------------

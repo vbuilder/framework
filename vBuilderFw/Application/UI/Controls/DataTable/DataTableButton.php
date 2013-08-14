@@ -63,7 +63,7 @@ class Button extends Component {
 			$url = new Nette\Http\Url($this->_url);
 			
 			foreach($this->_table->getIdColumns() as $key)
-				$url->appendQuery(array('record' . ucfirst($key) => $rowData->{$key}));
+				$url->appendQuery(array('record' . ucfirst($key) => isset($rowData->{$key}) ? $rowData->{$key} : NULL));
 
 			$this->element->href((string) $url);
 

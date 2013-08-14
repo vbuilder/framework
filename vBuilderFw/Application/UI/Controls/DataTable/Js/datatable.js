@@ -27,6 +27,8 @@
 		var renderedContent = '<div class="error">Vyskytla se chyba při načítání dat</div>';
 		
 		replaceContentWith(el, renderedContent);
+		el.trigger('dtContentRemoved');
+		el.data('dtLoadedContent', false);
 	}
 
 	// -------------------------------------------------------------------------
@@ -130,53 +132,95 @@
 	}
 
 	// -------------------------------------------------------------------------
+	
+	// Opens / closes detail row
+	function setDetailOpen(el, args, open, callback) {
 
-	// Helper function which does all the heavy lifting
-	function detailButtonClicked(el, args) {
-		
 		var oTable = el.parents('TABLE').dataTable(),
-			nTr = el.parents('TR')[0];
+			nTr = el.parents('TR')[0],
+			subrowDiv = $(nTr).next().find('.innerDetails');
 
-		// Closes the subrow
-		if(oTable.fnIsOpen(nTr)) {
+		// Close subrow if necessary
+		if(oTable.fnIsOpen(nTr) && open == false) {
 
 			$('DIV.innerDetails', $(nTr).next()[0]).slideUp({
 				duration: 300,
 				complete: function () {
+					$(nTr).removeClass('withDetails');
 					oTable.fnClose(nTr);
 
-					if(el.data('openLabel'))
-						el.html(el.data('openLabel'));
+					$(this).trigger('dtContentRemoved');
 
-					$(nTr).removeClass('selected');
+					if(typeof(callback) == "function")
+						callback();
 				}
-			});	
+			});
 
-		// Opens the subrow with loading message and start the data request
-		} else {
-			$(nTr).addClass('selected');
+		}
 
-			var nDetailsRow = oTable.fnOpen(
-				nTr, // row element
-				'<div class="innerDetails" style="display: none;">' + '</div>', // HTML content of details subrow
-				'details' // class name of subrow TD cell
-			);
+		// Open subrow if necessary
+		else if(open == true) {
+			if(!oTable.fnIsOpen(nTr)) {
+				$(nTr).addClass('withDetails');
 
-			// TD in row can't have any vertical padding or the animation suffers
-			var paddingTop = $(nDetailsRow).find('TD').css('padding-top'),
-				paddingBot = $(nDetailsRow).find('TD').css('padding-bottom');
+				var nDetailsRow = oTable.fnOpen(
+					nTr, // row element
+					'<div class="innerDetails" style="display: none;">' + '</div>', // HTML content of details subrow
+					'details' // class name of subrow TD cell
+				);
 
-			$(nDetailsRow).find('TD').css('padding-top', 0);
-			$(nDetailsRow).find('TD').css('padding-bottom', 0);
+				// TD in row can't have any vertical padding or the animation suffers
+				var paddingTop = $(nDetailsRow).find('TD').css('padding-top'),
+					paddingBot = $(nDetailsRow).find('TD').css('padding-bottom');
 
-			var subrowDiv = $('DIV.innerDetails', nDetailsRow)
-				.css('padding-top', paddingTop)
-				.css('padding-bottom', paddingBot);
+				$(nDetailsRow).find('TD').css('padding-top', 0);
+				$(nDetailsRow).find('TD').css('padding-bottom', 0);
 
-			showProcessing(subrowDiv);
-			subrowDiv.slideDown({ duration: 300 });
+				var subrowDiv = $('DIV.innerDetails', nDetailsRow)
+					.css('padding-top', paddingTop)
+					.css('padding-bottom', paddingBot);
 
+				if(typeof(callback) == "function")
+					callback(subrowDiv);
+
+				subrowDiv.slideDown({ duration: 300 });
+
+				return subrowDiv;
+
+			} else {
+				if(typeof(callback) == "function")
+					callback(subrowDiv);				
+			}
+		}
+
+		return subrowDiv;
+	}
+
+	// Helper function which show / hides detail row
+	function detailButtonClicked(el, args) {
+		var oTable = el.parents('TABLE').dataTable(),
+			nTr = el.parents('TR')[0],
+			subrowDiv = $(nTr).next().find('.innerDetails');
+
+		// Closes the subrow and updates the label
+		if(oTable.fnIsOpen(nTr) && subrowDiv.size() && subrowDiv.data('dtLoadedContent') == args.url) {
+
+			setDetailOpen(el, args, false);
+		}
+
+		// Opens the subrow
+		else {
+			var subrowDiv = setDetailOpen(el, args, true, showProcessing);
+			console.log(subrowDiv);
+			subrowDiv.data('dtLoadedContent', args.url);
+
+			// Scroll to the top of row
 			$('html, body').animate({ scrollTop: $(nTr).offset().top }, 'slow');
+
+			subrowDiv.one('dtContentRemoved', function (e) {
+				if(el.data('openLabel'))
+					el.html(el.data('openLabel'));
+			});
 
 			if(args.closeLabel) {
 				el.data('openLabel', el.html());
@@ -188,9 +232,87 @@
 		}
 	}
 
+
 	// -------------------------------------------------------------------------
 
-	// Registring colorboxSnippet as a listener on click event
+	// Sets row lock and lock animation
+	// TODO: What if the button is in the detail row?
+	function setRowLock(trEl, args, locked) {
+		var nextRowFirstCellEl = trEl.next().children().first(), 
+			lockingTrEl = trEl;
+
+		// If detail row is shown, add him to the locking set
+		if(nextRowFirstCellEl.size() > 0 && nextRowFirstCellEl.hasClass('details') && nextRowFirstCellEl.find('.innerDetails').size() > 0) {
+			lockingTrEl = lockingTrEl.add(trEl.next());
+		}
+
+		if(locked) {
+
+			// Prevent actions on all it's links if row is locked
+			// TODO: forms?
+			lockingTrEl.find('A').live('click', function (e) {
+				if(trEl.data('dtRowUpdateLock') === true) {
+					e.preventDefault();
+					e.stopImmediatePropagation();
+				}
+			});
+
+			// Skip if row is already locked
+			if(trEl.data('dtRowUpdateLock') === true) return ;
+			trEl.data('dtRowUpdateLock', true);
+
+			// Add class to locked row
+			lockingTrEl.addClass(args.classLocked);
+			
+			// Locking animation
+			lockingTrEl.animate({
+				opacity: args.rowOpacity,
+			}, 350, 'swing');
+
+		}
+
+		else {
+			if(trEl.data('dtRowUpdateLock') !== true) return ;
+			trEl.data('dtRowUpdateLock', false);
+
+			lockingTrEl.removeClass(args.classLocked);
+
+			lockingTrEl.animate({
+				opacity: 1.0,
+			}, 350, 'swing');
+		}
+	}
+
+	// Helper function for row update
+	function rowUpdateButtonClicked(el, args) {
+		var oTable = el.parents('TABLE').dataTable(),
+			trEl = el.parents('TR')[0];
+
+		setRowLock($(trEl), args, true);
+
+		$.ajax({
+			url: args.url,
+			success: function (payload) {
+				if(payload.aRowData)
+					oTable.fnUpdate(payload.aRowData, trEl, undefined, false, true);
+
+				setRowLock($(trEl), args, false);
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.error('Error while loading updated row data to DataTable: ' + args.url + ', ' + errorThrown);
+				setDetailOpen(el, args, true, function (subrowDiv) {
+					showError(subrowDiv, args, undefined);
+				});
+				
+
+				setRowLock($(trEl), args, false);
+			}
+		});
+	}
+
+	// -------------------------------------------------------------------------
+
+	// Registring dataTableDetailButton as a listener on click event
 	$.fn.dataTableDetailButton = function (args) {
 	
 		var elements = $(this),
@@ -224,6 +346,46 @@
 
 		return this;
 	};
+
+	// Registring dataTableRowUpdateButton as a listener on click event
+	$.fn.dataTableRowUpdateButton = function (args) {
+	
+		var elements = $(this),
+			defaults = {
+				url: null,
+				classLocked: 'locked',
+				rowOpacity: 0.4
+			};
+
+		if(jQuery().dataTable) {
+			elements.live('click', function (e) {
+				var el = $(this),
+					args2 = $.extend({}, defaults, args);
+
+				// URL from href attribute or given string / callback
+				if(args2.url == null || args2.url == undefined)
+					args2.url = el.attr('href');
+				else if(typeof(args2.url) == "function")
+					args2.url = args2.url(args2, el);
+
+				// Perform the action
+				rowUpdateButtonClicked(el, args2);
+
+				// Prevent the rest
+				e.preventDefault();
+				e.stopImmediatePropagation();
+				return false;
+			});
+
+		} else
+			console.error("DataTable not loaded");
+
+		return this;
+	};
+
+	
+
+	// -------------------------------------------------------------------------
 
 	// Helper function for alowing quick reset of all applied filters
 	// 
