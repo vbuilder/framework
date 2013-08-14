@@ -11,17 +11,19 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace vBuilder\Security;
+namespace vBuilder\Security\PasswordHashers;
+
+use vBuilder\Security\IPasswordHasher;
 
 /**
  * Class for making salted password hashes using SHA-1 algorithm.
@@ -29,7 +31,7 @@ namespace vBuilder\Security;
  * @author Adam Staněk (V3lbloud)
  * @since Feb 10, 2011
  */
-class Sha1SaltedHashProvider implements IPasswordHashProvider {
+class Sha1SaltedPasswordHasher implements IPasswordHasher {
 
 	/**
 	 * Return hashed password.
@@ -57,7 +59,7 @@ class Sha1SaltedHashProvider implements IPasswordHashProvider {
 	}
 
 	/**
-	 * Hash function for maintenance salted passwords.
+	 * Hash function for maintenance of salted passwords.
 	 * Kindly taken from one of anonymous contributors (including func __harvest, _scrabmle):
 	 *    http://www.php.net/manual/en/function.sha1.php#94326
 	 * and corrected mistakes.

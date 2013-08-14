@@ -11,34 +11,49 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace vBuilder\Security;
+namespace vBuilder\Security\Authenticators;
 
-use vBuilder;
+use vBuilder,
+	vBuilder\Security\IIdentityFactory,
+	vBuilder\Security\IAuthenticator,
+	Nette;
 
 /**
- * Last login info entity
- *
- * @Table(name="security_lastLoginInfo")
- * 
- * @Column(userId, pk, type="integer")
- * @Column(time, realName="time2", type="DateTime")
- * @Column(ip, realName="ip2", type="string")
+ * Base authentication handler
  *
  * @author Adam Staněk (V3lbloud)
- * @since Jun 16, 2011
+ * @since Aug 3, 2013
  */
-class LastLoginInfo extends vBuilder\Orm\ActiveEntity {
+abstract class BaseAuthenticator extends Nette\Object implements IAuthenticator {
 
-	
+	/** @var Nette\DI\IContainer */
+	protected $context;
+
+	/** @var IIdentityFactory */
+	protected $identityFactory;
+
+	public function __construct(IIdentityFactory $identityFactory, Nette\DI\IContainer $context) {
+		$this->context = $context;
+		$this->identityFactory = $identityFactory;
+	}
+
+	/**
+	 * Returns IIdentity factory.
+	 *
+	 * @return IIdentityFactory
+	 */
+	public function getIdentityFactory() {
+		return $this->identityFactory;
+	}
 
 }
