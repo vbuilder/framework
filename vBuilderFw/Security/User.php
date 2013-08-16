@@ -32,6 +32,8 @@ use vBuilder,
 /**
  * User authorization / authentication abstraction layer
  *
+ * TODO: Lazy service creation for authenticators (same as authorizator)
+ * 
  * TODO: Support for concurrent logins by storage
  *	(to allow PSK usage while maintaining existing logged session)
  *
@@ -74,7 +76,7 @@ class User extends Nette\Object {
 	public $authenticator;
 
 	/** @var IAuthorizator */
-	protected $authorizator;
+	protected $_authorizator;
 
 	/** @var Nette\DI\NestedAccessor */
 	public $passwordHasher;
@@ -118,6 +120,14 @@ class User extends Nette\Object {
 
 		// TODO
 		$this->storage = $this->context->nette->userStorage;
+	}
+
+	/**
+	 * Returns user identity storage
+	 * @return Nette\Security\IUserStorage
+	 */
+	public function getStorage() {
+		return $this->storage;
 	}
 
 	/** Authentication queries ************************************************/
@@ -303,7 +313,7 @@ class User extends Nette\Object {
 			return false;
 
 		$acl = $this->getAuthorizator();
-		if($acl instanceof Nette\Security\Permission) {
+		if($acl instanceof vBuilder\Security\Authorizators\AclAuthorizator) {
 			foreach($roles as $childRole) {
 				if($acl->roleInheritsFrom($childRole, $role))
 					return true;
@@ -336,19 +346,20 @@ class User extends Nette\Object {
 
 	/**
 	 * Sets authorization handler.
+	 * 
+	 * @param  string|IAuthorizator authorizator instance or name of service
 	 * @return self
+	 * @throws  Nette\InvalidArgumentException if argument is invalid
 	 */
-	public function setAuthorizator(IAuthorizator $handler) {
-		$this->authorizator = $handler;
-
-		if($handler instanceof Authorizators\AclAuthorizatorProxy) {
-			$handler->addInitCallback(function ($acl) {
-				$acl->addRole('guest');
-				$acl->addRole('user', 'guest');
-				$acl->addRole('psk', 'guest');
-			});
+	public function setAuthorizator($handler) {
+		if(!($handler instanceof IAuthorizator)) {
+			if(!is_string($handler))
+				throw new Nette\InvalidArgumentException("Expected name of service or instance of class implementing IAuthorizator");
+			/* elseif($this->context->hasService($handler))
+				throw new Nette\InvalidArgumentException("Invalid authorizator given. No such service '$handler'."); */
 		}
 
+		$this->_authorizator = $handler;
 		return $this;
 	}
 
@@ -356,9 +367,22 @@ class User extends Nette\Object {
 	/**
 	 * Returns current authorization handler.
 	 * @return IAuthorizator
+	 * @throws Nette\InvalidStateException if no authorizator has been set
 	 */
-	final public function getAuthorizator() {
-		return $this->authorizator ?: $this->context->getByType('Nette\Security\IAuthorizator');
+	public function getAuthorizator() {
+		if(!isset($this->_authorizator))
+			throw new Nette\InvalidStateException("No authorizator has been set");
+
+		if(is_string($this->_authorizator)) {
+			$authz = $this->context->getService($this->_authorizator);
+
+			if(!($authz instanceof IAuthorizator))
+				throw new Nette\InvalidStateException("Service $this->_authorizator returned instance of class which does not implement IAuthorizator");
+
+			$this->_authorizator = $authz;
+		}
+
+		return $this->_authorizator;
 	}
 
 }
