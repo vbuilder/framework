@@ -81,6 +81,17 @@ class DatabasePasswordAuthenticator extends BasePasswordAuthenticator {
 	}
 
 	/**
+	 * Sets column name for a field
+	 * @param string field name
+	 * @param string column name
+	 * @return  self
+	 */
+	public function setColumn($field, $column) {
+		$this->fieldName[$field] = $column;
+		return $this;
+	}
+
+	/**
 	 * Helper function for easy overriding of DB query
 	 *
 	 * @return DibiRow|FALSE
