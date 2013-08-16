@@ -35,12 +35,12 @@ use vBuilder,
  * @author Adam Staněk (V3lbloud)
  * @since Aug 3, 2013
  */
-class DatabaseAclAuthorizator extends AclAuthorizatorProxy {
+class DatabaseAclAuthorizator extends AclAuthorizator {
 
 	protected $tableName = 'security_acl';
 
-	protected function init() {
-		parent::init();
+	protected function setup() {
+		parent::setup();
 
 		// Load from DB
 		$db = $this->context->database->connection;
