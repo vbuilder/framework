@@ -3,7 +3,8 @@ services:
 	user:
 		class: vBuilder\Security\User
 		setup:
-			- setAuthorizator(@user.authorizator.acl)
+			# Intentionally without @ (we are passing service name, not service itself)
+			- setAuthorizator(user.authorizator.acl)
 
 	# Identity factory
 	user.identityFactory:
@@ -29,7 +30,11 @@ services:
 
 	# ACL authorizator
 	user.authorizator.acl:
-		class: vBuilder\Security\Authorizators\DatabaseAclAuthorizator
+		class: vBuilder\Security\Authorizators\AclAuthorizator
+
+	# ACL authorizator with DB storage
+	user.authorizator.dbAcl:
+		class: vBuilder\Security\Authorizators\DatabaseAclAuthorizator	
 
 	# User config
 	userConfig:
