@@ -28,7 +28,7 @@
 				if (!config.errorElement) {
 					config.errorElement = this.find('.errorBlock');
 					if(config.errorElement.find('li:first').length == 0)
-						config.errorElement.append($('<li>'));
+						config.errorElement.append($('<li class="text-error">'));
 				}
 				config.errorElement.find('li:first').html(msg);
 				if(config.errorElement.effect) {

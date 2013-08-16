@@ -80,8 +80,8 @@
 					// with .live() events.
 					// html: htmlData,
 					
-					width: $('#colorbox').outerWidth(),
-					height: $('#colorbox').outerHeight()
+					width: args.width == null ? $('#colorbox').outerWidth() : args.width,
+					height: args.height == null ? $('#colorbox').outerHeight() : args.height
 				});
 			},
 
@@ -130,6 +130,10 @@
 					args.url = el.attr('href');
 				else if(typeof(args.url) == "function")
 					args.url = args.url(args, el);
+
+				if(args.url == false) {
+					return true;
+				}
 
 				$.colorboxSnippet(args);
 
