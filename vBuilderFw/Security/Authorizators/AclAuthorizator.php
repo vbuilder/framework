@@ -38,6 +38,18 @@ use vBuilder,
  * when adding objects (which was pain in the ass with circual dependencies of different app modules).
  * The check is done lazily on first call of query methods.
  *
+ * You can also use compound names for roles and resources. Compound names
+ * have implicit parents and allows you to use parametrized resources / roles even
+ * without the need to explicitly add them to ACL.
+ *
+ * For example let's say we have created resource 'file' but we need to specify permissions
+ * to each individual file and we don't know anything about them (how many, etc...).
+ * Usually you would need to create ACL resources for each file.
+ * With compound names you can just query 'file:452' which will check for
+ * all rules to this individual file with maintaining the implicit ownership of parent resource
+ * 'file' which simplifies definition of administrative roles.
+ * See: vBuilder\Utils\Strings::intoParameterizedString() for creating compound names.
+ *
  * @copyright  Copyright (c) 2005, 2007 Zend Technologies USA Inc.
  * @author Adam Staněk (V3lbloud), David Grudl
  * @since Aug 16, 2013
@@ -807,7 +819,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 			if ($role instanceof IRole) {
 				$role = $role->getRoleId();
 			}
-			$this->checkRole($role);
+			$this->checkRole($role, FALSE);
 		}
 
 		$this->queriedResource = $resource;
@@ -815,7 +827,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 			if ($resource instanceof IResource) {
 				$resource = $resource->getResourceId();
 			}
-			$this->checkResource($resource);
+			$this->checkResource($resource, FALSE);
 		}
 
 		do {
@@ -844,10 +856,22 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 				}
 			}
 
-			$resource = $this->resources[$resource]['parent']; // try next Resource
+
+			if(isset($this->resources[$resource])) {
+				$resource = $this->resources[$resource]['parent'];
+
+			} elseif($this->isCompoundName($resource)) {
+				list($name, $params) = Strings::parseParametrizedString($resource);
+				$resource = $name;
+
+			} else {
+				throw new Nette\InvalidStateException("Resource '$resource' does not exist.");
+			}
+
 		} while (TRUE);
 
 		$this->queriedRole = $this->queriedResource = NULL;
+
 		return $result;
 	}
 
@@ -920,8 +944,15 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 			}
 
 			$dfs['visited'][$role] = TRUE;
-			foreach ($this->roles[$role]['parents'] as $roleParent => $foo) {
-				$dfs['stack'][] = $roleParent;
+			if(isset($this->roles[$role])) {
+				foreach ($this->roles[$role]['parents'] as $roleParent => $foo) {
+					$dfs['stack'][] = $roleParent;
+				}
+			} elseif($this->isCompoundName($role)) {
+				list($name, $params) = Strings::parseParametrizedString($role);
+				$dfs['stack'][] = $name;
+			} else {
+				throw new Nette\InvalidStateException("Role '$role' does not exist.");
 			}
 		}
 		return NULL;
@@ -1012,6 +1043,18 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 		}
 
 		return $visitor['byRole'][$role];
+	}
+
+	// *************************************************************************
+
+	/**
+	 * Returns TRUE if given name (role, resource, ...) is a compound name
+	 *
+	 * @param string
+	 * @return bool
+	 */
+	public function isCompoundName($name) {
+		return (bool) preg_match('/[^\\\\]:/', $name);
 	}
 
 }
