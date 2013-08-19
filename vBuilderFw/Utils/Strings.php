@@ -227,4 +227,19 @@ class Strings extends Nette\Utils\Strings {
 		return $s;
 	}
 
+
+	/**
+	 * Splits string into tokens using specified separator with maintaining
+	 * posibility to use escaped separator within string.
+	 *
+	 * @param string string to split
+	 * @param string separator
+	 * @param string escape sequence
+	 * 
+	 * @return string
+	 */
+	public static function splitWithEscape($str, $separator = '/', $escape = '\\') {
+		return preg_split('#(.*?[^' . preg_quote($escape, '#') . ']|.*' . preg_quote($escape . $escape, '#') . ')' . preg_quote($separator, '#') . '#', $str, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+	}
+
 }
