@@ -136,6 +136,27 @@ class DataTable extends vBuilder\Application\UI\Control {
 	}
 
 	/**
+	 * Returns registered column with given name
+	 *
+	 * @param string column name
+	 * @param bool throw exception if column does not exist?
+	 *
+	 * @return DataTable\Column|NULL
+	 * @throws Nette\InvalidArgumentException if column does not exist and second argument is TRUE
+	 */
+	public function getColumn($name, $need = TRUE) {
+		foreach($this->_columns as $col) {
+			if($col->getName() == $name)
+				return $col;
+		}
+
+		if($need)
+			throw new Nette\InvalidArgumentException("Column '$name' does not exist");
+
+		return NULL;
+	}
+
+	/**
 	 * Sets names of columns which uniquely identifies a record
 	 * 
 	 * @param string|array column names
@@ -249,13 +270,14 @@ class DataTable extends vBuilder\Application\UI\Control {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Sets number of records to show on a single page
-	 * 
-	 * @param int
+	 * Sets number of records to show on a single page.
+	 * Set to NULL if no pagination should be done.
+	 *
+	 * @param int|NULL
 	 * @return DataTable fluent interface
 	 */
 	public function setRecordsPerPage($numRecords) {
-		$this->_recordsPerPage = intval($numRecords) ?: 10;
+		$this->_recordsPerPage = $numRecords === NULL ? NULL : (intval($numRecords) ?: 10);
 		return $this;
 	}
 
@@ -369,7 +391,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 		
 		$renderedData = $this->getRenderedData(
 			intval($this->context->httpRequest->getQuery('iDisplayStart', 0)), 
-			intval($this->context->httpRequest->getQuery('iDisplayLength', $this->_recordsPerPage)),
+			intval($this->context->httpRequest->getQuery('iDisplayLength', 0)) ?: $this->_recordsPerPage,
 			$sortingColumns,
 			$filter
 		);
@@ -453,8 +475,8 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 		foreach($this->_columns as $col) {
 			$value = NULL;
-			if(isset($rowData[$col->getName()])) $value = $rowData[$col->getName()];
-			elseif(isset($rowData->{$col->getName()})) $value = $rowData->{$col->getName()};
+			if(is_array($rowData) && isset($rowData[$col->getName()])) $value = $rowData[$col->getName()];
+			elseif(is_object($rowData) && isset($rowData->{$col->getName()})) $value = $rowData->{$col->getName()};
 			else $value = NULL;
 
 			$trRow[] = $col->render($value, $rowData);
@@ -612,7 +634,8 @@ class DataTable extends vBuilder\Application\UI\Control {
 				$data = '';
 
 				foreach($table->getButtons() as $button)
-					$data .= $button->render($rowData) . "\n";
+					if($button->isVisible($rowData))
+						$data .= $button->render($rowData) . "\n";
 
 				return $data;
 			});

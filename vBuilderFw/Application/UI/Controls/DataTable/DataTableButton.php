@@ -43,6 +43,14 @@ class Button extends Component {
 		return $this;
 	}
 
+	public function setUrlCallback($callable) {
+		if(!is_callable($callable))
+			throw new Nette\InvalidArgumentException("Given URL callback is not callable");
+	
+		$this->_url = $callable;
+		return $this;
+	}
+
 	public function getElement() {
 		if(!isset($this->_el)) {
 			$this->_el = Html::el('a', str_replace(" ", "\xc2\xa0", $this->getLabel()));
@@ -59,11 +67,20 @@ class Button extends Component {
 		}
 
 		// Direct URL
-		if($this->_url != '') {
-			$url = new Nette\Http\Url($this->_url);
-			
-			foreach($this->_table->getIdColumns() as $key)
-				$url->appendQuery(array('record' . ucfirst($key) => isset($rowData->{$key}) ? $rowData->{$key} : NULL));
+		if($this->_url !== NULL) {
+
+			// URL callback
+			if(is_callable($this->_url)) {
+				$foo = $this->_url;
+				$url = $foo($rowData);
+			}
+
+			// URL string
+			else {
+				$url = new Nette\Http\Url($this->_url);
+				foreach($this->_table->getIdColumns() as $key)
+					$url->appendQuery(array('record' . ucfirst($key) => isset($rowData->{$key}) ? $rowData->{$key} : NULL));
+			}
 
 			$this->element->href((string) $url);
 

@@ -4,6 +4,7 @@
 {default $noPaginateText = false}
 
 <div id="dt-{$control->getUniqueId()}">
+	{block #beforeTable}{/block}
 	<table class="display">
 		<tbody>
 		</tbody>
@@ -15,6 +16,7 @@
 		<tfoot>
 		</tfoot>
 	</table>
+	{block #afterTable}{/block}
 </div>
 <script type="text/javascript">
 	$(function () {

@@ -63,12 +63,26 @@ class Component extends Nette\Object {
 		return $this;
 	}
 
-	public function isVisible() {
+	public function isVisible($rowData = NULL) {
+		if(is_callable($this->_visible) && $rowData !== NULL) {
+			$foo = $this->_visible;
+			return $foo($rowData);
+		}
+
 		return $this->_visible;
 	}
 
+	/**
+	 * Sets if component should be visible
+	 *
+	 * @param bool|callable
+	 */
 	public function setVisible($enabled) {
-		$this->_visible = (bool) $enabled;
+		if(is_callable($enabled))
+			$this->_visible = $enabled;
+		else
+			$this->_visible = (bool) $enabled;
+		
 		return $this;
 	}
 
