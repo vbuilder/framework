@@ -48,13 +48,11 @@ class DatabaseAclAuthorizator extends AclAuthorizator {
 
 		foreach($rules as $rule) {
 			// If querying the compound name, ensure it exists
-			if($rule->role) $this->addRoleIfNotExist($rule->role, TRUE);
-			if($rule->resource) $this->addResourceIfNotExist($rule->resource, TRUE);
 
 			if($rule->type == 'allow')
-				$this->acl->allow($rule->role, $rule->resource, $rule->privilege);
+				$this->allow($rule->role, $rule->resource, $rule->privilege);
 			else
-				$this->acl->deny($rule->role, $rule->resource, $rule->privilege);
+				$this->deny($rule->role, $rule->resource, $rule->privilege);
 		}
 	}
 

@@ -109,6 +109,106 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	}
 
 	/**
+	 * Returns array of roles which have permission to use resource.
+	 *
+	 * @warning Please note that function assumes 'deny all' policy
+	 *    so if the allow rule does not explicitly exist it assumes
+	 *	  that role is not allowed. All ['allRoles']['allResources'] rules
+	 *	  are ignored.
+	 * 
+	 * @param string|array|AclAuthorizator::ALL resource name
+	 * @param string|AclAuthorizator::ALL privilege name
+	 * @return array of role names
+	 */
+	public function getRolesAllowedFor($resource = self::ALL, $privilege = self::ALL) {
+		// !!!
+		$this->querying();
+
+		$allowedRoles = array();
+		$byRole = array();
+
+		if($resource !== self::ALL) {
+			$resourcesToProcess = is_array($resource) ? $resource : array($resource);
+			
+			if(count($resourcesToProcess) == 0)
+				throw new Nette\InvalidArgumentException("No resources given");
+
+			foreach($resourcesToProcess as $resource)
+				$this->checkResource($resource, FALSE);
+
+			$resource = array_shift($resourcesToProcess);
+			$visited = array();
+
+			while($resource !== NULL) {
+				if(isset($this->rules['byResource'][$resource]) && !isset($visited[$resource])) {
+					$visited[$resource] = TRUE;
+					$byRole[] = &$this->rules['byResource'][$resource]['byRole'];
+				}
+
+				if(isset($this->resources[$resource])) {
+					$resource = $this->resources[$resource]['parent'];
+
+					if($resource === NULL && count($resourcesToProcess) > 0)
+						$resource = array_shift($resourcesToProcess);
+
+				} elseif($this->isCompoundName($resource)) {
+					list($name, $params) = Strings::parseParametrizedString($resource);
+					$resource = $name;
+
+				} else {
+					throw new Nette\InvalidStateException("Resource '$resource' does not exist.");
+				}								
+			}
+		}
+
+		// At last I will be matching 'all resources' rules
+		$byRole[] = &$this->rules['allResources']['byRole'];
+		
+		// Check all mentioned roles for valid rules
+		$allowedRoles = array();
+		$deniedRoles = array();
+		foreach($byRole as $curr) {
+			foreach($curr as $role => $rules) {
+				if(in_array($role, $allowedRoles)) continue;
+
+				$rulesToCheck = array();
+				if($privilege !== NULL && isset($rules['byPrivilege'][$privilege]))
+					$rulesToCheck[] = &$rules['byPrivilege'][$privilege];
+				if(isset($rules['allPrivileges']))
+					$rulesToCheck[] = &$rules['allPrivileges'];
+
+				foreach($rulesToCheck as $rule) {
+					if ($rule['assert'] !== NULL && $rule['assert']->__invoke($this, $role, $resource, $privilege)) {
+						
+						// ALLOW
+						if($rule['type'] === self::ALLOW)
+							if(!in_array($role, $deniedRoles)) $allowedRoles[] = $role;
+
+						// DENY -> only suppress future rules
+						elseif($rule['type'] === self::DENY) 
+							$deniedRoles[] = $role;
+
+						break;
+
+					} elseif (self::DENY === $rule['type']) {
+						// DENY -> only suppress future rules
+						$deniedRoles[] = $role;
+						break;
+
+					} else {
+
+						// ALLOW
+						if(!in_array($role, $deniedRoles)) $allowedRoles[] = $role;
+						break;
+					}
+				}
+			}
+		}
+
+		return $allowedRoles;
+	}
+
+	/**
 	 * Helper function which is called before any query method
 	 * 
 	 * @return void
@@ -613,9 +713,9 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	 * Allows one or more Roles access to [certain $privileges upon] the specified Resource(s).
 	 * If $assertion is provided, then it must return TRUE in order for rule to apply.
 	 *
-	 * @param  string|array|Permission::ALL  roles
-	 * @param  string|array|Permission::ALL  resources
-	 * @param  string|array|Permission::ALL  privileges
+	 * @param  string|array|AclAuthorizator::ALL  roles
+	 * @param  string|array|AclAuthorizator::ALL  resources
+	 * @param  string|array|AclAuthorizator::ALL  privileges
 	 * @param  callable    assertion
 	 * @return Permission  provides a fluent interface
 	 */
@@ -631,9 +731,9 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	 * Denies one or more Roles access to [certain $privileges upon] the specified Resource(s).
 	 * If $assertion is provided, then it must return TRUE in order for rule to apply.
 	 *
-	 * @param  string|array|Permission::ALL  roles
-	 * @param  string|array|Permission::ALL  resources
-	 * @param  string|array|Permission::ALL  privileges
+	 * @param  string|array|AclAuthorizator::ALL  roles
+	 * @param  string|array|AclAuthorizator::ALL  resources
+	 * @param  string|array|AclAuthorizator::ALL  privileges
 	 * @param  callable    assertion
 	 * @return Permission  provides a fluent interface
 	 */
@@ -648,9 +748,9 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	/**
 	 * Removes "allow" permissions from the list in the context of the given Roles, Resources, and privileges.
 	 *
-	 * @param  string|array|Permission::ALL  roles
-	 * @param  string|array|Permission::ALL  resources
-	 * @param  string|array|Permission::ALL  privileges
+	 * @param  string|array|AclAuthorizator::ALL  roles
+	 * @param  string|array|AclAuthorizator::ALL  resources
+	 * @param  string|array|AclAuthorizator::ALL  privileges
 	 * @return Permission  provides a fluent interface
 	 */
 	public function removeAllow($roles = self::ALL, $resources = self::ALL, $privileges = self::ALL)
@@ -664,9 +764,9 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	/**
 	 * Removes "deny" restrictions from the list in the context of the given Roles, Resources, and privileges.
 	 *
-	 * @param  string|array|Permission::ALL  roles
-	 * @param  string|array|Permission::ALL  resources
-	 * @param  string|array|Permission::ALL  privileges
+	 * @param  string|array|AclAuthorizator::ALL  roles
+	 * @param  string|array|AclAuthorizator::ALL  resources
+	 * @param  string|array|AclAuthorizator::ALL  privileges
 	 * @return Permission  provides a fluent interface
 	 */
 	public function removeDeny($roles = self::ALL, $resources = self::ALL, $privileges = self::ALL)
@@ -681,9 +781,9 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	 * Performs operations on Access Control List rules.
 	 * @param  bool  operation add?
 	 * @param  bool  type
-	 * @param  string|array|Permission::ALL  roles
-	 * @param  string|array|Permission::ALL  resources
-	 * @param  string|array|Permission::ALL  privileges
+	 * @param  string|array|AclAuthorizator::ALL  roles
+	 * @param  string|array|AclAuthorizator::ALL  resources
+	 * @param  string|array|AclAuthorizator::ALL  privileges
 	 * @param  callable    assertion
 	 * @throws Nette\InvalidStateException
 	 * @return Permission  provides a fluent interface
@@ -803,9 +903,9 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	 * and its respective parents are checked similarly before the lower-priority parents of
 	 * the Role are checked.
 	 *
-	 * @param  string|Permission::ALL|IRole  role
-	 * @param  string|Permission::ALL|IResource  resource
-	 * @param  string|Permission::ALL  privilege
+	 * @param  string|AclAuthorizator::ALL|IRole  role
+	 * @param  string|AclAuthorizator::ALL|IResource  resource
+	 * @param  string|AclAuthorizator::ALL  privilege
 	 * @throws Nette\InvalidStateException
 	 * @return bool
 	 */
@@ -813,6 +913,9 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	{
 		// !!!
 		$this->querying();
+
+		/* d10($this->rules);
+		exit; */
 
 		$this->queriedRole = $role;
 		if ($role !== self::ALL) {
@@ -824,10 +927,19 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 		$this->queriedResource = $resource;
 		if ($resource !== self::ALL) {
-			if ($resource instanceof IResource) {
-				$resource = $resource->getResourceId();
+			$resourcesToProcess = is_array($resource) ? $resource : array($resource);
+
+			foreach($resourcesToProcess as $resource) {
+				if ($resource instanceof IResource) {
+					$resource = $resource->getResourceId();
+				}
+				$this->checkResource($resource, FALSE);
 			}
-			$this->checkResource($resource, FALSE);
+
+			if(count($resourcesToProcess) == 0)
+				throw new Nette\InvalidArgumentException("No resources given");
+
+			$resource = array_shift($resourcesToProcess);
 		}
 
 		do {
@@ -860,6 +972,9 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 			if(isset($this->resources[$resource])) {
 				$resource = $this->resources[$resource]['parent'];
 
+				if($resource === NULL && count($resourcesToProcess) > 0)
+					$resource = array_shift($resourcesToProcess);
+				
 			} elseif($this->isCompoundName($resource)) {
 				list($name, $params) = Strings::parseParametrizedString($resource);
 				$resource = $name;
@@ -962,9 +1077,9 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 	/**
 	 * Returns the rule type associated with the specified Resource, Role, and privilege.
-	 * @param  string|Permission::ALL
-	 * @param  string|Permission::ALL
-	 * @param  string|Permission::ALL
+	 * @param  string|AclAuthorizator::ALL
+	 * @param  string|AclAuthorizator::ALL
+	 * @param  string|AclAuthorizator::ALL
 	 * @return mixed  NULL if a rule does not exist or assertion fails, otherwise returns ALLOW or DENY
 	 */
 	private function getRuleType($resource, $role, $privilege)
@@ -1005,8 +1120,8 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	/**
 	 * Returns the rules associated with a Resource and a Role, or NULL if no such rules exist.
 	 * If the $create parameter is TRUE, then a rule set is first created and then returned to the caller.
-	 * @param  string|Permission::ALL
-	 * @param  string|Permission::ALL
+	 * @param  string|AclAuthorizator::ALL
+	 * @param  string|AclAuthorizator::ALL
 	 * @param  bool
 	 * @return array|NULL
 	 */
