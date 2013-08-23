@@ -474,11 +474,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 		$trRow = array();
 
 		foreach($this->_columns as $col) {
-			$value = NULL;
-			if(is_array($rowData) && isset($rowData[$col->getName()])) $value = $rowData[$col->getName()];
-			elseif(is_object($rowData) && isset($rowData->{$col->getName()})) $value = $rowData->{$col->getName()};
-			else $value = NULL;
-
+			$value = $this->getDataForKey($rowData, $col->getName());
 			$trRow[] = $col->render($value, $rowData);
 		}
 
@@ -486,6 +482,52 @@ class DataTable extends vBuilder\Application\UI\Control {
 		// $trRow['DT_RowClass'] = NULL;
 
 		return $trRow;	
+	}
+
+	/**
+	 * Helper function for gathering column data from row
+	 *
+	 * @param mixed row data
+	 * @param string key
+	 * @param bool should I throw an exception if data not found?
+	 * 
+	 * @return mixed
+	 * @throws Nette\InvalidArgumentException if key is not found in given row (or is NULL) and $need == TRUE
+	 */
+	protected function getDataForKey($rowData, $key, $need = FALSE) {
+
+		// Objects
+		if(is_object($rowData)) {
+
+			// Class property
+			if(isset($rowData->{$key}))
+				return $rowData->{$key};
+
+			// Array access
+			if($rowData instanceof \ArrayAccess) {
+				if(isset($rowData[$key]))
+					return $rowData[$key];
+			}
+
+			// Getter
+			$getter = 'get' . ucfirst($key);
+			if(method_exists($rowData, $getter)) {
+				$value = $rowData->{$getter}();
+				if(isset($value))
+					return $value;
+			}
+
+		}
+
+		// Simple array
+		elseif(is_array($rowData)) {
+			if(isset($rowData[$key]))
+				return $rowData[$key];
+		}
+
+		// Data not found or NULL
+		if($need) throw new Nette\InvalidArgumentException("Missing ID column $key in given row data");
+		return NULL;
 	}
 
 	// -------------------------------------------------------------------------
@@ -543,12 +585,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 		);
 
 		foreach($this->_idColumns as $key => $index) {
-			
-			if(isset($rowData->{$key})) $value = $rowData->{$key};
-			elseif(isset($rowData[$key])) $value = $rowData[$key];
-			else throw new Nette\InvalidArgumentException("Missing ID column $key in given row data");
-
-			$args['record' . ucfirst($key)] = $value;
+			$args['record' . ucfirst($key)] = $this->getDataForKey($rowData, $key, TRUE);
 		}
 
 		return (string) $this->link('//perform', $args);
