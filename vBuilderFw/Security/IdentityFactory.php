@@ -35,9 +35,17 @@ use Nette,
  */
 class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
+	const TABLE_ROLES = 'roles';
+
 	/** @var Nette\DI\IContainer */
 	protected $context;
 
+	/** @var array of string */
+	protected $tableName = array(
+		self::TABLE_ROLES => 'security_userRoles'
+	);
+
+	/** Constructor */
 	public function __construct(Nette\DI\IContainer $context) {
 		$this->context = $context;
 	}
@@ -52,38 +60,66 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 	 */
 	public function createIdentity($userData, $authenticator) {
 
+		$uid = NULL;
+		$roles = array();
+		$profile = array();
+
+		// ---------------------------------------------------------------------
+
 		// DB Password
 		if($authenticator instanceof Authenticators\DatabasePasswordAuthenticator) {
 			$uid = $userData->{$authenticator->getColumn($authenticator::ID)};
-			$identity = new Nette\Security\Identity(
-				$uid,
-				array(Strings::intoParameterizedString('user', array($uid))),
-				$userData
-			);
+			$roles[] = "user:$uid";
+			$profile = $userData;
 		}
 
 		// LDAP
 		elseif($authenticator instanceof Authenticators\LdapBindAuthenticator) {
 			$ldapData = LdapUtils::entriesToStructure($userData);
-			$uid = $ldapData['dn'];
 
-			$identity = new Nette\Security\Identity(
-				$uid,
-				array(Strings::intoParameterizedString('user', array($uid))),
-				$ldapData
-			);
+			$uid = $ldapData['dn'];
+			$roles[] = "user:$uid";
+			$profile = $ldapData;
 		}
 
 		// Preshared secret
 		elseif($authenticator instanceof Authenticators\PresharedSecretAuthenticator) {
 			$uid = Strings::intoParameterizedString('psk', array($userData->key));
+			$roles[] = $uid;
+			$profile = $userData;
 
-			$identity = new Nette\Security\Identity(
-				$uid,
-				array($uid), // Not user
-				$userData
-			);
+		// Other authenticators
+		} else {
+			throw new Nette\NotSupportedException("Authenticator " . get_class($authenticator) . " not supported yet");
 		}
+
+		// ---------------------------------------------------------------------
+		
+		// Remove duplicit roles
+		$roles = array_unique($roles);
+
+		// Sanity check
+		if(!is_scalar($uid) || $uid == "")
+			throw new Nette\InvalidStateException("User ID has to be non-empty string or number");
+
+		// ---------------------------------------------------------------------
+
+		$db = $this->context->database->connection;
+		$dbRoles = $db->query("SELECT [role] FROM %n", $this->tableName[self::TABLE_ROLES], 'WHERE [user] = %s', $uid)->fetchAll();
+		foreach($dbRoles as $curr) {
+			if(!in_array($curr->role, $roles))
+				$roles[] = $curr->role;
+		}
+
+		// ---------------------------------------------------------------------
+
+		// Identity
+		$identity = new Nette\Security\Identity(
+			$uid,
+			$roles,
+			$profile
+		);
+
 
 		return $identity;
 	}
