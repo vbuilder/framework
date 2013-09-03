@@ -30,6 +30,8 @@ use Nette,
 /**
  * Basic identity factory
  *
+ * @todo  cofigurable LDAP binding + table name + id column name
+ * 
  * @author Adam Staněk (V3lbloud)
  * @since Aug 3, 2013
  */
@@ -77,9 +79,59 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 		elseif($authenticator instanceof Authenticators\LdapBindAuthenticator) {
 			$ldapData = LdapUtils::entriesToStructure($userData);
 
-			$uid = $ldapData['dn'];
+			$db = $this->context->database->connection;
+			$idCol = 'id';
+			$tableName = 'security_users';
+
+			// LDAP Binding
+			// DB column name -> ldap array key (or callable)
+			$binding = array(
+
+				// Primary keys
+				array(
+					'username' => function ($ldapData) use ($authenticator) {
+						return mb_substr(
+							$ldapData['dn'],
+							mb_strlen($authenticator->getQueryPrefix()),
+							0 - mb_strlen($authenticator->getQuerySuffix())
+						);
+					}
+
+				// Other data
+				), array(
+					'name' => 'givenname',
+					'surname' => 'sn',
+					'email' => function ($ldapData) use (&$binding) {
+						$username = $binding[0]['username']($ldapData);
+
+						$tokens = Strings::splitWithEscape($ldapData['dn'], ',dc=');
+						array_shift($tokens);
+						return $username . '@' . implode($tokens, '.');
+					}
+				)
+			);
+
+			// Prepare data based on LDAP binding
+			$boundData = $this->bindValues($ldapData, $binding[0]);
+
+			$db->query('LOCK TABLES %n WRITE', $tableName);
+			$ds = $db->select('*')->from($tableName);
+			foreach($boundData as $key => $value) $ds->where('%n = %s', $key, $value);
+			$profile = $ds->fetch();
+
+			// If profile does not exist yet
+			if($profile === FALSE) {
+				$boundData = array_merge($boundData, $this->bindValues($ldapData, $binding[1]));
+				$db->insert($tableName, $boundData)->execute();
+				$boundData[$idCol] = $uid = $db->getInsertId();
+				$profile = $boundData;
+			} else {
+				$uid = $profile[$idCol];
+			}
+
+			$db->query('UNLOCK TABLES');
+
 			$roles[] = "user:$uid";
-			$profile = $ldapData;
 		}
 
 		// Preshared secret
@@ -122,6 +174,24 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 
 		return $identity;
+	}
+
+	/**
+	 * Helper function for getting values from data with given binding
+	 * 
+	 * @param  array data
+	 * @param  array column binding
+	 * @return array
+	 */
+	protected function bindValues($data, $binding) {
+		$bound = array();
+		foreach($binding as $key1 => $key2) {
+			$bound[$key1] = is_callable($key2)
+				? $key2($data)
+				: ( isset($data[$key2]) ? $data[$key2] : NULL );
+		}
+
+		return $bound;
 	}
 
 }
