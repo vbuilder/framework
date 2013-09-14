@@ -88,6 +88,11 @@ class Button extends Component {
 		} else
 			$this->element->href($this->_table->createActionLink($this->getName(), $rowData));
 
+		// Class
+		if(($class = $this->getClass($rowData)) !== NULL) {
+			$this->element->class .= " $class";
+		}
+
 		return (string) $this->element;
 	}
 
