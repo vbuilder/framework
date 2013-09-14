@@ -53,6 +53,19 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 	}
 
 	/**
+	 * Returns table name
+	 * 
+	 * @return string table name
+	 * @throws Nette\InvalidArgumentException if invalid table requested
+	 */
+	public function getTableName($table) {
+		if(!isset($this->tableName[$table]))
+			throw new Nette\InvalidArgumentException("Invalid table '$table'");
+
+		return $this->tableName[$table];
+	}
+
+	/**
 	 * Creates IIdentity object from obtained user data
 	 *
 	 * @param mixed user data
