@@ -26,7 +26,8 @@ namespace vBuilder\DibiTree;
 use vBuilder,
 	Nette,
 	Dibi,
-	DibiConnection;
+	DibiConnection,
+	IteratorAggregate;
 
 /**
  * Abstract tree model implementation over dibi database layer
@@ -34,7 +35,7 @@ use vBuilder,
  * @author Adam Staněk (V3lbloud)
  * @since Sep 12, 2013
  */
-class DibiTree extends Nette\Object {
+class DibiTree extends Nette\Object implements IteratorAggregate {
 
 	/**/ /** Move direction */
 	const MOVE_UNDER 		= 1;
@@ -122,13 +123,31 @@ class DibiTree extends Nette\Object {
 	}
 
 	/**
+	 * Returns tree iterator
+	 *
+	 * @param int base node id (if specified only children of this node will be iterated)
+	 * @param int number of levels to iterate ($depthLimit < 1 means no limit)
+	 *
+	 * @return DibiTreeNodeIterator
+	 * @throws Nette\InvalidArgumentException if trying to iterate through children of non-existing node
+	 */
+	public function getIterator($nodeId = NULL, $depthLimit = -1) {
+		if(!isset($this->nodes)) $this->loadFromDb();
+
+		if(isset($nodeId) && !isset($this->nodes[$nodeId]))
+			throw new Nette\InvalidArgumentException("Node '$nodeId' does not exist");
+
+		return new DibiTreeNodeIterator($this->nodes, $nodeId, $depthLimit);
+	}
+
+	/**
 	 * Performs atomic insert of new node into tree structure
 	 * and returns it's ID
 	 * 
 	 * @param array node data
 	 * @param NULL|int ID of parent node
 	 * @return  int ID of newly inserted node [description]
-	 * @throws Nette\InvalidArgumentException if trying to insert record under non-existing parent
+	 * @throws Nette\InvalidArgumentException if trying to insert node under non-existing parent
 	 */
 	public function addNode(array $data = array(), $parentId = NULL) {
 
