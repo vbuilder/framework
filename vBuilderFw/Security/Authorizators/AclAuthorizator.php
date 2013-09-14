@@ -432,8 +432,18 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 		// !!!
 		$this->querying();
 
-		$this->checkRole($role);
-		$this->checkRole($inherit);
+		$this->checkRole($role, FALSE);
+		$this->checkRole($inherit, FALSE);
+
+		if(!isset($this->roles[$inherit]))
+			return FALSE;
+
+		if(!isset($this->roles[$role]) && $this->isCompoundName($role)) {
+			list($role, $params) = Strings::parseParametrizedString($role);
+			
+			if($role == $inherit) return TRUE;
+			elseif($onlyParents) return FALSE;
+		}
 
 		$inherits = isset($this->roles[$role]['parents'][$inherit]);
 
@@ -619,8 +629,18 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 		// !!!
 		$this->querying();
 
-		$this->checkResource($resource);
-		$this->checkResource($inherit);
+		$this->checkResource($resource, FALSE);
+		$this->checkResource($inherit, FALSE);
+
+		if(!isset($this->resources[$inherit]))
+			return FALSE;
+
+		if(!isset($this->resources[$resource]) && $this->isCompoundName($resource)) {
+			list($resource, $params) = Strings::parseParametrizedString($resource);
+			
+			if($resource == $inherit) return TRUE;
+			elseif($onlyParents) return FALSE;
+		}
 
 		if ($this->resources[$resource]['parent'] === NULL) {
 			return FALSE;
