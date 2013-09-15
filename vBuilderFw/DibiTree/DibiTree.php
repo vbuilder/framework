@@ -81,6 +81,19 @@ class DibiTree extends Nette\Object implements IteratorAggregate {
 	}
 
 	/**
+	 * Forces tree to reload it self on next read
+	 *
+	 * @warning be awere that DibiTreeNodeIterator uses reference on array which this
+	 *    function frees.
+	 *
+	 * @return DibiTree fluent interface
+	 */
+	public function refresh() {
+		$this->nodes = NULL;
+		return $this;
+	}
+
+	/**
 	 * Sets tree node factory
 	 *
 	 * @param Callable factory callable
