@@ -124,6 +124,15 @@ class DibiTree extends Nette\Object implements IteratorAggregate {
 	}
 
 	/**
+	 * Returns tree node class name
+	 * 
+	 * @return string class name
+	 */
+	public function getNodeClass() {
+		return $this->nodeClass;
+	}
+
+	/**
 	 * Returns tree node with given id or NULL if it does not exist
 	 * @param  int node id
 	 * @return NULL|DibiTreeNode
@@ -386,8 +395,19 @@ class DibiTree extends Nette\Object implements IteratorAggregate {
 
 		if(isset($this->nodeFactory))
 			$dibiResult->setRowFactory($this->nodeFactory);
-		else
-			$dibiResult->setRowClass($this->nodeClass);
+		else {
+			$_this = $this;
+			$parentIds = array();
+			$dibiResult->setRowFactory(function (array $rowData) use ($_this, &$parentIds) {
+
+				$rowData['parentId'] = $rowData['level'] > 0 ? $parentIds[$rowData['level'] - 1] : NULL;
+
+				if($rowData['rgt'] - $rowData['lft'] > 1)
+					$parentIds[$rowData['level']] = $rowData['id'];
+
+				return new $_this->nodeClass($rowData);
+			});
+		}
 
 		$this->nodes = $dibiResult->fetchAssoc('id');
 		$this->dirty = FALSE;
