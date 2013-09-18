@@ -18,12 +18,6 @@ services:
 	user.authenticator.dbPassword:
 		class: vBuilder\Security\Authenticators\DatabasePasswordAuthenticator(@user.passwordHasher.sha1Salted, @user.identityFactory)
 
-	# Authenticator against LDAP (bind)
-	user.authenticator.ldapBind:
-		class: vBuilder\Security\Authenticators\LdapBindAuthenticator(@user.identityFactory)
-		setup:
-			- setServerUrl('ldaps://ldap.v3net.cz')
-
 	# Authenticator with PSK in local DB
 	user.authenticator.dbPsk:
 		class: vBuilder\Security\Authenticators\PresharedSecretAuthenticator(@user.identityFactory)

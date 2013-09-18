@@ -28,6 +28,8 @@ use vBuilder,
 	vBuilder\Security\IIdentityFactory,
 	vBuilder\Security\IAuthenticator,
 	vBuilder\Utils\Strings,
+	vBuilder\Ldap\LdapConnection,
+	vBuilder\Ldap\LdapException,
 	Nette,
 	Nette\Security\AuthenticationException;
 
@@ -39,8 +41,7 @@ use vBuilder,
  */
 class LdapBindAuthenticator extends BaseAuthenticator {
 
-	/** @var string server URL **/
-	protected $_serverUrl;
+	protected $ldapConnection;
 	
 	/** @var string query prefix */
 	protected $_queryPrefix = 'uid=';
@@ -48,11 +49,10 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 	/** @var string query suffix */
 	protected $_querySuffix = ',ou=users,ou=people,dc=v3net,dc=cz';
 
-	public function __construct(IIdentityFactory $identityFactory, Nette\DI\IContainer $context) {
+	public function __construct(IIdentityFactory $identityFactory, LdapConnection $ldapConnection, Nette\DI\IContainer $context) {
+		$this->ldapConnection = $ldapConnection;
+
 		parent::__construct($identityFactory, $context);
-		
-		if(!function_exists('ldap_connect'))
-			throw new Nette\NotSupportedException("LDAP library is not installed on the server");
 	}
 
 	/**
@@ -76,22 +76,11 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 	}
 
 	/**
-	 * Sets URL of the LDAP server
-	 * Example: ldaps://ldap.v3net.cz
-	 *
-	 * @param string url
+	 * Returns LDAP connection
+	 * @return LdapConnection
 	 */
-	public function setServerUrl($url) {
-		$this->_serverUrl = $url;
-	}
-	
-	/**
-	 * Returns URL of the LDAP server
-	 *
-	 * @return string
-	 */
-	public function getServerUrl() {
-		return $this->_serverUrl;
+	public function getLdapConnection() {
+		return $this->ldapConnection;
 	}
 	
 	/**
@@ -147,42 +136,29 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 	 */
 	public function authenticate(array $credentials) {
 
-		// Initializes resource (does not perfom connect)
-		$res = ldap_connect($this->serverUrl);
-		if($res) {
-			ldap_set_option($res, LDAP_OPT_PROTOCOL_VERSION, 3);
-			
-			// DN
-			$query = $this->queryPrefix . $credentials[self::USERNAME] . $this->querySuffix;
-			$bind = @ldap_bind($res, $query, $credentials[self::PASSWORD]);
+		$bindDn = $this->queryPrefix . $credentials[self::USERNAME] . $this->querySuffix;
+		$this->ldapConnection->setParameters(array(
+			LdapConnection::BIND_DN => $bindDn,
+			LdapConnection::BIND_PASSWORD => $credentials[self::PASSWORD]
+		));
 
-			if($bind) {
-				
-				$search = ldap_search($res, $query, '(objectclass=*)', array('displayname', 'sn', 'givenname'));
-				$info = ldap_get_entries($res, $search);
-				
-				$identity = $this->identityFactory->createIdentity(
-					$info,
-					$this
-				);
-
-				ldap_close($res);
-				return $identity;
-				
-			} else {
-				$errNo = ldap_errno($res);
-				$errMsg = ldap_error($res);
-				ldap_close($res);
-				
-				if($errNo == 49)
-					throw new AuthenticationException("Invalid credentials", self::INVALID_CREDENTIAL);
-				else
-					throw new AuthenticationException("LDAP returned error: $errMsg ($errNo)", self::FAILURE);
-			}
+		try {
+			$result = $this->ldapConnection->search($bindDn, '(objectclass=*)', array('givenname', 'sn', 'displayName', 'gidNumber', 'uidNumber'));
+			$info = $result->fetch();
 			
-		} else {
-			ldap_close($res);
-			throw new AuthenticationException("Error while creating LDAP resource", self::FAILURE);
+			$identity = $this->identityFactory->createIdentity(
+				$info,
+				$this
+			);
+
+			unset($result);
+			return $identity;
+
+		} catch(LdapException $e) {
+			if($e->getCode() == 49)
+				throw new AuthenticationException("Invalid credentials", self::INVALID_CREDENTIAL);
+			else
+				throw new AuthenticationException("LDAP returned error: $errMsg ($errNo)", self::FAILURE);
 		}
 
 		return NULL;

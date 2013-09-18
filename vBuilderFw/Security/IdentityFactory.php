@@ -77,7 +77,7 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 		// LDAP
 		elseif($authenticator instanceof Authenticators\LdapBindAuthenticator) {
-			$ldapData = LdapUtils::entriesToStructure($userData);
+			$ldapData = (array) $userData;
 
 			$db = $this->context->database->connection;
 			$idCol = 'id';
@@ -132,6 +132,28 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 			$db->query('UNLOCK TABLES');
 
 			$roles[] = "user:$uid";
+
+			// TODO: configurable
+			$groupsDn = NULL;
+			if($groupsDn == NULL) {
+				$dnTokens = array_reverse($userData->getParsedDn());
+				foreach($dnTokens as $k => $v) {
+					if(!Strings::startsWith($v, 'dc=')) {
+						array_splice($dnTokens, $k, count($dnTokens), array('ou=groups'));
+						break;
+					}
+				}
+
+				$groupDn = implode(array_reverse($dnTokens), ',');
+			}
+
+			$username = str_replace(array('\\', ')'), array('\\\\', '\\)'), $boundData['username']);
+			$userGid = intval($userData->gidNumber);
+			$filter = "(&(objectClass=posixGroup)(|(gidNumber=$userGid)(memberUid=$username)))";
+			$result = $authenticator->ldapConnection->search($groupsDn, $filter);
+			foreach($result as $record) {
+				$roles[] = $record->cn;
+			}
 		}
 
 		// Preshared secret
