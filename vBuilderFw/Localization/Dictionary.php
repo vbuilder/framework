@@ -47,6 +47,8 @@ class Dictionary extends Nette\FreezableObject implements \IteratorAggregate, \S
 
 	/** @var string */
 	private $dir;
+	/** @var string */
+	private $fileMask;
 	/** @var IStorage */
 	private $storage;
 	/** @var string */
@@ -62,9 +64,10 @@ class Dictionary extends Nette\FreezableObject implements \IteratorAggregate, \S
 	 * @param string
 	 * @param string
 	 */
-	public function __construct($dir, IStorage $storage)
+	public function __construct($dir, $fileMask, IStorage $storage)
 	{
 		$this->dir = $dir;
+		$this->fileMask = $fileMask;
 		$this->storage = $storage;
 		$this->metadata = $this->dictionary = array();
 	}
@@ -76,6 +79,15 @@ class Dictionary extends Nette\FreezableObject implements \IteratorAggregate, \S
 	{
 		return $this->dir;
 	}
+
+	/**
+	 * @return string
+	 */
+	public function getFileMask()
+	{
+		return $this->fileMask;
+	}
+
 
 	/**
 	 * @return string

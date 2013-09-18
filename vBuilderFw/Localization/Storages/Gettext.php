@@ -40,16 +40,6 @@ use vBuilder,
  */
 class Gettext extends \Nette\Object implements vBuilder\Localization\IStorage
 {
-	/** @var string */
-	private $fileMask;
-
-	/**
-	 * @param string
-	 */
-	public function __construct($fileMask = "%dir%/lang/%lang%.mo")
-	{
-		$this->fileMask = $fileMask;
-	}
 
 	/**
 	 * Process gettext metadata array
@@ -149,7 +139,7 @@ class Gettext extends \Nette\Object implements vBuilder\Localization\IStorage
 		foreach ($offsets as $offset)
 			$mo .= pack('i', $offset);
 
-		$path = str_replace(array('%dir%', '%lang%'), array($dictionary->dir, $lang), $this->fileMask);
+		$path = str_replace(array('%dir%', '%lang%'), array($dictionary->dir, $lang), $dictionary->fileMask);
 		file_put_contents($path, $mo.$ids.$strings);
 	}
 
@@ -160,7 +150,7 @@ class Gettext extends \Nette\Object implements vBuilder\Localization\IStorage
 	 */
 	public function load($lang, Dictionary $dictionary)
 	{
-		$path = str_replace(array('%dir%', '%lang%'), array($dictionary->dir, $lang), $this->fileMask);
+		$path = str_replace(array('%dir%', '%lang%'), array($dictionary->dir, $lang), $dictionary->fileMask);
 		if (!file_exists($path)) {
 			return;
 		}
