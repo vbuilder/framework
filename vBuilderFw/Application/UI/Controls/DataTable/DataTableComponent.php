@@ -37,6 +37,7 @@ class Component extends Nette\Object {
 	private $_name;
 	private $_label;
 	private $_visible = true;
+	private $_class;
 
 	protected $_table;
 	protected $_renderer;
@@ -60,6 +61,20 @@ class Component extends Nette\Object {
 
 	public function setLabel($label) {
 		$this->_label = $label;
+		return $this;
+	}
+
+	public function getClass($rowData = NULL) {
+		if(is_callable($this->_class) && $rowData !== NULL) {
+			$foo = $this->_class;
+			return $foo($rowData);
+		}
+
+		return $this->_class;
+	}
+
+	public function setClass($class) {
+		$this->_class = $class;
 		return $this;
 	}
 
