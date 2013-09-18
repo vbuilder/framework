@@ -48,7 +48,13 @@ services:
 	translator:
 		class: vBuilder\Localization\Translator
 		setup:
+			- setStorage(@translatorStorage)
+			- addDictionary('vBuilderFw', '%libsDir%/vBuilderFw/vBuilderFw', '%%dir%%/Translations/%%lang%%.mo', @translatorStorage)
 			- addDictionary('app', '%appDir%')
+
+	# Translator storage
+	translatorStorage:
+		class: vBuilder\Localization\Storages\Gettext
 	
 	# Page metadata
 	metadata:
