@@ -66,6 +66,9 @@ class DataTable extends vBuilder\Application\UI\Control {
 	/** @var number of records per page */
 	private $_recordsPerPage = 10;
 
+	/** @var NULL|string|Callable addtional row class */
+	private $_rowClass;
+
 	/** @var Nette\Http\SessionSection */
 	protected $session;
 	
@@ -291,6 +294,17 @@ class DataTable extends vBuilder\Application\UI\Control {
 	}
 	
 	// -------------------------------------------------------------------------
+	
+	/**
+	 * Sets addtional row class
+	 * 
+	 * @param NULL|string|Callable
+	 */
+	public function setRowClass($class) {
+		$this->_rowClass = $class;
+	}
+
+	// -------------------------------------------------------------------------
 
 	/**
 	 * This method will be called when the component (or component's parent)
@@ -473,13 +487,26 @@ class DataTable extends vBuilder\Application\UI\Control {
 	public function getRenderedRowData($rowData) {
 		$trRow = array();
 
+		// Cell data
 		foreach($this->_columns as $col) {
 			$value = $this->getDataForKey($rowData, $col->getName());
 			$trRow[] = $col->render($value, $rowData);
 		}
 
+		// Row id
 		// $trRow['DT_RowId'] = NULL;
-		// $trRow['DT_RowClass'] = NULL;
+		
+		// Row class
+		if(isset($this->_rowClass)) {
+			if(is_callable($this->_rowClass)) {
+				$cb = $this->_rowClass;
+				$class = $cb($rowData);
+			} else
+				$class = $this->_rowClass;
+
+			if($class != '')
+				$trRow['DT_RowClass'] = $class;
+		}
 
 		return $trRow;	
 	}
