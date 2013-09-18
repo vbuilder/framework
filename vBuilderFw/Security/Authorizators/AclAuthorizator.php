@@ -36,18 +36,18 @@ use vBuilder,
  *
  * As opposed to Nette Permission class, the role / resource checking has been removed
  * when adding objects (which was pain in the ass with circual dependencies of different app modules).
- * The check is done lazily on first call of query methods.
+ * The check is done lazily on first call any of the query methods.
  *
  * You can also use compound names for roles and resources. Compound names
  * have implicit parents and allows you to use parametrized resources / roles even
- * without the need to explicitly add them to ACL.
+ * without the need to explicitly define them.
  *
  * For example let's say we have created resource 'file' but we need to specify permissions
  * to each individual file and we don't know anything about them (how many, etc...).
  * Usually you would need to create ACL resources for each file.
  * With compound names you can just query 'file:452' which will check for
  * all rules to this individual file with maintaining the implicit ownership of parent resource
- * 'file' which simplifies definition of administrative roles.
+ * 'file' to simplify definition of administrative roles.
  * See: vBuilder\Utils\Strings::intoParameterizedString() for creating compound names.
  *
  * @copyright  Copyright (c) 2005, 2007 Zend Technologies USA Inc.
@@ -243,7 +243,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 			}
 
 			// Check resource hierarchy
-			// Note: we don't have to check childrens because we are maintaing them by this method.
+			// Note: we don't have to check children because we are maintaing them by this method.
 			foreach($this->resources as $name => $res) {
 				if($res['parent'] != '') {
 					// Check if parent exists
@@ -285,7 +285,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 	/**
 	 * Adds new initialization callback.
-	 * This callback will be called only once, before first query.
+	 * This callback will be called only once, before the first query.
 	 *
 	 * @param callable
 	 * @return self
@@ -364,6 +364,10 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 		$this->querying();
 
 		$this->checkRole($role, FALSE);
+
+		if($this->isCompoundName($role))
+			list($role, $params) = Strings::parseParametrizedString($role);
+
 		return isset($this->roles[$role]);
 	}
 
@@ -424,7 +428,6 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	 * @param  string
 	 * @param  string
 	 * @param  bool
-	 * @throws Nette\InvalidStateException
 	 * @return bool
 	 */
 	public function roleInheritsFrom($role, $inherit, $onlyParents = FALSE)
@@ -579,6 +582,10 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 		$this->querying();
 
 		$this->checkResource($resource, FALSE);
+
+		if($this->isCompoundName($resource))
+			list($resource, $params) = Strings::parseParametrizedString($resource);
+		
 		return isset($this->resources[$resource]);
 	}
 
@@ -621,7 +628,6 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	 * @param  string
 	 * @param  string
 	 * @param  bool
-	 * @throws Nette\InvalidStateException
 	 * @return bool
 	 */
 	public function resourceInheritsFrom($resource, $inherit, $onlyParent = FALSE)

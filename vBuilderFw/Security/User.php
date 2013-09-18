@@ -334,6 +334,11 @@ class User extends Nette\Object {
 	{
 		$authorizator = $this->getAuthorizator();
 		foreach ($this->getRoles() as $role) {
+
+			// We need to skip undefined roles (ie. LDAP users)
+			if(!$authorizator->hasRole($role))
+				continue;
+
 			if ($authorizator->isAllowed($role, $resource, $privilege)) {
 				return TRUE;
 			}
