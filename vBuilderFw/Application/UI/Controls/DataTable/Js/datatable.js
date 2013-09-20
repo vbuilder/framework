@@ -211,11 +211,10 @@
 		// Opens the subrow
 		else {
 			var subrowDiv = setDetailOpen(el, args, true, showProcessing);
-			console.log(subrowDiv);
 			subrowDiv.data('dtLoadedContent', args.url);
 
 			// Scroll to the top of row
-			$('html, body').animate({ scrollTop: $(nTr).offset().top }, 'slow');
+			$('html, body').animate({ scrollTop: $(nTr).offset().top + args.scrollTopOffset }, 'slow');
 
 			subrowDiv.one('dtContentRemoved', function (e) {
 				if(el.data('openLabel'))
@@ -250,7 +249,11 @@
 
 			// Prevent actions on all it's links if row is locked
 			// TODO: forms?
-			lockingTrEl.find('A').live('click', function (e) {
+			
+			// Old jQuery
+			// lockingTrEl.find('A').live('click', function (e) {
+			// jQuery > 1.9
+			$(lockingTrEl.context).on('click', lockingTrEl.selector, function (e) {
 				if(trEl.data('dtRowUpdateLock') === true) {
 					e.preventDefault();
 					e.stopImmediatePropagation();
@@ -318,11 +321,17 @@
 		var elements = $(this),
 			defaults = {
 				url: null,
-				closeLabel: null
+				closeLabel: null,
+				scrollTopOffset: 0
 			};
 
 		if(jQuery().dataTable) {
-			elements.live('click', function (e) {
+
+			// Old jQuery
+			// elements.live('click', function (e) {
+			
+			// jQuery > 1.9
+			$(elements.context).on('click', elements.selector, function (e) {
 				var el = $(this),
 					args2 = $.extend({}, defaults, args);
 
@@ -347,6 +356,20 @@
 		return this;
 	};
 
+	// Registring for accepting direct $.colorSnippet calls
+	$.extend({
+		dataTableDetailButton: function (args) {
+			if(jQuery().dataTable) {
+				openColorboxWithSnippet(args);
+				
+			} else {
+				console.error("DataTable not loaded");
+			}
+
+			return this;
+		}
+	});
+
 	// Registring dataTableRowUpdateButton as a listener on click event
 	$.fn.dataTableRowUpdateButton = function (args) {
 	
@@ -358,7 +381,11 @@
 			};
 
 		if(jQuery().dataTable) {
-			elements.live('click', function (e) {
+			// Old jQuery
+			// elements.live('click', function (e) {
+			
+			// jQuery > 1.9
+			$(elements.context).on('click', elements.selector, function (e) {
 				var el = $(this),
 					args2 = $.extend({}, defaults, args);
 
