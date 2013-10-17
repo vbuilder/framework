@@ -48,7 +48,8 @@
 		config = $.extend({}, defaults, args),
 		ajaxError = false;;
 
-	form.live('submit', function (e) {
+	// Previously LIVE, do I really need it?
+	form.on('submit', function (e) {
 		var $this = $(this),
 			ajaxFailed = function (jqXHR, textStatus, errorThrown) {
 				ajaxError = true;

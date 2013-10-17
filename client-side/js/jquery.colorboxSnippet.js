@@ -122,8 +122,12 @@
 			args = $.extend({}, defaults, args);
 
 		if(jQuery().colorbox) {
-			elements.live('click', function (e) {
-		
+
+			// Old jQuery
+			// elements.live('click', function (e) {
+			// jQuery > 1.9
+			$(elements.context).on('click', elements.selector, function (e) {
+				
 				var el = $(this);
 		
 				if(args.url == null || args.url == undefined)
