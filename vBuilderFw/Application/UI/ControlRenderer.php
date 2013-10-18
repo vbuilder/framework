@@ -239,6 +239,7 @@ class ControlRenderer extends vBuilder\Object {
 		$template->registerHelperLoader('Nette\Templating\Helpers::loader');
 
 		$template->registerHelper('stripBetweenTags', 'vBuilder\Latte\Helpers\FormatHelpers::stripBetweenTags');
+		$template->registerHelper('printf', 'sprintf');
 
 		// default parameters
 		$template->renderer = $this;
@@ -247,6 +248,8 @@ class ControlRenderer extends vBuilder\Object {
 		$template->context = $this->context;
 		$template->baseUri = $template->baseUrl = rtrim($this->context->httpRequest->getUrl()->getBaseUrl(), '/');
 		$template->basePath = preg_replace('#https?://[^/]+#A', '', $template->baseUrl);
+
+		$template->setTranslator($this->context->translator);
 		
 		if ($presenter instanceof Nette\Application\UI\Presenter) {
 			$template->setCacheStorage($this->context->{'nette.templateCacheStorage'});

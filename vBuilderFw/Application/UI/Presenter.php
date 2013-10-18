@@ -144,6 +144,7 @@ class Presenter extends Nette\Application\UI\Presenter {
 		$tpl->context = $this->context;
 		
 		$tpl->registerHelper('stripBetweenTags', 'vBuilder\\Latte\\Helpers\\FormatHelpers::stripBetweenTags');
+		$tpl->registerHelper('printf', 'sprintf');
 		$tpl->setTranslator($this->context->translator);
 
 		return $tpl;
