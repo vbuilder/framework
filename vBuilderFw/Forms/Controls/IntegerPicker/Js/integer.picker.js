@@ -12,14 +12,16 @@ $(function() {
 		integerPickerLess: -1
 	};
 	for (var i in tmp) {
-		$('.'+i).live('click', ((function (m) {
+
+		$(document).on('click', '.'+i, ((function (m) {
 			return function (e){
 				changeAmount($('#'+$(this).attr('data-integerPicker-id')), tmp[m]);
 				e.preventDefault();
 			}
 		})(i)));
 	}
-	$('.integerPicker').live('keypress', function (e) {
+
+	$(document).on('keypress', '.integerPicker', function (e) {
 		var $this = $(this),
 			goodVal = $this.val();
 		window.setTimeout(function () {
