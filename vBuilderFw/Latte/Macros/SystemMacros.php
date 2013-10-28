@@ -84,8 +84,11 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		// ---------
 
 		// Pokud se macro vyskytuje bez nejakeho parent bloku musime ho zapsat v prologu,
-		// protoze jinak by se nemuselo vubec zavolat kvuli dedicnosti sablon
+		// protoze jinak by se nemuselo vubec zavolat kvuli dedicnosti sablon.
+		// Naopak ve snippetModu to nedelame, abychom zbytecne neposilali soubory z layoutu
+		// a ostatnich bloku, ktere nebyly vykresleny.
 		if($node->parentNode == NULL) {
+			$cmd = 'if(!$_control->snippetMode) ' . $cmd;
 			$this->_prolog[] = $cmd;
 		} else 
 			return $writer->write($cmd);

@@ -59,6 +59,14 @@
 					}
 				}
 
+				if(payload.webFiles) {
+					if(payload.webFiles.js)
+						htmlData = "<script type=\"text/javascript\">" + payload.webFiles.js + "</script>\n" + htmlData;
+
+					if(payload.webFiles.css)
+						htmlData = "<style>" + payload.webFiles.css + "</style>\n" + htmlData;
+				}
+
 				// TODO: Some random id
 				var inlineElId = 'cboxInlineContent-123';
 

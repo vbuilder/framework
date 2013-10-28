@@ -197,16 +197,13 @@ class Presenter extends Nette\Application\UI\Presenter {
 			}
 		}
 
-		if($this->isAjax()) {
-			$this->sendResponse(new Nette\Application\Responses\TextResponse($template));
-			return ;
-		}
-
-		// NON AJAX REQUESTS -----------------------
+		$generatedWebFiles = new \StdClass;
+		if($this->isAjax() && $this->isControlInvalid())
+			$this->snippetMode = TRUE;
 
 		// Redering kvuli tomu, aby se zpracovaly pripadna addCss/Js makra pro generator
-		$rendered = (string) $template;
-
+		$rendered = $template->__toString(true);
+		
 		if($this->context->hasService('webFilesGenerator'))	{
 			$webFileTypes = array(WebFilesGenerator::JAVASCRIPT, WebFilesGenerator::STYLESHEET);
 			$webFiles = $this->context->webFilesGenerator;
@@ -216,16 +213,23 @@ class Presenter extends Nette\Application\UI\Presenter {
 			$webFiles->registerOutput(TEMP_DIR . '/webfiles/' . $webFiles->getHash(WebFilesGenerator::STYLESHEET) . '.css', WebFilesGenerator::STYLESHEET);
 			
 			foreach($webFileTypes as $fileType) {			
-				if($webFiles->isCached($fileType) === false) {
-					$webFiles->generate($fileType);
+				if($webFiles->isCached($fileType) === false || $this->snippetMode) {
+					$generatedWebFiles->{$fileType} = $webFiles->generate($fileType, $this->snippetMode);
 				}
 			}
 			
 			// Oprava pripadne zmeny CSS / JS souboru po vygenerovani hlavicky
-			$this['webFiles']->lateRenderFix($rendered);
+			if(!$this->snippetMode)
+				$this['webFiles']->lateRenderFix($rendered);
+			else {
+				$this->payload->webFiles = $generatedWebFiles;
+			}
 		}	
 		
-		$this->sendResponse(new Nette\Application\Responses\TextResponse($rendered));
+		if($this->snippetMode)
+			$this->sendPayload();
+		else
+			$this->sendResponse(new Nette\Application\Responses\TextResponse($rendered));
 	}
 	
 	public function createComponentHeadGenerator($name) {

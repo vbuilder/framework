@@ -188,36 +188,48 @@ class WebFilesGenerator extends Nette\Object {
 	/**
 	 * Generates files
 	 */
-	public function generate($type) {		
+	public function generate($type, $return = false) {		
 		if(!isset($this->output[$type])) throw new Nette\InvalidStateException ("Output for web file of type '$type' is not registred. Forgot to call ".get_called_class()."::registerOutput?");		
 		if(isset($this->generated[$type])) throw new Nette\InvalidStateException("Web file of type '$type' has been already generated");
-		$this->generated[$type] = true;	
-		
-		$filePath = $this->output[$type];
-		$dirPath = pathinfo($filePath, PATHINFO_DIRNAME);
-		if($filePath === null) return ;
-		
-		$this->hasBeenGenerated[$type] = true;
-		
-		if(!is_dir($dirPath))
-			if(@mkdir($dirPath, 0777, true) === false) // @ - is escalated to exception
-				throw new Nette\IOException("Cannot create directory '".$dirPath."'");
-		
+		$this->generated[$type] = true;
 
-		$fp = fopen('safe://' . $filePath, 'w');
-		if($fp === false) throw new Nette\IOException("Cannot write file '$filePath'");
+		if(!isset($this->files[$type])) return ;
+		
+		if(!$return) {
+
+			$filePath = $this->output[$type];
+			$dirPath = pathinfo($filePath, PATHINFO_DIRNAME);
+			if($filePath === null) return ;
+			
+			$this->hasBeenGenerated[$type] = true;
+			
+			if(!is_dir($dirPath))
+				if(@mkdir($dirPath, 0777, true) === false) // @ - is escalated to exception
+					throw new Nette\IOException("Cannot create directory '".$dirPath."'");
+			
+
+			$fp = fopen('safe://' . $filePath, 'w');
+			if($fp === false) throw new Nette\IOException("Cannot write file '$filePath'");
+		} else
+			$result = "";
 
 		foreach($this->files[$type] as $id => $file) {
-			fwrite($fp, "/* " . str_pad('  ' . $id . '  ', 74, "#", STR_PAD_BOTH) . " */\n");
+			$head = "/* " . str_pad('  ' . $id . '  ', 74, "#", STR_PAD_BOTH) . " */\n";
+			$content = $file instanceof vBuilder\Redaction\Files\BaseFile
+				? $file->getContent()."\n"
+				: file_get_contents($file)."\n";
 
-			// Podpora pro CMS:
-			if($file instanceof vBuilder\Redaction\Files\BaseFile)
-				fwrite($fp, $file->getContent()."\n");
-			else
-				fwrite($fp, file_get_contents($file)."\n");
+			if(!$return) {
+				fwrite($fp, $head);
+				fwrite($fp, $content);
+			} else 
+				$result .= $head . $content;
 		}
 
-		fclose($fp);		
+		if(!$return)
+			fclose($fp);		
+		else
+			return $result;
 		
 	}
 	
