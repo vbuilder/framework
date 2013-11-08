@@ -35,6 +35,9 @@ class EntityCollection extends Collection {
 	
 	/** @var array of event listeners - function (Entity, EntityCollection) */
 	public $onItemAdded = array();
+
+	/** @var array of event listeners - function (Entity, EntityCollection) */
+	public $onItemRemoved = array();
 	
 	/** @var string name of target entity */
 	protected $targetEntity;
@@ -95,6 +98,8 @@ class EntityCollection extends Collection {
 		foreach($this->data as $k=>$curr) {
 			if($entity === $curr) {
 				unset($this->data[$k]);
+				$this->onItemRemoved($entity, $this);
+				
 				break;
 			}
 		}
