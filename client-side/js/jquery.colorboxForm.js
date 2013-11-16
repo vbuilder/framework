@@ -28,17 +28,15 @@
 				if (!config.errorElement) {
 					config.errorElement = this.find('.errorBlock');
 					if(config.errorElement.find('li:first').length == 0)
-						config.errorElement.append($('<li class="text-error">'));
-				}
-				config.errorElement.find('li:first').html(msg);
-				if(config.errorElement.effect) {
-					config.errorElement.effect('bounce', {
-						times: 3,
-						distance: 25,
-						direction: 'right',
-						mode: 'show'
-					}, 500);
-				}
+						config.errorElement.append($('<li><span class="text-danger" style="display: none;">'));
+
+				}			
+
+				var span = config.errorElement.find('li:first span');
+				span.hide().attr('class', 'text-danger');
+				span.html(msg);
+
+				span.fadeIn();
 			},
 			onSpecial:		function (data, config) {
 				return (data.error === true || data.success === true || data.redirect);
