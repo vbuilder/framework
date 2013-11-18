@@ -118,7 +118,7 @@ class Cache extends Nette\Object {
 				$ptr = &$this->data->table;
 				foreach($this->eMetadata->getIdFields() as $idField) {
 					if(count($args) == 0)
-						throw new Nette\InvalidArgumentException("Missing primary key");
+						throw new Nette\InvalidArgumentException("Missing primary key '$idField'");
 						
 					$key = array_shift($args);
 						
