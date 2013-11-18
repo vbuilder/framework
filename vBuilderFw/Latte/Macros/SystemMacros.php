@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -54,13 +54,24 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		$me->addMacro('meta', array($me, 'macroMeta'));
 		$me->addMacro('iftest', array($me, 'macroTest'), array($me, 'macroEndTest'));
 		$me->addMacro('ifTest', array($me, 'macroTest'), array($me, 'macroEndTest'));
-		
+
 		return $me;
 	}
 
+	/**
+	 * Initializes before template parsing.
+	 * @return void
+	 */
+	public function initialize() {
+		$this->_prolog[$this->compiler->templateId] = array();
+	}
+
+	/**
+	 * Finishes template parsing.
+	 * @return array(prolog, epilog)
+	 */
 	function finalize() {
-		// ($prolog, $epilog)
-		return array(implode($this->_prolog, "\n"), '');
+		return array(implode($this->_prolog[$this->compiler->templateId], "\n"), '');
 	}
 	
 	/**
@@ -89,7 +100,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		// a ostatnich bloku, ktere nebyly vykresleny.
 		if($node->parentNode == NULL) {
 			$cmd = 'if(!$_control->snippetMode) ' . $cmd;
-			$this->_prolog[] = $cmd;
+			$this->_prolog[$this->compiler->templateId][] = $cmd;
 		} else 
 			return $writer->write($cmd);
 	}
@@ -198,7 +209,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		// Pokud se macro vyskytuje bez nejakeho parent bloku musime ho zapsat v prologu,
 		// protoze jinak by se nemuselo vubec zavolat kvuli dedicnosti sablon
 		if($node->parentNode == NULL) {
-			$this->_prolog[] = $cmd;
+			$this->_prolog[$this->compiler->templateId][] = $cmd;
 		} else 
 			return $writer->write($cmd);
 	}
