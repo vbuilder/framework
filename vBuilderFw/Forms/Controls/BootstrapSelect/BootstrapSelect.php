@@ -137,6 +137,7 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 				->name($inputEl->attrs['name'] . '_label')
 				->id($inputEl->attrs['id'])
 				->class('form-control')
+				->placeholder($this->translate('Click to choose'))
 		);
 
 		// Hidden field
@@ -179,6 +180,8 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 
 		// Custom entry
 		if($this->customEntryAllowed) {
+			$menu->add(Html::el('li')->class('divider'));
+
 			$customEntryValue = $inputEl->attrs['id'] . '-custom';
 			$menu->add(
 				Html::el('li')->add(Html::el('a', $this->translate($this->customEntryLabel))

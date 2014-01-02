@@ -378,7 +378,7 @@
             }
 
             var old_value = this.get_value();
-            this._currently_selected_option = $(this.generatedSelect).find('li').index(option);
+            this._currently_selected_option = this.get_option_index_for_value(option.find('a').attr('href'));
             this.highlight_value(option.find('a').attr('href'));
 
             if(customValue)
@@ -518,6 +518,7 @@
         	this.set_mode(1);
 
 			$(this.generatedSelect).prepend('<span class="input-group-addon input-group-addon-custom">' + this._option_values[customOptionIndex][0] + ':</span>');
+			$(this.generatedSelect).find('input[type="text"]').attr('placeholder', '');
         },
         exit_custom_mode: function () {
         	$(this.generatedSelect).find('.input-group-addon.input-group-addon-custom').remove();
