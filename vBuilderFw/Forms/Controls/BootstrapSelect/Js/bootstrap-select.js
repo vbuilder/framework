@@ -279,6 +279,14 @@
                     else
                     	_self.set_value($(this).val());
                 }
+                else if (e.keyCode == 27) { /* escape key */
+                	if(_self.is_open()) {
+                		_self.close();
+
+                		if(_self._currently_in_mode == 0)
+                			_self.generatedSelect.find('input[type="text"]').blur();
+                	}
+                }
                 else if (e.keyCode === 9) {
                     _self.close();
                 }
@@ -302,6 +310,8 @@
                         var starts_with = String.fromCharCode(e.keyCode); /* get the char from pressed key code */
                         var matched_element = false; /* begin with assuming that nothing was matched */
                         var counter = _self._currently_selected_option; /* looking for the matching option starts from current element */
+
+                        var iteration = 0;
                         while (!matched_element) {
                             counter = (counter + 1) % _self._option_values.length; /* move to the next option, but if end is reached - jump to the beginning */
                             if (counter === _self._currently_selected_option) {
@@ -313,8 +323,13 @@
                                 /* key matched with the option */
                                 matched_element = true;
                             }
+
+                            if(++iteration == _self._option_values.length)
+                            	break;
                         }
-                        _self.set_value(_self._option_values[counter][1]);
+
+                        if(matched_element)
+                        	_self.set_value(_self._option_values[counter][1]);
                     }
 
                     /* close this select instance when tab pressed */
@@ -384,7 +399,7 @@
             if(customValue)
             	$(this.generatedSelect).find('input[type="text"]').val(new_value == this.settings['custom-value'] ? '' : new_value);
             else
-            	$(this.generatedSelect).find('input[type="text"]').val(option.find('a').html());
+            	$(this.generatedSelect).find('input[type="text"]').val(option.find('a').text());
 
             if(new_value != this.settings['custom-value']) $(this.generatedSelect).find('input[type="hidden"]').val(new_value);
             else $(this.generatedSelect).find('input[type="hidden"]').val('');

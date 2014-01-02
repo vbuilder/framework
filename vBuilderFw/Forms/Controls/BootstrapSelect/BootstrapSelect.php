@@ -108,8 +108,19 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 	 *
 	 * @return array
 	 */
-	final public function getItems() {
+	public function getItems() {
 		return $this->items;
+	}
+
+	/**
+	 * Sets label for the custom entries.
+	 *
+	 * @param  array
+	 * @return self
+	 */
+	public function setCustomEntryLabel($label) {
+		$this->customEntryLabel = $label;
+		return $this;
 	}
 
 	/**
@@ -170,12 +181,15 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 		// Dropdown menu items
 		foreach($this->items as $key => $value) {
 			$menu->add(
-				Html::el('li')->add(Html::el('a', $this->translate($value))
+				Html::el('li')->add($a = Html::el('a', $value instanceof Html ? '' : $this->translate($value))
 					->href($key)
 					// ->addAttributes(array('data-value' => $key))
 					->tabindex("-1")
 				)
 			);
+
+			if($value instanceof Html)
+				$a->add($value);
 		}
 
 		// Custom entry
@@ -184,11 +198,14 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 
 			$customEntryValue = $inputEl->attrs['id'] . '-custom';
 			$menu->add(
-				Html::el('li')->add(Html::el('a', $this->translate($this->customEntryLabel))
+				Html::el('li')->add($a = Html::el('a', $this->customEntryLabel instanceof Html ? '' : $this->translate($this->customEntryLabel))
 					->href($customEntryValue)
 					->tabindex("-1")
 				)
 			);
+
+			if($this->customEntryLabel instanceof Html)
+				$a->add($this->customEntryLabel);
 
 			$jsObject->{'custom-value'} = $customEntryValue;
 		}
