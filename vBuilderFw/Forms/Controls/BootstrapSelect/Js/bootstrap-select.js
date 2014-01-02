@@ -22,7 +22,8 @@
             'max-visible-items': 0, /* scrollbars disabled */
             'filter-type': '',
             'filter-start-from': 1,
-            'filter-case-sensitive': false
+            'filter-case-sensitive': false,
+            'custom-value': 'custom'
         };
         this.settings = $.extend({}, this._defaults, settings);
         this._name = plugin_name;
@@ -34,7 +35,7 @@
         this._option_height = 0;
         this._max_height = 0;
         this._currently_from_top = 0;
-        this._currently_in_custom_mode = false;
+        this._currently_in_mode = 0;
         this.init();
     }
 
@@ -78,9 +79,9 @@
                 _self._option_values.push([ $(this).html(), $(this).attr('href'), true]);
             });
 
-
             if(_self.generatedSelect.find('INPUT[type=hidden]').val() > '') {
-                _self.set_value(_self.generatedSelect.find('INPUT[type=hidden]').val());
+            	var val = _self.generatedSelect.find('INPUT[type=hidden]').val();
+                _self.set_value(val);
             }
 
             /* read from existing structure - end */
@@ -134,10 +135,16 @@
                 e.preventDefault();
                 _self.close();
                 _self.set_value($(this).attr('href'));
+
+                if(_self._currently_in_mode > 0)
+                	_self.generatedSelect.find('input[type="text"]').focus();
             });
 
             /* text field gains focus */
             _self.generatedSelect.find('input[type="text"]').bind('focus', function() {
+            	if(_self._currently_in_mode > 0)
+            		return ;
+
                 _self.open();
                 if (_self.settings['filter-type'] > '') {
                     /* when typeahead is on, show all values first */
@@ -153,6 +160,9 @@
                 /* only has effect if it is not disabled */
                 else if ( !$(this).hasClass('disabled') ) {
                     _self.generatedSelect.find('input[type="text"]').focus();
+
+                    if(_self._currently_in_mode > 0)
+                    	_self.open();
                 }
             });
 
@@ -187,17 +197,31 @@
                         }
                     }
                 });
-                _self.generatedSelect.find('input[type="text"]').bind('blur', function(e){
+
+				_self.generatedSelect.find('input[type="text"]').bind('blur', function(e){
                     _self.set_value(_self._option_values[_self._currently_selected_option][1]);
                 });
             }
+
+            _self.generatedSelect.find('input[type="text"]').bind('blur', function(e){
+            	if(_self._currently_in_mode > 0)
+            		_self.set_value($(this).val());
+            });
 
             _self.generatedSelect.find('button').bind('blur', function(e){
                 _self.close();
             });
 
             _self.generatedSelect.find('input[type="text"]').bind('paste keydown', function(e) {
+
+
                 if (e.keyCode == 38 ) { /* up arrow key */
+
+                	if(!_self.is_open()) {
+                		_self.open();
+                		return ;
+                	}
+
                     if (_self.settings['filter-type'] > '') {
                         /* only highlight, but not select value when typeahead is on */
                         var found_next_to_highlight = false;
@@ -215,6 +239,12 @@
                     }
                 }
                 else if (e.keyCode == 40) { /* down arrow key */
+
+                	if(!_self.is_open()) {
+                		_self.open();
+                		return ;
+                	}
+
                     if (_self.settings['filter-type'] > '') {
                         /* only highlight, but not select value when typeahead is on */
                         var found_next_to_highlight = false;
@@ -236,13 +266,30 @@
                         /* when typeahead is on, then value gets selected on enter key only (or click) */
                         _self.set_value(_self.generatedSelect.find('li.active a').attr('href'));
                     }
+
+                    var hasBeenOpen = _self.is_open();
                     _self.close();
-                    _self.generatedSelect.find('input[type="text"]').blur();
+
+                    // In normal mode: loose focus
+                    // In custom mode: prevent sending the form (if dropdown has been open)
+                    if(_self._currently_in_mode == 0)
+                    	_self.generatedSelect.find('input[type="text"]').blur();
+                    else if(hasBeenOpen)
+                    	e.preventDefault();
+                    else
+                    	_self.set_value($(this).val());
                 }
                 else if (e.keyCode === 9) {
                     _self.close();
                 }
                 else if (e.keyCode !== 9) { /* tab should behave as normal */
+
+                	if(_self._currently_in_mode) {
+                		if(_self.is_open())
+                			_self.close();
+
+            			return ;
+                	}
 
                     if ( _self.settings['filter-type'] === '' ) {
                         /* only prevent typing if typeahead is off */
@@ -284,6 +331,7 @@
                     _self.close();
                 }
             });
+
             /* bind events - end */
 
         },
@@ -321,17 +369,34 @@
         },
         /* select value */
         set_value: function(new_value) {
-
             var option = $(this.generatedSelect).find('.dropdown-menu li a[href="' + new_value + '"]').closest('li');
+
+            // Custom values
+            var customValue = option.length == 0 || new_value == this.settings['custom-value'];
+            if(customValue) {
+            	option = $(this.generatedSelect).find('.dropdown-menu li a[href="' + this.settings['custom-value'] + '"]').closest('li');
+            }
+
             var old_value = this.get_value();
             this._currently_selected_option = $(this.generatedSelect).find('li').index(option);
+            this.highlight_value(option.find('a').attr('href'));
 
-            this.highlight_value(new_value);
+            if(customValue)
+            	$(this.generatedSelect).find('input[type="text"]').val(new_value == this.settings['custom-value'] ? '' : new_value);
+            else
+            	$(this.generatedSelect).find('input[type="text"]').val(option.find('a').html());
 
-            $(this.generatedSelect).find('input[type="text"]').val(option.find('a').html());
-            $(this.generatedSelect).find('input[type="hidden"]').val(new_value);
+            if(new_value != this.settings['custom-value']) $(this.generatedSelect).find('input[type="hidden"]').val(new_value);
+            else $(this.generatedSelect).find('input[type="hidden"]').val('');
+
             if (old_value !== new_value) {
                 $(this.generatedSelect).find('input[type="text"]').change();
+
+                if(customValue)
+                	this.enter_custom_mode();
+
+                else if(this._currently_in_mode > 0)
+                	this.exit_custom_mode();
             }
         },
         /* return selected value */
@@ -436,6 +501,28 @@
                 this._currently_highlighted_option--;
                 this._currently_from_top = this._currently_from_to - this._option_height;
             }
+        },
+        get_option_index_for_value: function (value) {
+        	for(var i in this._option_values) {
+        		if(this._option_values[i][1] == value)
+        			return i;
+        	}
+        },
+        set_mode: function (mode) {
+        	this._currently_in_mode = mode;
+        },
+        enter_custom_mode: function () {
+        	var customOptionIndex = this.get_option_index_for_value(this.settings['custom-value']);
+        	if(customOptionIndex == undefined || this._currently_in_mode == 1) return ;
+
+        	this.set_mode(1);
+
+			$(this.generatedSelect).prepend('<span class="input-group-addon input-group-addon-custom">' + this._option_values[customOptionIndex][0] + ':</span>');
+        },
+        exit_custom_mode: function () {
+        	$(this.generatedSelect).find('.input-group-addon.input-group-addon-custom').remove();
+
+        	this.set_mode(0);
         }
     };
 

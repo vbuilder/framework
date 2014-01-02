@@ -39,6 +39,9 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 	/** @var array */
 	private $items = array();
 
+	private $customEntryAllowed = true;
+	private $customEntryLabel = 'custom';
+
 	/**
 	 * Constructor
 	 *
@@ -69,6 +72,8 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 	 * @return void
 	 */
 	protected function attached($parent) {
+		parent::attached($parent);
+
 		$presenter = $this->lookup('Nette\Application\UI\Presenter', true);
 		$context = $presenter->getContext();
 		$context->webFilesGenerator->addFile(__DIR__ . '/Js/bootstrap-select.js', WebFilesGenerator::JAVASCRIPT);
@@ -115,6 +120,10 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 	public function getControl() {
 		$inputEl = parent::getControl();
 
+		// JS Object
+		$jsObject = new \StdClass;
+
+		// Input group
 		$inputGroupId = $inputEl->attrs['id'] . '-input-group';
 		$inputGroup = Html::el('div')
 			->class('bootstrap-select input-group')
@@ -168,10 +177,23 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 			);
 		}
 
+		// Custom entry
+		if($this->customEntryAllowed) {
+			$customEntryValue = $inputEl->attrs['id'] . '-custom';
+			$menu->add(
+				Html::el('li')->add(Html::el('a', $this->translate($this->customEntryLabel))
+					->href($customEntryValue)
+					->tabindex("-1")
+				)
+			);
+
+			$jsObject->{'custom-value'} = $customEntryValue;
+		}
+
 		// Wrapper with script
 		return Html::el('div')
 			->add($inputGroup)
-			->add(Html::el('script', "\$('#$inputGroupId').bootstrapSelect();")->type('text/javascript'));
+			->add(Html::el('script', "\$('#$inputGroupId').bootstrapSelect(" . json_encode($jsObject) . ");")->type('text/javascript'));
 	}
 
 }
