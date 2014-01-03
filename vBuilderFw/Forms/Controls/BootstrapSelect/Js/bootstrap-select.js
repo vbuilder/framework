@@ -23,13 +23,14 @@
             'filter-type': '',
             'filter-start-from': 1,
             'filter-case-sensitive': false,
-            'custom-value': 'custom'
+            'custom-value': 'custom',
+            'custom-prefix': ''
         };
         this.settings = $.extend({}, this._defaults, settings);
         this._name = plugin_name;
         this._option_values = [];
-        this._currently_selected_option = 0;
-        this._currently_highlighted_option = 0;
+        this._currently_selected_option = -1;
+        this._currently_highlighted_option = -1;
         this._options_container_height = 0;
         this._options_container_spacing = 0;
         this._option_height = 0;
@@ -520,7 +521,7 @@
         get_option_index_for_value: function (value) {
         	for(var i in this._option_values) {
         		if(this._option_values[i][1] == value)
-        			return i;
+        			return parseInt(i);
         	}
         },
         set_mode: function (mode) {
@@ -532,7 +533,11 @@
 
         	this.set_mode(1);
 
-			$(this.generatedSelect).prepend('<span class="input-group-addon input-group-addon-custom">' + this._option_values[customOptionIndex][0] + ':</span>');
+            var prefix = this.settings['custom-prefix'] == ""
+                ? this._option_values[customOptionIndex][0] + ':'
+                : this.settings['custom-prefix'];
+
+			$(this.generatedSelect).prepend('<span class="input-group-addon input-group-addon-custom">' + prefix + '</span>');
 			$(this.generatedSelect).find('input[type="text"]').attr('placeholder', '');
         },
         exit_custom_mode: function () {

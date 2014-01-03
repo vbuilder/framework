@@ -39,8 +39,9 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 	/** @var array */
 	private $items = array();
 
-	private $customEntryAllowed = true;
-	private $customEntryLabel = 'custom';
+	private $customEntryAllowed = false;
+	private $customEntryLabel = 'Custom';
+	private $customEntryPrefixLabel;
 
 	/**
 	 * Constructor
@@ -120,6 +121,20 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 	 */
 	public function setCustomEntryLabel($label) {
 		$this->customEntryLabel = $label;
+		$this->customEntryAllowed = true;
+		return $this;
+	}
+
+	/**
+	 * Sets prefix label for the custom entries.
+	 *
+	 * @param  array
+	 * @return self
+	 */
+	public function setCustomEntryPrefixLabel($prefix) {
+		$this->customEntryPrefixLabel = $prefix;
+		$this->customEntryAllowed = true;
+
 		return $this;
 	}
 
@@ -194,20 +209,24 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 
 		// Custom entry
 		if($this->customEntryAllowed) {
-			$menu->add(Html::el('li')->class('divider'));
+			if(($customEntryValue = array_search($this->customEntryLabel, $this->items)) === FALSE) {
 
-			$customEntryValue = $inputEl->attrs['id'] . '-custom';
-			$menu->add(
-				Html::el('li')->add($a = Html::el('a', $this->customEntryLabel instanceof Html ? '' : $this->translate($this->customEntryLabel))
-					->href($customEntryValue)
-					->tabindex("-1")
-				)
-			);
+				$menu->add(Html::el('li')->class('divider'));
 
-			if($this->customEntryLabel instanceof Html)
-				$a->add($this->customEntryLabel);
+				$customEntryValue = $inputEl->attrs['id'] . '-custom';
+				$menu->add(
+					Html::el('li')->add($a = Html::el('a', $this->customEntryLabel instanceof Html ? '' : $this->translate($this->customEntryLabel))
+						->href($customEntryValue)
+						->tabindex("-1")
+					)
+				);
+
+				if($this->customEntryLabel instanceof Html)
+					$a->add($this->customEntryLabel);
+			}
 
 			$jsObject->{'custom-value'} = $customEntryValue;
+			if($this->customEntryPrefixLabel) $jsObject->{'custom-prefix'} = $this->customEntryPrefixLabel;
 		}
 
 		// Wrapper with script
