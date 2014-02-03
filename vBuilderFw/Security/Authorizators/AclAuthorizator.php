@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -28,7 +28,7 @@ use vBuilder,
 	Nette,
 	Nette\Security\IResource,
 	Nette\Security\IRole;
-	
+
 /**
  * Basic ACL authorization layer.
  * Mostly based on Nette\Security\Permission,
@@ -60,9 +60,6 @@ use vBuilder,
  * @property-read mixed $queriedResource
  */
 class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizator {
-
-	/** @var Nette\DI\IContainer */
-	protected $context;
 
 	/** @var bool should I check the roles / resources? */
 	protected $dirty = false;
@@ -104,10 +101,6 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 	// *************************************************************************
 
-	public function __construct(Nette\DI\IContainer $context) {
-		$this->context = $context;
-	}
-
 	/**
 	 * Returns array of roles which have permission to use resource.
 	 *
@@ -115,7 +108,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	 *    so if the allow rule does not explicitly exist it assumes
 	 *	  that role is not allowed. All ['allRoles']['allResources'] rules
 	 *	  are ignored.
-	 * 
+	 *
 	 * @param string|array|AclAuthorizator::ALL resource name
 	 * @param string|AclAuthorizator::ALL privilege name
 	 * @return array of role names
@@ -129,7 +122,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 		if($resource !== self::ALL) {
 			$resourcesToProcess = is_array($resource) ? $resource : array($resource);
-			
+
 			if(count($resourcesToProcess) == 0)
 				throw new Nette\InvalidArgumentException("No resources given");
 
@@ -157,13 +150,13 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 				} else {
 					throw new Nette\InvalidStateException("Resource '$resource' does not exist.");
-				}								
+				}
 			}
 		}
 
 		// At last I will be matching 'all resources' rules
 		$byRole[] = &$this->rules['allResources']['byRole'];
-		
+
 		// Check all mentioned roles for valid rules
 		$allowedRoles = array();
 		$deniedRoles = array();
@@ -179,13 +172,13 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 				foreach($rulesToCheck as $rule) {
 					if ($rule['assert'] !== NULL && $rule['assert']->__invoke($this, $role, $resource, $privilege)) {
-						
+
 						// ALLOW
 						if($rule['type'] === self::ALLOW)
 							if(!in_array($role, $deniedRoles)) $allowedRoles[] = $role;
 
 						// DENY -> only suppress future rules
-						elseif($rule['type'] === self::DENY) 
+						elseif($rule['type'] === self::DENY)
 							$deniedRoles[] = $role;
 
 						break;
@@ -210,7 +203,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 	/**
 	 * Helper function which is called before any query method
-	 * 
+	 *
 	 * @return void
 	 */
 	protected function querying() {
@@ -260,7 +253,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 	/**
 	 * Helper function which is called before any role / resource is altered
-	 * 
+	 *
 	 * @return void
 	 */
 	protected function updating() {
@@ -269,11 +262,11 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 	/**
 	 * Helper function which is called before the first query
-	 * 
+	 *
 	 * @return void
 	 */
 	protected function setup() {
-		
+
 		// Basic roles
 		$this->addRole('guest');
 		$this->addRole('user', 'guest');
@@ -304,7 +297,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 	}
 
 	// *************************************************************************
-	
+
 	/********************* roles ****************d*g**/
 
 
@@ -443,7 +436,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 		if(!isset($this->roles[$role]) && $this->isCompoundName($role)) {
 			list($role, $params) = Strings::parseParametrizedString($role);
-			
+
 			if($role == $inherit) return TRUE;
 			elseif($onlyParents) return FALSE;
 		}
@@ -585,7 +578,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 		if($this->isCompoundName($resource))
 			list($resource, $params) = Strings::parseParametrizedString($resource);
-		
+
 		return isset($this->resources[$resource]);
 	}
 
@@ -643,7 +636,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 		if(!isset($this->resources[$resource]) && $this->isCompoundName($resource)) {
 			list($resource, $params) = Strings::parseParametrizedString($resource);
-			
+
 			if($resource == $inherit) return TRUE;
 			elseif($onlyParents) return FALSE;
 		}
@@ -1000,7 +993,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 
 				if($resource === NULL && count($resourcesToProcess) > 0)
 					$resource = array_shift($resourcesToProcess);
-				
+
 			} elseif($this->isCompoundName($resource)) {
 				list($name, $params) = Strings::parseParametrizedString($resource);
 				$resource = $name;

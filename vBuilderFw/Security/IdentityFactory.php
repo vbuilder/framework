@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -31,7 +31,7 @@ use Nette,
  * Basic identity factory
  *
  * @todo  cofigurable LDAP binding + table name + id column name
- * 
+ *
  * @author Adam Staněk (V3lbloud)
  * @since Aug 3, 2013
  */
@@ -39,8 +39,8 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 	const TABLE_ROLES = 'roles';
 
-	/** @var Nette\DI\IContainer */
-	protected $context;
+	/** @var DibiConnection */
+	protected $db;
 
 	/** @var array of string */
 	protected $tableName = array(
@@ -48,13 +48,13 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 	);
 
 	/** Constructor */
-	public function __construct(Nette\DI\IContainer $context) {
-		$this->context = $context;
+	public function __construct(\DibiConnection $dbConnection) {
+		$this->db = $dbConnection;
 	}
 
 	/**
 	 * Returns table name
-	 * 
+	 *
 	 * @return string table name
 	 * @throws Nette\InvalidArgumentException if invalid table requested
 	 */
@@ -92,7 +92,6 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 		elseif($authenticator instanceof Authenticators\LdapBindAuthenticator) {
 			$ldapData = (array) $userData;
 
-			$db = $this->context->database->connection;
 			$idCol = 'id';
 			$tableName = 'security_users';
 
@@ -127,22 +126,22 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 			// Prepare data based on LDAP binding
 			$boundData = $this->bindValues($ldapData, $binding[0]);
 
-			$db->query('LOCK TABLES %n WRITE', $tableName);
-			$ds = $db->select('*')->from($tableName);
+			$this->db->query('LOCK TABLES %n WRITE', $tableName);
+			$ds = $this->db->select('*')->from($tableName);
 			foreach($boundData as $key => $value) $ds->where('%n = %s', $key, $value);
 			$profile = $ds->fetch();
 
 			// If profile does not exist yet
 			if($profile === FALSE) {
 				$boundData = array_merge($boundData, $this->bindValues($ldapData, $binding[1]));
-				$db->insert($tableName, $boundData)->execute();
-				$boundData[$idCol] = $uid = $db->getInsertId();
+				$this->db->insert($tableName, $boundData)->execute();
+				$boundData[$idCol] = $uid = $this->db->getInsertId();
 				$profile = $boundData;
 			} else {
 				$uid = $profile[$idCol];
 			}
 
-			$db->query('UNLOCK TABLES');
+			$this->db->query('UNLOCK TABLES');
 
 			$roles[] = "user:$uid";
 
@@ -181,7 +180,7 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 		}
 
 		// ---------------------------------------------------------------------
-		
+
 		// Remove duplicit roles
 		$roles = array_unique($roles);
 
@@ -191,8 +190,7 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 		// ---------------------------------------------------------------------
 
-		$db = $this->context->database->connection;
-		$dbRoles = $db->query("SELECT [role] FROM %n", $this->tableName[self::TABLE_ROLES], 'WHERE [user] = %s', $uid)->fetchAll();
+		$dbRoles = $this->db->query("SELECT [role] FROM %n", $this->tableName[self::TABLE_ROLES], 'WHERE [user] = %s', $uid)->fetchAll();
 		foreach($dbRoles as $curr) {
 			if(!in_array($curr->role, $roles))
 				$roles[] = $curr->role;
@@ -213,7 +211,7 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 	/**
 	 * Helper function for getting values from data with given binding
-	 * 
+	 *
 	 * @param  array data
 	 * @param  array column binding
 	 * @return array

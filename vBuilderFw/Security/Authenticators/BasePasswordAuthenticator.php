@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -40,20 +40,17 @@ use vBuilder,
  */
 abstract class BasePasswordAuthenticator extends BaseAuthenticator {
 
-	/** @var Nette\DI\IContainer */
-	protected $context;
-
 	/** @var IPasswordHasher */
 	protected $passwordHasher;
 
-	public function __construct(IPasswordHasher $hasher, IIdentityFactory $identityFactory, Nette\DI\IContainer $context) {
-		parent::__construct($identityFactory, $context);
+	public function __construct(IPasswordHasher $hasher, IIdentityFactory $identityFactory) {
+		parent::__construct($identityFactory);
 		$this->passwordHasher = $hasher;
 	}
 
 	/**
      * Returns name of authentication method for this handler.
-     * {@link User::AUTHN_METHOD_INVALID} 
+     * {@link User::AUTHN_METHOD_INVALID}
      *
      * @return string
      */
@@ -73,9 +70,9 @@ abstract class BasePasswordAuthenticator extends BaseAuthenticator {
 	/**
 	 * Performs an authentication against DB.
 	 * and returns IIdentity on success or throws AuthenticationException
-	 * 
+	 *
 	 * @param array credentials
-	 * 
+	 *
 	 * @return IIdentity
 	 * @throws AuthenticationException
 	 */

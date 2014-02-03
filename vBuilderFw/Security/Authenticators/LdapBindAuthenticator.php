@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -42,22 +42,22 @@ use vBuilder,
 class LdapBindAuthenticator extends BaseAuthenticator {
 
 	protected $ldapConnection;
-	
+
 	/** @var string query prefix */
 	protected $_queryPrefix = 'uid=';
-	
+
 	/** @var string query suffix */
 	protected $_querySuffix = ',ou=users,ou=people,dc=v3net,dc=cz';
 
-	public function __construct(IIdentityFactory $identityFactory, LdapConnection $ldapConnection, Nette\DI\IContainer $context) {
+	public function __construct(IIdentityFactory $identityFactory, LdapConnection $ldapConnection) {
 		$this->ldapConnection = $ldapConnection;
 
-		parent::__construct($identityFactory, $context);
+		parent::__construct($identityFactory);
 	}
 
 	/**
      * Returns name of authentication method for this handler.
-     * {@link User::AUTHN_METHOD_INVALID} 
+     * {@link User::AUTHN_METHOD_INVALID}
      *
      * @return string
      */
@@ -67,7 +67,7 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 
 	/**
      * Returns name of authentication source for this handler.
-     * {@link vBuilder\Security\User::AUTHN_SOURCE_ALL} 
+     * {@link vBuilder\Security\User::AUTHN_SOURCE_ALL}
      *
      * @return string
      */
@@ -82,7 +82,7 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 	public function getLdapConnection() {
 		return $this->ldapConnection;
 	}
-	
+
 	/**
 	 * Sets prefix for query string
 	 *
@@ -91,16 +91,16 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 	public function setQueryPrefix($prefix) {
 		$this->_queryPrefix = $prefix;
 	}
-	
+
 	/**
 	 * Returns query prefix
 	 *
 	 * @return string
 	 */
 	public function getQueryPrefix() {
-		return $this->_queryPrefix;	
+		return $this->_queryPrefix;
 	}
-	
+
 	/**
 	 * Sets suffix of query string
 	 *
@@ -109,14 +109,14 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 	public function setQuerySuffix($suffix) {
 		$this->_querySuffix = $suffix;
 	}
-	
+
 	/**
 	 * Returns query suffix
 	 *
 	 * @return string
 	 */
 	public function getQuerySuffix() {
-		return $this->_querySuffix;	
+		return $this->_querySuffix;
 	}
 
 	/**
@@ -128,9 +128,9 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 	 *	 You can't bypass check by adding following line into /etc/ldap.conf:
 	 *		TLS_REQCERT never
 	 *   (apache restart might be required)
-	 * 
+	 *
 	 * @param array credentials
-	 * 
+	 *
 	 * @return IIdentity
 	 * @throws AuthenticationException
 	 */
@@ -145,7 +145,7 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 		try {
 			$result = $this->ldapConnection->search($bindDn, '(objectclass=*)', array('givenname', 'sn', 'displayName', 'gidNumber', 'uidNumber'));
 			$info = $result->fetch();
-			
+
 			$identity = $this->identityFactory->createIdentity(
 				$info,
 				$this

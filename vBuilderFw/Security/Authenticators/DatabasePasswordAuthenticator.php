@@ -27,6 +27,7 @@ use vBuilder,
 	vBuilder\Security\User,
 	vBuilder\Security\IPasswordHasher,
 	vBuilder\Security\IAuthenticator,
+	vBuilder\Security\IIdentityFactory,
 	vBuilder\Utils\Strings,
 	Nette,
 	Nette\Security\AuthenticationException;
@@ -39,6 +40,9 @@ use vBuilder,
  */
 class DatabasePasswordAuthenticator extends BasePasswordAuthenticator {
 
+	/** @var DibiConnection */
+	protected $db;
+
 	/** @var string Table name */
 	protected $tableName = 'security_users';
 
@@ -49,6 +53,11 @@ class DatabasePasswordAuthenticator extends BasePasswordAuthenticator {
 		self::PASSWORD => 'password',
 		self::EMAIL => 'email'
 	);
+
+	public function __construct(\DibiConnection $dbConnection, IPasswordHasher $hasher, IIdentityFactory $identityFactory) {
+		parent::__construct($hasher, $identityFactory);
+		$this->db = $dbConnection;
+	}
 
 	/**
      * Returns name of authentication source for this handler.
@@ -97,8 +106,7 @@ class DatabasePasswordAuthenticator extends BasePasswordAuthenticator {
 	 * @return DibiRow|FALSE
 	 */
 	protected function fetchUserData(array $credentials) {
-		$db = $this->context->database->connection;
-		$ds = $db->select('*')->from($this->tableName);
+		$ds = $this->db->select('*')->from($this->tableName);
 
 		if(Strings::contains($credentials[self::USERNAME], '@'))
 			$ds->where('%n = %s', $this->fieldName[self::EMAIL], $credentials[self::USERNAME]);

@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -36,14 +36,10 @@ use vBuilder,
  */
 abstract class BaseAuthenticator extends Nette\Object implements IAuthenticator {
 
-	/** @var Nette\DI\IContainer */
-	protected $context;
-
 	/** @var IIdentityFactory */
 	protected $identityFactory;
 
-	public function __construct(IIdentityFactory $identityFactory, Nette\DI\IContainer $context) {
-		$this->context = $context;
+	public function __construct(IIdentityFactory $identityFactory) {
 		$this->identityFactory = $identityFactory;
 	}
 

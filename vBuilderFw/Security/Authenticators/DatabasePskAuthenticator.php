@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -38,13 +38,16 @@ use vBuilder,
  * @author Adam Staněk (V3lbloud)
  * @since Aug 3, 2013
  */
-class PresharedSecretAuthenticator extends BaseAuthenticator {
+class DatabasePSKAuthenticator extends BaseAuthenticator {
 
 	const PSK = 0;
 	const EXPIRATION = 5;
 
 	const PSK_NOT_FOUND = 5;
 	const INVALID_PSK = 6;
+
+	/** @var DibiConnection */
+	protected $db;
 
 	/** @var string Table name */
 	protected $tableName = 'security_psk';
@@ -58,18 +61,18 @@ class PresharedSecretAuthenticator extends BaseAuthenticator {
 	/** @var StdClass */
 	protected $sessionCache;
 
-	public function __construct(IIdentityFactory $identityFactory, Nette\DI\IContainer $context) {
-		parent::__construct($identityFactory, $context);
-
+	public function __construct(\DibiConnection $dbConnection, IIdentityFactory $identityFactory) {
+		parent::__construct($identityFactory);
+		$this->db = $dbConnection;
 
 		$sessionSection = $context->session->getSection(strtr(__CLASS__, '\\', '.'));
 		$this->sessionCache = &$sessionSection->sessionCache;
-		if($this->sessionCache == NULL) $this->sessionCache = new \StdClass;		
+		if($this->sessionCache == NULL) $this->sessionCache = new \StdClass;
 	}
 
 	/**
      * Returns name of authentication method for this handler.
-     * {@link User::AUTHN_METHOD_INVALID} 
+     * {@link User::AUTHN_METHOD_INVALID}
      *
      * @return string
      */
@@ -79,7 +82,7 @@ class PresharedSecretAuthenticator extends BaseAuthenticator {
 
 	/**
      * Returns name of authentication source for this handler.
-     * {@link vBuilder\Security\User::AUTHN_SOURCE_ALL} 
+     * {@link vBuilder\Security\User::AUTHN_SOURCE_ALL}
      *
      * @return string
      */
@@ -110,9 +113,9 @@ class PresharedSecretAuthenticator extends BaseAuthenticator {
 	/**
 	 * Performs an authentication against DB.
 	 * and returns IIdentity on success or throws AuthenticationException
-	 * 
+	 *
 	 * @param array credentials
-	 * 
+	 *
 	 * @return IIdentity
 	 * @throws AuthenticationException
 	 */
@@ -143,8 +146,7 @@ class PresharedSecretAuthenticator extends BaseAuthenticator {
 	protected function fetchRecord(array $credentials) {
 		if(!isset($this->sessionCache->{$credentials[self::PSK]})) {
 
-			$db = $this->context->database->connection;
-			$ds = $db->select('*')->from($this->tableName);
+			$ds = $this->db->select('*')->from($this->tableName);
 			$ds->where('%n = %s', $this->fieldName[self::PSK], $credentials[self::PSK]);
 
 			$record = $ds->fetch();
@@ -164,7 +166,6 @@ class PresharedSecretAuthenticator extends BaseAuthenticator {
 	 * @return string[16]
 	 */
 	public function createPsk(DateTime $expiration = NULL) {
-		$db = $this->context->database->connection;
 
 		while(true) {
 			$psk = Strings::randomHumanToken(16);
@@ -175,7 +176,7 @@ class PresharedSecretAuthenticator extends BaseAuthenticator {
 			);
 
 			try {
-				$db->insert($this->tableName, $values)->execute();
+				$this->db->insert($this->tableName, $values)->execute();
 				break;
 
 			} catch(\DibiException $e) {

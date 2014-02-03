@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,15 +32,21 @@ use vBuilder,
 /**
  * User authorization / authentication abstraction layer
  *
- * TODO: Lazy service creation for authenticators (same as authorizator)
- * 
+ * TODO: Autowiring for authorizators / authenticators
+ * TODO: Refactor without DI container
+ *
  * TODO: Support for concurrent logins by storage
  *	(to allow PSK usage while maintaining existing logged session)
  *
  * @author Adam Staněk (V3lbloud)
  * @since Aug 3, 2013
  */
-class User extends Nette\Object {
+class User extends vBuilder\Events\Observable {
+
+	/**/ /** Events */
+	const EVENT_ON_LOGGED_IN = 'onLoggedIn';
+	const EVENT_ON_LOGGED_OUT = 'onLoggedOut';
+	/**/
 
 	/**/ /** Authorization methods */
 	const AUTHN_METHOD_INVALID = NULL;
@@ -57,69 +63,21 @@ class User extends Nette\Object {
 	/** @var string  default role for unauthenticated user */
 	public $guestRole = 'guest';
 
-	/** @var array of function(User $sender); Occurs when the user is successfully logged in */
-	public $onLoggedIn;
-
-	/** @var array of function(User $sender); Occurs when the user is logged out */
-	public $onLoggedOut;
-
 	/** @var IUserStorage Session storage for current user */
 	private $storage;
 
-	/** @var Nette\DI\IContainer */
+	/** @var Nette\DI\Container */
 	protected $context;
 
 	/** @var array of IAuthenticator (associative by AUTHN_METHOD_*) */
 	protected $availableAuthenticators = array();
 
-	/** @var Nette\DI\NestedAccessor */
-	public $authenticator;
-
 	/** @var IAuthorizator */
 	protected $_authorizator;
 
-	/** @var Nette\DI\NestedAccessor */
-	public $passwordHasher;
-
-	public function __construct(Nette\DI\IContainer $context) {
+	public function __construct(Nette\Security\IUserStorage $userStorage, Nette\DI\Container $context) {
 		$this->context = $context;
-
-		// DI nested accessors
-		$this->authenticator = new Nette\DI\NestedAccessor($context, 'user.authenticator');
-		$this->passwordHasher = new Nette\DI\NestedAccessor($context, 'user.passwordHasher');
-
-		// Update last login time
-		$this->onLoggedIn[] = function ($userService) use ($context) {
-
-			// Only for real users (no PSK, etc...s)
-			try {
-				if(!$userService->isInRole('user'))
-					return ;
-
-			// If role does not exist
-			} catch(Nette\InvalidStateException $e) {
-				return ;
-			} 
-
-			// TODO: Parametrized table name
-			$tableName 	= 'security_lastLoginInfo';
-			$db 		= $context->database->connection;
-			$remoteAddr = $context->httpRequest->getRemoteAddress();
-			$uid 		= $userService->getId();
-
-			// Sanity check
-			if($uid == NULL)
-				return;
-
-			$db->query(
-					'INSERT INTO %n', $tableName, '([userId], [time], [ip], [time2], [ip2]) VALUES(' .
-					'%i', $uid, ', NOW(), %s', $remoteAddr, ', NULL, NULL) ' .
-					'ON DUPLICATE KEY UPDATE [time2] = [time], [ip2] = [ip], [time] = NOW(), [ip] = %s', $remoteAddr
-			);
-		};
-
-		// TODO
-		$this->storage = $this->context->nette->userStorage;
+		$this->storage = $userStorage; 
 	}
 
 	/**
@@ -172,6 +130,7 @@ class User extends Nette\Object {
 	 * @throws AuthenticationException from authenticator if authentication was not successful
 	 */
 	public function login($method, $source, $id) {
+
 		$this->logout(TRUE);
 		if (!$id instanceof IIdentity) {
 			$handlers = $this->getAuthenticator($method, $source);
@@ -196,7 +155,7 @@ class User extends Nette\Object {
 
 		$this->storage->setIdentity($id);
 		$this->storage->setAuthenticated(TRUE);
-		$this->onLoggedIn($this);
+		$this->notifyObservers(self::EVENT_ON_LOGGED_IN);
 
 		return $id;
 	}
@@ -208,7 +167,7 @@ class User extends Nette\Object {
 	 */
 	public function logout($clearIdentity = FALSE) {
 		if ($this->isLoggedIn()) {
-			$this->onLoggedOut($this);
+			$this->notifyObservers(self::EVENT_ON_LOGGED_OUT);
 			$this->storage->setAuthenticated(FALSE);
 		}
 		if ($clearIdentity) {
@@ -258,7 +217,7 @@ class User extends Nette\Object {
 	 * @param string method (AUTHN_METHOD_*)
 	 * @param string source (AUTHN_SOURCE_*)
 	 * @param bool throw exceptions?
-	 * 
+	 *
 	 * @return IAuthenticator|array of IAuthenticator
 	 * @throws AuthenticationException if there is no handler for this type
 	 */
@@ -266,7 +225,7 @@ class User extends Nette\Object {
 
 		if(!isset($this->availableAuthenticators[$method])) {
 			if($throw) throw new Nette\InvalidArgumentException("There is no authentication handler for method " . var_export($method, TRUE));
-		
+
 			return NULL;
 		}
 
@@ -275,7 +234,7 @@ class User extends Nette\Object {
 
 		if(!isset($this->availableAuthenticators[$method][$source])) {
 			if($throw) throw new Nette\InvalidArgumentException("There is no source " . var_export($source, TRUE) . " for authentication method " . var_export($method, TRUE) . " ");
-		
+
 			return NULL;
 		}
 
@@ -351,7 +310,7 @@ class User extends Nette\Object {
 
 	/**
 	 * Sets authorization handler.
-	 * 
+	 *
 	 * @param  string|IAuthorizator authorizator instance or name of service
 	 * @return self
 	 * @throws  Nette\InvalidArgumentException if argument is invalid

@@ -37,14 +37,21 @@ use vBuilder,
  */
 class DatabaseAclAuthorizator extends AclAuthorizator {
 
+	/** @var DibiConnection */
+	protected $db;
+
+	/** @var string */
 	protected $tableName = 'security_acl';
+
+	public function __construct(\DibiConnection $dbConnection) {
+		$this->db = $dbConnection;
+	}
 
 	protected function setup() {
 		parent::setup();
 
 		// Load from DB
-		$db = $this->context->database->connection;
-		$rules = $db->query("SELECT * FROM %n", $this->tableName);
+		$rules = $this->db->query("SELECT * FROM %n", $this->tableName);
 
 		foreach($rules as $rule) {
 			// If querying the compound name, ensure it exists
