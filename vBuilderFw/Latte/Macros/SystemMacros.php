@@ -27,7 +27,8 @@ use vBuilder,
 	Nette,
 	Nette\Latte\MacroNode,
 	Nette\Latte\ParseException,
-	Nette\Latte\MacroTokenizer;
+	Nette\Latte\MacroTokens,
+	Nette\Utils\Tokenizer;
 
 /**
  * System macros
@@ -134,34 +135,32 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		// 2: Whitespace found -> everything else is a value
 		$state = 0;	
 
-		// dd($node->tokenizer->tokens);
-
 		$prev = NULL;
 		foreach($node->tokenizer->tokens as $token) {
 
 			// Getting value (don't care about anything)
 			if($state > 1) {
-				$value .= $token['value'];
+				$value .= $token[Tokenizer::VALUE];
 			}
 
 			// Special characters (operators, etc...)
-			elseif($token['type'] == MacroTokenizer::T_CHAR) {
+			elseif($token[Tokenizer::TYPE] == MacroTokens::T_CHAR) {
 
 				// : in a symbol
-				if($token['value'] == ':' && $state > 0) {
-					$key .= $token['value'];
+				if($token[Tokenizer::VALUE] == ':' && $state > 0) {
+					$key .= $token[Tokenizer::VALUE];
 				}
 
-				elseif($token['value'] == '[' && $state > 0) {
+				elseif($token[Tokenizer::VALUE] == '[' && $state > 0) {
 
 				}
 
-				elseif($token['value'] == ']' && $state > 0 && $prev['value'] == '[') {
+				elseif($token[Tokenizer::VALUE] == ']' && $state > 0 && $prev[Tokenizer::VALUE] == '[') {
 					$operator = '[]';
 				}
 
 				// ! before any symbol
-				elseif($token['value'] == '!' && $state == 0) {
+				elseif($token[Tokenizer::VALUE] == '!' && $state == 0) {
 					$force = true;
 					
 				} else
@@ -170,16 +169,16 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 			}
 
 			// Checking for the first symbol
-			elseif($token['type'] == MacroTokenizer::T_SYMBOL) {
+			elseif($token[Tokenizer::TYPE] == MacroTokens::T_SYMBOL) {
 
-				$key .= $token['value'];
+				$key .= $token[Tokenizer::VALUE];
 
 				// We have found first symbol
 				if($state == 0) $state++;
 			}
 
 			// Checking for whitespace after symbol
-			if($token['type'] == MacroTokenizer::T_WHITESPACE && $state > 0) {
+			if($token[Tokenizer::TYPE] == MacroTokens::T_WHITESPACE && $state > 0) {
 				$state++;
 			}
 
