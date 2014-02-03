@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -28,7 +28,7 @@ use vBuilder,
 
 /**
  * Datatype for saving/loading serialized arrays into DB
- * 
+ *
  * TODO: SET!
  *
  * @author Adam Staněk (V3lbloud)
@@ -38,38 +38,38 @@ class Json extends vBuilder\Object implements vBuilder\Orm\IDataType, \IteratorA
 
 	protected $entity;
 	protected $fieldName;
-	
+
 	protected $array;
-	
-	public function __construct($fieldName, &$entity, Nette\DI\IContainer $context) {
+
+	public function __construct($fieldName, &$entity, Nette\DI\Container $context) {
 		$this->entity = $entity;
 		$this->fieldName = $fieldName;
 	}
-	
+
 	public function convertFrom(&$data) {
 		if(is_array($data)) {
 			$this->entity->data->{$this->fieldName} = json_encode($data);
 			$this->array = $data;
 			return ;
 		}
-		
+
 		throw new Nette\InvalidArgumentException("'".  gettype($data)."' is not supported by " . get_called_class());
 	}
-	
+
 	public function toArray() {
 		if(!isset($this->array)) {
-			
+
 			if($this->entity->data->{$this->fieldName} == '') $this->array = array();
 			else $this->array = json_decode($this->entity->data->{$this->fieldName}, true);
 		}
-		
+
 		return $this->array;
 	}
-	
+
 	public function getIterator() {
 		return new \ArrayIterator($this->toArray());
 	}
-	
+
 	public static function acceptedDataTypes() {
 		return array("Json");
 	}

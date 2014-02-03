@@ -61,7 +61,7 @@ class ControlRenderer extends vBuilder\Object {
 	/**
 	 * Returns current context
 	 * 
-	 * @return Nette\DI\IContainer
+	 * @return Nette\DI\Container
 	 */
 	final public function getControl() {
 			return $this->control;
@@ -70,7 +70,7 @@ class ControlRenderer extends vBuilder\Object {
 	/**
 	 * Returns current context
 	 * 
-	 * @return Nette\DI\IContainer
+	 * @return Nette\DI\Container
 	 */
 	final public function getContext() {
 			return $this->control->context;

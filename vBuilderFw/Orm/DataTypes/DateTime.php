@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,48 +37,48 @@ class DateTime extends \DateTime implements vBuilder\Orm\IDataType {
 
 	protected $entity;
 	protected $fieldName;
-	
-	public function __construct($fieldName, &$entity, Nette\DI\IContainer $context) {
+
+	public function __construct($fieldName, &$entity, Nette\DI\Container $context) {
 		$this->entity = $entity;
 		$this->fieldName = $fieldName;
-		
+
 		$data = isset($entity->data->{$fieldName}) ? $entity->data->{$fieldName} : null;
 		if(is_numeric($data)) $data = date('Y-m-d H:i:s', $data);
-		
+
 		parent::__construct($data);
 	}
 
-	public function convertFrom(&$data) {		
+	public function convertFrom(&$data) {
 		if($data instanceof \DateTime) {
 			$this->entity->data->{$this->fieldName} = $data->format('Y-m-d H:i:s');
 			$this->setTimestamp($data->getTimestamp());
-			
+
 			// @ - Bug #45543 - https://bugs.php.net/bug.php?id=45543
 			if($data->getTimezone() !== false) @$this->setTimezone($data->getTimezone());
-			
+
 			return ;
 		}
-		
+
 		elseif(is_int($data) || intval($data) == $data) {
 			$this->setTimestamp(intval($data));
 			$this->entity->data->{$this->fieldName} = $this->format('Y-m-d H:i:s');
 			return ;
-			
+
 		} elseif(is_string($data)) {
 			if(($matches = Strings::match($data, '#^[0-4]{4}-[0-9]{2}-[0-9]{2}$#')) !== false) {
 				$this->setTimestamp(strtotime($data));
 				$this->entity->data->{$this->fieldName} = $this->format('Y-m-d H:i:s');
-				
+
 			} else {
 				throw new Nette\InvalidArgumentException("Unsupported string format " . var_export($data, true) . " for " . get_called_class());
 			}
-			
+
 			return ;
 		}
-		
+
 		throw new Nette\InvalidArgumentException("'".  gettype($data)."' is not supported by " . get_called_class());
 	}
-	
+
 	public static function acceptedDataTypes() {
 		return array("DateTime", "Timestamp", 'CreatedDateTime', 'ModifiedDateTime');
 	}

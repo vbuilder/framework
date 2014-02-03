@@ -42,7 +42,7 @@ class EntityCollection extends Collection {
 	/** @var string name of target entity */
 	protected $targetEntity;
 	
-	function __construct(Entity &$parent, $fieldName, $targetEntityName, Nette\DI\IContainer $context) {
+	function __construct(Entity &$parent, $fieldName, $targetEntityName, Nette\DI\Container $context) {
 		$this->targetEntity = $targetEntityName;
 		parent::__construct($parent, $fieldName, $context);
 	}

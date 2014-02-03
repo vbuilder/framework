@@ -44,15 +44,15 @@ class WebFilesGenerator extends Nette\Object {
 	private $hasBeenGenerated = array();
 	private $hashes = array();
 	
-	/** @var Nette\DI\IContainer DI */
+	/** @var Nette\DI\Container DI */
 	private $context;
 	
 	/**
 	 * Constructor
 	 * 
-	 * @param Nette\DI\IContainer $context 
+	 * @param Nette\DI\Container $context 
 	 */
-	function __construct(Nette\DI\IContainer $context) {
+	function __construct(Nette\DI\Container $context) {
 		$this->context = $context;
 		
 		Nette\Diagnostics\Debugger::addPanel(new vBuilder\Diagnostics\WebFilesBar);

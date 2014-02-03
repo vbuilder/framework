@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -43,45 +43,45 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 	protected $data;
 	/** @var bool true if data has been loaded already */
 	protected $loaded = false;
-	
-	/** @var Nette\DI\IContainer */ 
+
+	/** @var Nette\DI\Container */
 	protected $context;
 
 	/**
 	 * Conctructs collection
-	 * 
+	 *
 	 * @param Entity reference to parent entity
 	 * @param string name of virtual field in parent entity
 	 */
-	function __construct(Entity &$parent, $fieldName, Nette\DI\IContainer $context) {
+	function __construct(Entity &$parent, $fieldName, Nette\DI\Container $context) {
 		$this->context = $context;
 		$this->parent = &$parent;
 		$this->field = $fieldName;
 	}
-	
+
 	/**
 	 * Returns owning entity
-	 * 
+	 *
 	 * @return Entity
 	 */
 	public function getParent() {
 		return $this->parent;
 	}
-	
+
 	/**
 	 * Returns name of joined field
-	 * 
-	 * @return string 
+	 *
+	 * @return string
 	 */
 	public function getIdField() {
 		return $this->field;
 	}
-	
+
 	/**
 	 * Saves loaded data (called from repository loader)
-	 * 
+	 *
 	 * @param array of data
-	 * 
+	 *
 	 * @internal
 	 */
 	public function performDataLoad($data) {
@@ -93,7 +93,7 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 	 * Calls load on repository
 	 */
 	public function load() {
-		$this->context->repository->load($this);		
+		$this->context->repository->load($this);
 	}
 
 	/**
@@ -109,7 +109,7 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 	public function mightNeedSave() {
 		// Pokud data nebyla nactena ani nebyla pridana zadna nova entita
 		// nebudeme se ani pokouset o save
-		
+
 		return count($this->data) > 0;
 	}
 
@@ -117,8 +117,8 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 
 	/**
 	 * Returns data as an array
-	 * 
-	 * @return array 
+	 *
+	 * @return array
 	 */
 	function toArray() {
 		if(!$this->loaded)
@@ -128,8 +128,8 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 
 	/**
 	 * Implementation of magic function for string representation
-	 * 
-	 * @return string 
+	 *
+	 * @return string
 	 */
 	function __toString() {
 		return "Collection({$this->count()})";
@@ -137,20 +137,20 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 
 	/**
 	 * Implementation of IteratorAggregate::getIterator
-	 * @return ArrayIterator 
+	 * @return ArrayIterator
 	 */
 	public function getIterator() {
 		if(!$this->loaded)
 			$this->load();
-		
+
 		return new \ArrayIterator($this->data);
 	}
 
 	/**
 	 * Implementation of ArrayAccess::offsetExists
-	 * 
+	 *
 	 * @param string $offset
-	 * 
+	 *
 	 * @return bool
 	 */
 	function offsetExists($offset) {
@@ -161,9 +161,9 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 
 	/**
 	 * Implementation of ArrayAccess::offsetGet
-	 * 
+	 *
 	 * @param string $offset
-	 * 
+	 *
 	 * @return mixed
 	 */
 	function offsetGet($offset) {
@@ -174,10 +174,10 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 
 	/**
 	 * Implementation of ArrayAccess::offsetSet
-	 * 
+	 *
 	 * @param string $offset
-	 * @param mixed $value 
-	 * 
+	 * @param mixed $value
+	 *
 	 * @return void
 	 */
 	function offsetSet($offset, $value) {
@@ -186,9 +186,9 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 
 	/**
 	 * Implementation of ArrayAccess::offsetUnset
-	 * 
+	 *
 	 * @param string $offset
-	 * 
+	 *
 	 * @return void
 	 */
 	function offsetUnset($offset) {
@@ -197,8 +197,8 @@ class Collection extends vBuilder\Object implements \ArrayAccess, \Countable, \I
 
 	/**
 	 * Implementation of Countable::count
-	 * 
-	 * @return int 
+	 *
+	 * @return int
 	 */
 	function count() {
 		if(!$this->loaded) $this->load();

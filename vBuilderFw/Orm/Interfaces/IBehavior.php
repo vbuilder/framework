@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,14 +32,14 @@ use Nette;
  * @since Apr 7, 2011
  */
 interface IBehavior {
-	
+
 	/**
 	 * Register behavior to entity
-	 * 
-	 * @parem Nette\DI\IContainer DI
+	 *
+	 * @parem Nette\DI\Container DI
 	 * @param Entity entity reference
 	 * @param array of arguments (associative)
 	 */
-	public function __construct(Nette\DI\IContainer $context, Entity $entity, array $args = array());
-	
+	public function __construct(Nette\DI\Container $context, Entity $entity, array $args = array());
+
 }

@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -124,7 +124,7 @@ class Helpers {
 			if ($var instanceof \Closure) {
 				$rc = new \ReflectionFunction($var);
 				$arr = array();
-				foreach ($rc->getParameters() as $param) {				
+				foreach ($rc->getParameters() as $param) {
 					$arr[] = '$' . $param->getName();
 				}
 				$arr = array('file' => $rc->getFileName(), 'line' => $rc->getStartLine(), 'parameters' => implode(', ', $arr));
@@ -149,15 +149,15 @@ class Helpers {
 						$m = ' <span class="php-visibility">' . ($k[1] === '*' ? 'protected' : 'private') . '</span>';
 						$k = substr($k, strrpos($k, "\x00") + 1);
 					}
-					
+
 					$k = strtr($k, preg_match($reBinary, $k) || preg_last_error() ? $tableBin : $tableUtf);
 					$k = htmlSpecialChars(preg_match('#^\w+$#', $k) ? $k : "\"$k\"");
-					
+
 					// -------------------------------------------------------------------
 
 					$s .= "$space$space1<span class=\"php-key\">$k</span>$m => ";
 
-					if($v instanceof Nette\DI\IContainer)
+					if($v instanceof Nette\DI\Container)
 						$s .= "{ DI CONTAINER }\n";
 					else
 						$s .= self::htmlDump($v, $level + 1);
@@ -181,5 +181,5 @@ class Helpers {
 		}
 	}
 
-	
+
 }

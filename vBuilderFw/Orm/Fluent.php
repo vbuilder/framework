@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -38,35 +38,35 @@ class Fluent extends \DibiFluent {
 
 	/** @var string name of row class */
 	protected $rowClass = null;
-	
-	/** @var Nette\DI\IContainer DI */
+
+	/** @var Nette\DI\Container DI */
 	protected $context;
 
 	/**
 	 * Constructs fluent object
-	 * 
+	 *
 	 * @param string $rowClass row class
-	 * @param Nette\DI\IContainer DI
+	 * @param Nette\DI\Container DI
 	 */
-	public function __construct($rowClass, Nette\DI\IContainer $context) {
+	public function __construct($rowClass, Nette\DI\Container $context) {
 		$this->rowClass = $rowClass;
 		$this->context = $context;
-		
+
 		parent::__construct($this->context->database->connection);
 	}
 
 	/**
 	 * Returns row class name which will be assigned as result set data holder
-	 * 
+	 *
 	 * @return string class name
 	 */
 	public function getRowClass() {
 		return $this->rowClass;
 	}
-	
+
 	/**
 	 * Executes query and translates result
-	 * 
+	 *
 	 * @param  array|mixed      one or more arguments
 	 * @return DibiResult|int
 	 */
@@ -75,7 +75,7 @@ class Fluent extends \DibiFluent {
 		if($result instanceOf \DibiResult) {
 			$context = $this->context;
 			$rowClass = $this->rowClass;
-			
+
 			$result->setRowFactory(function ($data) use ($context, $rowClass) {
 				return new $rowClass($data, $context);
 			});
@@ -139,28 +139,28 @@ class Fluent extends \DibiFluent {
 	public function fetchAssoc($assoc) {
 		// Dibi implementace fetchAssoc s ORM nefunguje, protoze nepodporuje array access
 		// return $this->query($this->_export())->fetchAssoc($assoc);
-		
+
 		// Quick 'n' dirty:
-		
+
 		if(!is_scalar($assoc))
 			throw new Nette\NotImplementedException("Current implementation of " . get_called_class() . "::fetchAssoc does not support non-scalar parameters");
-					
+
 		$dibiResult = $this->query($this->_export());
-					
+
 		$dibiResult->seek(0);
 		$row = $dibiResult->fetch();
 		if (!$row) return array();  // empty result set
-				
+
 		if(!$row->getMetadata()->hasField($assoc))
 			throw new Nette\InvalidArgumentException(get_class($row) . " does not have any field " . var_export($assoc, true));
-		
+
 		$resultset = array();
-		
+
 		do {
 			$resultset[$row->{$assoc}] = $row;
-			
+
 		} while ($row = $dibiResult->fetch());
-		
+
 		return $resultset;
 	}
 

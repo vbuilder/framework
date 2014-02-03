@@ -40,15 +40,15 @@ class MailNotificator extends vBuilder\EventListener {
 	/** @var Nette\Templating\ITemplate */
 	private $_template;
 	
-	/** @var Nette\DI\IContainer */ 
+	/** @var Nette\DI\Container */ 
 	protected $context;
 	
 	/**
 	 * Constructor
 	 * 
-	 * @param Nette\DI\IContainer $context 
+	 * @param Nette\DI\Container $context 
 	 */
-	public function __construct(Nette\DI\IContainer $context) {
+	public function __construct(Nette\DI\Container $context) {
 		$this->context = $context;		
 	}
 	

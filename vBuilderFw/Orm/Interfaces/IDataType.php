@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -39,17 +39,17 @@ interface IDataType {
 	 *
 	 * @param string field name
 	 * @param Entity instance
-	 * @param Nette\DI\IContainer DI context
+	 * @param Nette\DI\Container DI context
 	 */
-	public function __construct($fieldName, &$entity, Nette\DI\IContainer $context);
+	public function __construct($fieldName, &$entity, Nette\DI\Container $context);
 
 	/**
 	 * Tries to convert value from setter
-	 * 
+	 *
 	 * @throws Nette\InvalidArgumentException if input is not convertible
 	 */
 	public function convertFrom(&$data);
-	
+
 	/**
 	 * Returns array of names of all data types accepted by this class.
 	 * Assumes PHP 5.3 (in earlier versions it should still work, but not if
@@ -61,5 +61,5 @@ interface IDataType {
 	public static function acceptedDataTypes();
 
 	public function __toString();
-	
+
 }

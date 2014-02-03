@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -34,12 +34,12 @@ use vBuilder, Nette;
  */
 class RegionProvider extends Nette\Object {
 
-	/** @var Nette\DI\IContainer DI context container */
+	/** @var Nette\DI\Container DI context container */
 	protected $context;
 
 	private $_activeRegion;
 
-	public function __construct(Nette\DI\IContainer $context) {
+	public function __construct(Nette\DI\Container $context) {
 		$this->context = $context;
 	}
 
@@ -67,7 +67,7 @@ class RegionProvider extends Nette\Object {
 /**
  * Region representation
  */
-class Region { 
+class Region {
 
 	protected $_parent;
 	protected $_data = array();
@@ -92,7 +92,7 @@ class Region {
 			$v = $this->_data[$name];
 		elseif($this->_parent !== NULL)
 			$v = $this->_parent->{$name};
-					
+
 		return $v;
 	}
 

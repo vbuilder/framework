@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -35,17 +35,17 @@ use vBuilder,
  */
 class ClassInfoProvider extends Nette\Object {
 
-	/** @var Nette\DI\IContainer DI context container */
+	/** @var Nette\DI\Container DI context container */
 	protected $context;
 
-	public function __construct(Nette\DI\IContainer $context) {
+	public function __construct(Nette\DI\Container $context) {
 		$this->context = $context;
 	}
 
 	/**
 	 * Returns all child classes of specified parent.
 	 * Results are cached along with robot cache.
-	 * 
+	 *
 	 * @param string parent class name
 	 * @return array of fully qualified class names (with namespace)
 	 */
@@ -53,15 +53,15 @@ class ClassInfoProvider extends Nette\Object {
 		$cacheKey = array();
 		$cacheKey[] = 'childrenOf';
 		$cacheKey[] = $parentClassName;
-		
+
 		return $this->getAllClassesHelper($cacheKey, function ($className) use ($parentClassName) {
 			return is_subclass_of($className, $parentClassName);
 		});
 	}
-	
+
 	/**
 	 * Returns all classes implementing specified interface
-	 * 
+	 *
 	 * @param string interface name
 	 * @return array of fully qualified class names (with namespace)
 	 */
@@ -69,17 +69,17 @@ class ClassInfoProvider extends Nette\Object {
 		$cacheKey = array();
 		$cacheKey[] = 'implementing';
 		$cacheKey[] = $interfaceName;
-		
+
 		return $this->getAllClassesHelper($cacheKey, function ($className) use ($interfaceName) {
 			$class = new Nette\Reflection\ClassType($className);
 
 			return $class->implementsInterface($interfaceName) && $interfaceName != $className;
 		});
 	}
-	
+
 	private function getAllClassesHelper($cacheKey, $cb) {
 		$cache = new Nette\Caching\Cache($this->context->cacheStorage, 'Nette.RobotLoader');
-		
+
 		if(isset($cache[$cacheKey])) {
 			return $cache[$cacheKey];
 		} else {
@@ -90,12 +90,12 @@ class ClassInfoProvider extends Nette\Object {
 					$children[] = $className;
 				}
 			}
-			
+
 			$cache->save($cacheKey, $children);
 			return $children;
 		}
 	}
-	
+
 	/**
 	 * Returns array of all indexed classes
 	 *
@@ -115,7 +115,7 @@ class ClassInfoProvider extends Nette\Object {
 
 		if(count($classes) == 0)
 			$classes = get_declared_classes();
-			
+
 		return $classes;
 	}
 

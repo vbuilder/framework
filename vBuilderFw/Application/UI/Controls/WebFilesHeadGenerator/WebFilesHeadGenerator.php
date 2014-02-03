@@ -35,10 +35,10 @@ use vBuilder,
  * @since Mar 13, 2011
  */
 class WebFilesHeadGenerator extends Nette\Application\UI\Control {
-	
+
 	/** @var string rendered hash */
 	private $_renderedHash = array();
-	
+
 	/** @var string rendered HTML of created HEAD tags */
 	private $_renderedHtml;
 
@@ -51,13 +51,13 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 	/**
 	  * Returns DI context container
 	  *
-	  * @return Nette\DI\IContainer
+	  * @return Nette\DI\Container
 	  */
 	public function getContext() {
 		return $this->getPresenter(true)->context;
 	}
-	
-	/** 
+
+	/**
 	 * Returns base URL
 	 *
 	 * @return string
@@ -65,10 +65,10 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 	private function getBaseUrl() {
 		return rtrim($this->context->httpRequest->getUrl()->getBaseUrl(), '/');
 	}
-	
+
 	/**
 	 * Adds addtional HTML element to head
-	 * 
+	 *
 	 * @param Nette\Utils\Html $el
 	 * @return  WebFilesHeadGenerator fluent interface
 	 */
@@ -89,7 +89,7 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 		$this->_renderedHash[WebFilesGenerator::STYLESHEET] = $webFiles->getHash(WebFilesGenerator::STYLESHEET);
 		if($this->_renderedHash[WebFilesGenerator::STYLESHEET] !== null) {
 			$lastModSuffix = $webFiles->getLastModification(WebFilesGenerator::STYLESHEET) !== null ? '?ver=' . $webFiles->getLastModification(WebFilesGenerator::STYLESHEET) : '';
-			
+
 			$output .= (string) Html::el('link', array(
 				'rel' => 'stylesheet',
 				'href' => $this->getBaseUrl() . '/css/' . $this->_renderedHash[WebFilesGenerator::STYLESHEET] . '.css' . $lastModSuffix,
@@ -97,17 +97,17 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 				'media' => 'all',
 			));
 		}
-		
+
 		// JS --------------------------
 		$this->_renderedHash[WebFilesGenerator::JAVASCRIPT] = $webFiles->getHash(WebFilesGenerator::JAVASCRIPT);
 		if($this->_renderedHash[WebFilesGenerator::JAVASCRIPT] !== null) {
 			$lastModSuffix = $webFiles->getLastModification(WebFilesGenerator::JAVASCRIPT) !== null ? '?ver=' . $webFiles->getLastModification(WebFilesGenerator::JAVASCRIPT) : '';
-		
+
 			$scriptEl = Html::el('script', array(
 				'type' => 'text/javascript',
 				'src' => $this->getBaseUrl() . '/js/' . $this->_renderedHash[WebFilesGenerator::JAVASCRIPT] . '.js' . $lastModSuffix
 			));
-			
+
 			$output .= "\n" . $scriptEl->startTag() . $scriptEl->endTag();
 		}
 
@@ -120,7 +120,7 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 				$output .= "\n" . $el->render();
 			}
 		}
-		
+
 		return $output;
 	}
 
@@ -132,7 +132,7 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 
 		echo $this->_renderedHtml;
 	}
-	
+
 	/**
 	 * Fixes rendered data to contain correct data hashes
 	 * which may have changed during late render addCss / addJs
@@ -141,13 +141,13 @@ class WebFilesHeadGenerator extends Nette\Application\UI\Control {
 	 */
 	public function lateRenderFix(&$renderedHtml) {
 		if(!isset($this->_renderedHtml)) return ;
-	
+
 		$webFiles = $this->context->webFilesGenerator;
-		
+
 		if($this->_renderedHash[WebFilesGenerator::JAVASCRIPT] !== $webFiles->getHash(WebFilesGenerator::JAVASCRIPT) || $this->_renderedHash[WebFilesGenerator::STYLESHEET] !== $webFiles->getHash(WebFilesGenerator::STYLESHEET) || $this->_addtionalElements != $this->_renderedAddtionalElements) {
-		
+
 			$renderedHtml = str_replace($this->_renderedHtml, $this->renderToString(), $renderedHtml);
 		}
 	}
-	 
+
 }

@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,24 +37,24 @@ class ArrayFluent implements \IteratorAggregate {
 
 	/** @var array of data */
 	protected $data;
-	
-	/** @var Nette\DI\IContainer DI */
+
+	/** @var Nette\DI\Container DI */
 	protected $context;
-	
+
 	private $whereConditions = array();
-	
+
 	private $iterator;
 
 	/**
 	 * Constructs fluent object
-	 * 
+	 *
 	 * @param array of entities (or entity data)
-	 * 
-	 * @param Nette\DI\IContainer DI
+	 *
+	 * @param Nette\DI\Container DI
 	 */
-	public function __construct($array, Nette\DI\IContainer $context) {
+	public function __construct($array, Nette\DI\Container $context) {
 		$this->data = $array;
-		
+
 		$this->context = $context;
 	}
 
@@ -62,12 +62,12 @@ class ArrayFluent implements \IteratorAggregate {
 	 * @return ArrayFluent
 	 */
 	public function where($expression, $value) {
-		if(preg_match('/^\\[([^\\]]+)\\] = %[si]$/', $expression, $matches) < 1) 
+		if(preg_match('/^\\[([^\\]]+)\\] = %[si]$/', $expression, $matches) < 1)
 				throw new Nette\NotSupportedException("Only simple '[column] = %s' where expressions supported");
-		
+
 		$this->iterator = null;
 		$this->whereConditions[] = array($matches[1], $value);
-		
+
 		return $this;
 	}
 
@@ -82,23 +82,23 @@ class ArrayFluent implements \IteratorAggregate {
 				$conditions = $this->whereConditions;
 				$this->iterator = new Nette\Iterators\Filter($this->iterator, function ($it) use ($conditions) {
 					$entity = $it->getInnerIterator()->current();
-					
+
 					foreach($conditions as $cond) {
 						if($entity instanceof Entity) {
 							if($entity->{$cond[0]} != $cond[1]) return false;
 						}
 					}
-					
+
 					return true;
 				});
 			}
 		}
-		
+
 		return $this->iterator;
 	}
-	
+
 	/**
-	 * @return Array 
+	 * @return Array
 	 */
 	public function fetchAll() {
 		$result = array();

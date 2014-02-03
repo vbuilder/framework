@@ -67,7 +67,7 @@ class Cache extends Nette\Object {
 	/**
 	 * Constructor
 	 * 
-	 * @param Nette\DI\IContainer DI
+	 * @param Nette\DI\Container DI
 	 */
 	public function __construct(IRepository $repository, $entityClass, Nette\Caching\IStorage $cacheStorage) {
 		$this->repository = $repository;

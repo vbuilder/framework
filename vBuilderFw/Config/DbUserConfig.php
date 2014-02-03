@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -33,64 +33,64 @@ use Nette;
  * @since Jun 18, 2011
  */
 class DbUserConfig extends DbConfigScope implements IConfig {
-	
+
 	/** @var int|null user id */
 	private $userId;
-	
-	public static function createService($configFile, Nette\DI\IContainer $context) {
+
+	public static function createService($configFile, Nette\DI\Container $context) {
 		$user = $context->user;
 		$userConfig = new self($context, $user->isLoggedIn() ? $user->getId() : null, $configFile);
-				
+
 		$user->onLoggedIn[] = function () use ($userConfig, $user) {
 			$userConfig->setUserId($user->getId());
 		};
-		
+
 		$user->onLoggedOut[] = function () use ($userConfig) {
 			$userConfig->setUserId(null);
 		};
-		
+
 		return $userConfig;
 	}
-	
+
 	/**
 	 * Constructor
-	 * 
-	 * @param Nette\DI\IContainer DI
+	 *
+	 * @param Nette\DI\Container DI
 	 * @param vBuilder\Security\User|int|null user id, if null only global config
 	 * will be loaded
 	 */
-	function __construct(Nette\DI\IContainer $context, $user = null, $configFile = null) {		
+	function __construct(Nette\DI\Container $context, $user = null, $configFile = null) {
 		$defaults = $configFile !== null && (is_array($configFile) || file_exists($configFile))
 				  ? new FileConfigScope((array) $configFile)
 				  : null;
-		
+
 		$global = new DbConfigScope($context, 'global', $defaults);
-		
+
 		if(is_object($user)) $this->userId = $user->getId();
 		else $this->userId = $user;
-		
+
 		parent::__construct($context, $this->userId !== null ? 'user('.$this->userId.')' : null, $global);
 	}
-	
+
 	/**
 	 * Returns user id of user whoose config it is loaded
-	 * 
+	 *
 	 * @return int|null user id or null if it is global config only
 	 */
 	function getUserId() {
 		return $this->userId;
 	}
-	
+
 	/**
 	 * Sets user id and loads it's config
-	 * 
+	 *
 	 * @param int user id
 	 */
 	function setUserId($userId) {
 		$this->userId = $userId;
 		$this->setScopeName($this->userId !== null ? 'user('.$this->userId.')' : null);
 	}
-	
+
 	/**
 	 * Shortcut to get global scope
 	 */
@@ -98,27 +98,27 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 		if($this->userId !== null) return $this->getFallbackScope();
 		else return $this;
 	}
-	
+
 	/**
 	 * Cascadading save
 	 */
 	public function save() {
 		parent::save();
-		
+
 		$ptr = $this->getFallbackScope();
 		while($ptr) {
 			$ptr->save();
 			$ptr = $ptr->getFallbackScope();
-		} 
+		}
 	}
-	
+
 	/**
 	 * Returns absolute path to config file with default values
-	 * 
+	 *
 	 * @return string absolute path
 	 */
 	public static function getDefaultsFilepath() {
 		return APP_DIR . '/defaults.neon';
 	}
-	
+
 }

@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -34,7 +34,7 @@ use vBuilder,
  *	 You can't bypass check by adding following line into /etc/ldap.conf:
  *		TLS_REQCERT never
  *   (apache restart might be required)
- * 
+ *
  * @author Adam Staněk (velbloud)
  * @since Sep 10, 2013
  */
@@ -50,7 +50,7 @@ class LdapConnection extends Nette\Object {
 		self::BIND_PASSWORD => NULL
 	);
 
-	/** @var Nette\DI\IContainer DI context container */
+	/** @var Nette\DI\Container DI context container */
 	protected $context;
 
 	/** @var resource */
@@ -59,7 +59,7 @@ class LdapConnection extends Nette\Object {
 	/** @var boolean */
 	protected $bound = FALSE;
 
-	public function __construct(array $parameters, Nette\DI\IContainer $context) {
+	public function __construct(array $parameters, Nette\DI\Container $context) {
 		$this->context = $context;
 		$this->setParameters($parameters);
 
@@ -76,7 +76,7 @@ class LdapConnection extends Nette\Object {
 
 	/**
 	 * Open LDAP resource
-	 * 
+	 *
 	 * @return LdapConnection fluent interface
 	 * @throws Nette\InvalidStateException if already opened
 	 * @throws LdapException if resource could not been created
@@ -94,7 +94,7 @@ class LdapConnection extends Nette\Object {
 
 	/**
 	 * Close opened resource
-	 * 
+	 *
 	 * @return LdapConnection fluent interface
 	 * @throws Nette\InvalidStateException if not opened
 	 */
@@ -112,7 +112,7 @@ class LdapConnection extends Nette\Object {
 	 * Returns TRUE if LDAP resource has been opened (ldap_connect was called)
 	 *
 	 * @note Please note, that this does not mean that the connection has been established!
-	 * 
+	 *
 	 * @return boolean
 	 */
 	public function isOpened() {
@@ -123,7 +123,7 @@ class LdapConnection extends Nette\Object {
 
 	/**
 	 * Bind an LDAP resource
-	 * 
+	 *
 	 * @return LdapConnection fluent interface
 	 * @throws Nette\InvalidStateException if already bound or not yet opened
 	 * @throws LdapException if bind fails
@@ -149,7 +149,7 @@ class LdapConnection extends Nette\Object {
 
 	/**
 	 * Returns TRUE if LDAP resource has been bound (ldap_bind called)
-	 * 
+	 *
 	 * @return boolean
 	 */
 	public function isBound() {
@@ -160,12 +160,12 @@ class LdapConnection extends Nette\Object {
 
 	/**
 	 * Sets connection parameters
-	 * 
+	 *
 	 * @param array $parameters
 	 * @return LdapConnection fluent interface
 	 */
 	public function setParameters(array $parameters) {
-		
+
 		foreach($parameters as $key => $value) {
 			if(!array_key_exists($key, $this->parameters))
 				throw new Nette\InvalidArgumentException("Invalid parameter '$key'");
@@ -174,7 +174,7 @@ class LdapConnection extends Nette\Object {
 				throw new Nette\InvalidStateException("LDAP resource already opened");
 
 			if(in_array($key, array(self::BIND_DN, self::BIND_PASSWORD)) && $this->isBound())
-				throw new Nette\InvalidStateException("LDAP resource already bound");				
+				throw new Nette\InvalidStateException("LDAP resource already bound");
 
 			$this->parameters[$key] = $value;
 		}
@@ -183,7 +183,7 @@ class LdapConnection extends Nette\Object {
 	}
 
 	// -------------------------------------------------------------------------
-	
+
 	/**
 	 * Create result set based on specified LDAP search
 	 * @param  string  base DN
@@ -211,7 +211,7 @@ class LdapConnection extends Nette\Object {
 	/**
 	 * Returns connection resource or NULL
 	 * if no resource has been opened
-	 * 
+	 *
 	 * @return LDAP link resource
 	 */
 	public function getResource() {
@@ -220,7 +220,7 @@ class LdapConnection extends Nette\Object {
 
 	/**
 	 * Routine for lazy preparation
-	 * 
+	 *
 	 * @return LdapConnection fluent interface
 	 */
 	protected function prepare() {
