@@ -6,6 +6,9 @@ services:
 			# Intentionally without @ (we are passing service name, not service itself)
 			- setAuthorizator(user.authorizator.acl)
 
+	userLegacy:
+		class: vBuilder\Security\NetteUserCompatibilityLayer
+
 	# Identity factory
 	user.identityFactory:
 		class: vBuilder\Security\IdentityFactory
