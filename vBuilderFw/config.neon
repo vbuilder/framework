@@ -1,13 +1,22 @@
 services:
+	# Event dispatcher
+	events.dispatcher:
+		class: vBuilder\Events\Dispatcher	
+
 	# Authentication / authorization layer
 	user:
 		class: vBuilder\Security\User
+		inject: true
 		setup:
 			# Intentionally without @ (we are passing service name, not service itself)
 			- setAuthorizator(user.authorizator.acl)
+			- addObserver('onLoggedIn', @user.dbLogger)
 
 	userLegacy:
 		class: vBuilder\Security\NetteUserCompatibilityLayer
+
+	user.dbLogger:
+		class: vBuilder\Security\DatabaseLogger
 
 	# Identity factory
 	user.identityFactory:
@@ -23,7 +32,7 @@ services:
 
 	# Authenticator with PSK in local DB
 	user.authenticator.dbPsk:
-		class: vBuilder\Security\Authenticators\PresharedSecretAuthenticator(@user.identityFactory)
+		class: vBuilder\Security\Authenticators\DatabasePskAuthenticator(@user.identityFactory)
 
 	# ACL authorizator
 	user.authorizator.acl:
