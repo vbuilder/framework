@@ -111,7 +111,7 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 				// Other data
 				), array(
-					'name' => 'givenname',
+					'name' => 'givenName',
 					'surname' => 'sn',
 					'email' => function ($ldapData) use (&$binding) {
 						$username = $binding[0]['username']($ldapData);
