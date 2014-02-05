@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +26,7 @@ namespace vBuilder\Application\UI\Controls;
 use vBuilder,
 	Nette,
 	Nette\Application\Responses\JsonResponse,
-	vBuilder\Application\UI\Controls\DataTable\IModel;	
+	vBuilder\Application\UI\Controls\DataTable\IModel;
 
 /**
  * Control for generating jQuery datatable
@@ -41,7 +41,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 	/** @var DataTable\IModel */
 	private $_model;
-	
+
 	/** @var array of DataTable\Column */
 	private $_columns = array();
 
@@ -69,9 +69,12 @@ class DataTable extends vBuilder\Application\UI\Control {
 	/** @var NULL|string|Callable addtional row class */
 	private $_rowClass;
 
+	/** @var bool initialized? */
+	private $_initialized = false;
+
 	/** @var Nette\Http\SessionSection */
 	protected $session;
-	
+
 	/**
 	 * Creates dummy table
 	 *
@@ -79,17 +82,17 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 */
 	public static function createDummyTable($rows = 72, $cols = 4) {
 		$dt = new static;
-		
+
 		$dt->setModel(new DataTable\DummyArrayModel($rows, $cols));
-		
+
 		for($i = 0; $i < $cols; $i++) {
 			$ch = chr(ord('A') + $i);
 			$dt->addColumn($ch);
 		}
-		
+
 		return $dt;
 	}
-	
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -100,21 +103,23 @@ class DataTable extends vBuilder\Application\UI\Control {
 	public function setModel(IModel $model) {
 		$this->_model = $model;
 	}
-	
+
 	/**
 	 * Returns data model
 	 *
 	 * @return DataTable\IModel
 	 */
 	public function getModel() {
+		if(!$this->_initialized) $this->init();
+
 		return $this->_model;
 	}
-	
+
 	// -------------------------------------------------------------------------
 
 	/**
 	 * Adds new column to the table
-	 * 
+	 *
 	 * @param string name of column
 	 * @param string|null column caption (shows in table head)
 	 *
@@ -122,16 +127,16 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 */
 	public function addColumn($name, $caption = NULL) {
 		$col = new DataTable\Column($name, $caption);
-		
+
 		$this->_columns[] = $col;
 		$col->setTable($this);
 
 		return $col;
 	}
-	
+
 	/**
 	 * Returns registered column instances
-	 * 
+	 *
 	 * @return array of DataTable\Column
 	 */
 	public function getColumns() {
@@ -161,7 +166,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 	/**
 	 * Sets names of columns which uniquely identifies a record
-	 * 
+	 *
 	 * @param string|array column names
 	 * @return DataTable fluent interface
 	 */
@@ -177,7 +182,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 	/**
 	 * Returns ID column names
-	 * 
+	 *
 	 * @return array of string
 	 */
 	public function getIdColumns() {
@@ -191,7 +196,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 *
 	 * @warn Please note that if you are passing direct URL as third argument,
 	 *   it is your own responsibility to protect against CSRF.
-	 * 
+	 *
 	 * @param string name of column
 	 * @param string|null column caption (shows in table head)
 	 * @param string|Callable action callback or URL
@@ -199,9 +204,9 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 * @return DataTable\Button
 	 */
 	public function addButton($name, $caption, $callback) {
-		
+
 		$button = new DataTable\Button($name, $caption);
-		
+
 		if(is_callable($callback))
 			$this->registerAction($name, $callback);
 		else
@@ -215,7 +220,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 	/**
 	 * Returns registered button instances
-	 * 
+	 *
 	 * @return array of DataTable\Button
 	 */
 	public function getButtons() {
@@ -223,10 +228,10 @@ class DataTable extends vBuilder\Application\UI\Control {
 	}
 
 	// -------------------------------------------------------------------------
-	
+
 	/**
 	 * Adds default rule for sorting by column name
-	 * 
+	 *
 	 * @param string column name
 	 * @param string direction ('asc' || 'desc')
 	 *
@@ -257,7 +262,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 	/**
 	 * Sets global filter keywords
-	 * 
+	 *
 	 * @param  string search keywords
 	 * @param  boolean should be keywords treated like regular expression?
 	 * @return DataTable fluent interface
@@ -286,18 +291,18 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 	/**
 	 * Returns number of records to show on a single page
-	 * 
+	 *
 	 * @return int
 	 */
 	public function getRecordsPerPage() {
 		return $this->_recordsPerPage;
 	}
-	
+
 	// -------------------------------------------------------------------------
-	
+
 	/**
 	 * Sets addtional row class
-	 * 
+	 *
 	 * @param NULL|string|Callable
 	 */
 	public function setRowClass($class) {
@@ -309,7 +314,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 	/**
 	 * This method will be called when the component (or component's parent)
 	 * becomes attached to a monitored object. Do not call this method yourself.
-	 * 
+	 *
 	 * @param  Nette\ComponentModel\IComponent
 	 * @return void
  	 */
@@ -329,7 +334,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 	/**
 	 * Returns authorization token
-	 * 
+	 *
 	 * @return string
 	 */
 	public function getAuthToken() {
@@ -339,12 +344,11 @@ class DataTable extends vBuilder\Application\UI\Control {
 	// -------------------------------------------------------------------------
 
 	public function actionDefault() {
-		// Better to perform sanity check here than in AJAX request
-		$this->init();
+		if(!$this->_initialized) $this->init();
 	}
 
 	public function actionGetData() {
-		$this->init();
+		if(!$this->_initialized) $this->init();
 
 		if($this->getParam('authToken') != $this->getAuthToken())
 			throw new Nette\Application\ForbiddenRequestException("Invalid authorization token");
@@ -359,7 +363,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 				$columnIndex = intval($this->context->httpRequest->getQuery("iSortCol_$i", -1)); // Column index (starting with 0)
 				$direction = $this->context->httpRequest->getQuery("sSortDir_$i", 'asc'); // Sorting direction ('asc' || 'desc')
 
-				if(isset($this->_columns[$columnIndex])) 
+				if(isset($this->_columns[$columnIndex]))
 					$sortingColumns[$this->_columns[$columnIndex]->getName()] = $direction;
 			}
 		}
@@ -381,7 +385,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 		// Column filtering
 		for($i = 0; $i < count($this->_columns); $i++) {
 			if($this->context->httpRequest->getQuery("bSearchable_$i") != "true") continue;
-			
+
 
 			if(($keywords = $this->context->httpRequest->getQuery("sSearch_$i")) == "") {
 
@@ -402,15 +406,15 @@ class DataTable extends vBuilder\Application\UI\Control {
 		// In case no column is searchable and global filtering was requested
 		if(count($filter) && count($filter[0]) == 0)
 			array_shift($filter);
-		
+
 		$renderedData = $this->getRenderedData(
-			intval($this->context->httpRequest->getQuery('iDisplayStart', 0)), 
+			intval($this->context->httpRequest->getQuery('iDisplayStart', 0)),
 			intval($this->context->httpRequest->getQuery('iDisplayLength', 0)) ?: $this->_recordsPerPage,
 			$sortingColumns,
 			$filter
 		);
 
-		// Returned structure		
+		// Returned structure
 		$data = array(
 			"sEcho" => intval($this->context->httpRequest->getQuery('sEcho')),
 			"iTotalRecords" => $this->model->getUnfilteredCount(),
@@ -421,13 +425,13 @@ class DataTable extends vBuilder\Application\UI\Control {
 		// Getting unfiltered record count might not be supported by the model
 		if($data['iTotalRecords'] === NULL)
 			$data['iTotalRecords'] = $data['iTotalDisplayRecords'];
-		
+
 		$this->getPresenter(true)->sendResponse(new JsonResponse($data));
 	}
 
 	/**
 	 * Creates an array of data for deffered loading
-	 * 
+	 *
 	 * @return array of arrays (ordered)
 	 */
 	public function getDefferedData() {
@@ -441,12 +445,12 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 	/**
 	 * Creates an array of rendered data for a page of table rows
-	 * 
+	 *
 	 * @param  int starting index
 	 * @param  int number of records to render
 	 * @param  array of columns to sort by
 	 * @param  array of filtering rules
-	 * 
+	 *
 	 * @return array of arrays (ordered)
 	 */
 	public function getRenderedData($start, $length, array $sortingColumns, array $filter) {
@@ -469,12 +473,12 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 		while($iterator->valid()) {
 			$rowData[] = $this->getRenderedRowData($iterator->current());
-			$iterator->next();			
+			$iterator->next();
 		}
 
 		return $rowData;
 	}
-	
+
 	/**
 	 * Returns ordered array formatted for load into table
 	 *
@@ -495,7 +499,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 		// Row id
 		// $trRow['DT_RowId'] = NULL;
-		
+
 		// Row class
 		if(isset($this->_rowClass)) {
 			if(is_callable($this->_rowClass)) {
@@ -508,7 +512,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 				$trRow['DT_RowClass'] = $class;
 		}
 
-		return $trRow;	
+		return $trRow;
 	}
 
 	/**
@@ -517,7 +521,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 * @param mixed row data
 	 * @param string key
 	 * @param bool should I throw an exception if data not found?
-	 * 
+	 *
 	 * @return mixed
 	 * @throws Nette\InvalidArgumentException if key is not found in given row (or is NULL) and $need == TRUE
 	 */
@@ -561,7 +565,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 	/**
 	 * Registers new action with callable
-	 * 
+	 *
 	 * @param  string action name
 	 * @param  Callable
 	 * @return DataTable fluent interface
@@ -578,7 +582,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 * Handles action execution
 	 */
 	public function actionPerform() {
-		$this->init();
+		if(!$this->_initialized) $this->init();
 
 		if($this->getParam('authToken') != $this->getAuthToken())
 			throw new Nette\Application\ForbiddenRequestException("Invalid authorization token");
@@ -600,7 +604,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 	/**
 	 * Generates absolute URL to DataTable action.
 	 * URL contains row ID columns + authorization token as parameters.
-	 * 
+	 *
 	 * @param  string action name
 	 * @param  object|array row data
 	 * @return string absolute URL
@@ -625,7 +629,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 * @return array
 	 */
 	public function createUpdateRowPayload($pk) {
-		
+
 		$filter = array();
 		foreach($pk as $key => $val) {
 			$filter[] = array(
@@ -668,7 +672,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 	protected function init() {
 
 		// Sanity check
-		if($this->model == NULL) throw new Nette\InvalidStateException("No data model has been set (Forget to call DataTable::setModel?)");
+		if($this->_model == NULL) throw new Nette\InvalidStateException("No data model has been set (Forget to call DataTable::setModel?)");
 		if(count($this->_columns) == 0) throw new Nette\InvalidStateException("No columns has been set (Forget to call DataTable::addColumn?)");
 
 		// Auto ID columns
@@ -684,7 +688,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 					$index = count($this->_columns);
 					$this->addColumn($name)->setVisible(false);
 				}
-			}	
+			}
 
 		} else {
 			foreach($this->_columns as $index => $col)
@@ -717,10 +721,14 @@ class DataTable extends vBuilder\Application\UI\Control {
 			foreach($globalFilterColumns as $col)
 				$this->_filter[0][$col->getName()] = $this->_globalFilter;
 		}
+
+		$this->_model->setFilter($this->_filter);
+
+		$this->_initialized = true;
 	}
 
 	// -------------------------------------------------------------------------
-	
+
 	/**
 	 * Renderer factory
 	 *
@@ -729,5 +737,5 @@ class DataTable extends vBuilder\Application\UI\Control {
 	protected function createDefaultRenderer() {
 		return new DataTableRenderer($this);
 	}
-	 
+
 }
