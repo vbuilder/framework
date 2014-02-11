@@ -42,19 +42,22 @@ class Presenter extends Nette\Application\UI\Presenter {
 	 * @return void
 	 */
 	public function checkRequirements($element) {
-		
+
 		// Nejprve se overuje pro Presenter, potom pro metodu (action*)
 		if($element instanceof Nette\Application\UI\PresenterComponentReflection) {
-			
+
 			// Support for PSK
 			// Note: Cannot be in startup() because checkRequirements()
 			//   usually checks for authentication and user has to be logged in
 			//   by then.
 			if($this->getParam('psk') !== NULL) {
+				// Set NULL storage (no session storing)
+				$this->context->user->setStorage();
+
 				if(NULL !== $this->context->user->getAuthenticator(User::AUTHN_METHOD_PSK, User::AUTHN_SOURCE_ALL, FALSE)) {
 					try {
 						$identity = $this->context->user->login(User::AUTHN_METHOD_PSK, User::AUTHN_SOURCE_ALL, $this->getParam('psk'));
-					
+
 					// We ignore invalid PSK and let actual requirements to handle it
 					// (display login, etc...)
 					} catch(Nette\Security\AuthenticationException $e) {
@@ -94,7 +97,7 @@ class Presenter extends Nette\Application\UI\Presenter {
 
 	/**
 	 * Compilation time templating filters
-	 * 
+	 *
 	 * @param  Nette\Templating\Template
 	 * @return void
 	 */
@@ -117,14 +120,14 @@ class Presenter extends Nette\Application\UI\Presenter {
 
 	/**
 	 * Prepares Latte macros
-	 * 
+	 *
 	 * @param  Nette\Latte\Compiler
 	 * @return void
 	 */
 	protected function lattePrepareMacros(Nette\Latte\Compiler $compiler, Nette\Templating\Template $template) {
 		Nette\Latte\Macros\CoreMacros::install($compiler);
 		$compiler->addMacro('cache', new Nette\Latte\Macros\CacheMacro($compiler));
-		
+
 		// Must be before UIMacros
 		vBuilder\Latte\Macros\SystemMacros::install($compiler);
 
@@ -142,14 +145,14 @@ class Presenter extends Nette\Application\UI\Presenter {
 	public function createTemplate($file = null, $class = null) {
 		$tpl = parent::createTemplate();
 		$tpl->context = $this->context;
-		
+
 		$tpl->registerHelper('stripBetweenTags', 'vBuilder\\Latte\\Helpers\\FormatHelpers::stripBetweenTags');
 		$tpl->registerHelper('printf', 'sprintf');
 		$tpl->setTranslator($this->context->translator);
 
 		return $tpl;
 	}
-	
+
 	/**
 	 * Overloaded sendTemplate for web files generation
 	 */
@@ -178,7 +181,7 @@ class Presenter extends Nette\Application\UI\Presenter {
 				throw new Nette\Application\BadRequestException("Page not found. Missing template '$file'.");
 			}
 		}
-		
+
 		// Automatic layout extending by formatLayoutTemplateFiles -----
 		if ($this->layout !== FALSE) { // layout template
 			$files = $this->formatLayoutTemplateFiles();
@@ -203,40 +206,40 @@ class Presenter extends Nette\Application\UI\Presenter {
 
 		// Redering kvuli tomu, aby se zpracovaly pripadna addCss/Js makra pro generator
 		$rendered = $template->__toString(true);
-		
+
 		if($this->context->hasService('webFilesGenerator'))	{
 			$webFileTypes = array(WebFilesGenerator::JAVASCRIPT, WebFilesGenerator::STYLESHEET);
 			$webFiles = $this->context->webFilesGenerator;
-			
+
 			// Generates web files
 			$webFiles->registerOutput(TEMP_DIR . '/webfiles/' . $webFiles->getHash(WebFilesGenerator::JAVASCRIPT) . '.js', WebFilesGenerator::JAVASCRIPT);
 			$webFiles->registerOutput(TEMP_DIR . '/webfiles/' . $webFiles->getHash(WebFilesGenerator::STYLESHEET) . '.css', WebFilesGenerator::STYLESHEET);
-			
-			foreach($webFileTypes as $fileType) {			
+
+			foreach($webFileTypes as $fileType) {
 				if($webFiles->isCached($fileType) === false || $this->snippetMode) {
 					$generatedWebFiles->{$fileType} = $webFiles->generate($fileType, $this->snippetMode);
 				}
 			}
-			
+
 			// Oprava pripadne zmeny CSS / JS souboru po vygenerovani hlavicky
 			if(!$this->snippetMode)
 				$this['webFiles']->lateRenderFix($rendered);
 			else {
 				$this->payload->webFiles = $generatedWebFiles;
 			}
-		}	
-		
+		}
+
 		if($this->snippetMode)
 			$this->sendPayload();
 		else
 			$this->sendResponse(new Nette\Application\Responses\TextResponse($rendered));
 	}
-	
+
 	public function createComponentHeadGenerator($name) {
 		$control = new Controls\HeadGenerator($this, $name);
 		return $control;
 	}
-	
+
 	public function createComponentWebFiles($name) {
 		$control = new Controls\WebFilesHeadGenerator($this, $name);
 		return $control;
@@ -251,5 +254,5 @@ class Presenter extends Nette\Application\UI\Presenter {
 	public function getUser() {
 		return $this->context->getByType('vBuilder\Security\User');
 	}
-	
+
 }

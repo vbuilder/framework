@@ -27,7 +27,8 @@ use vBuilder,
 	Nette,
 	Nette\Security\IIdentity,
 	Nette\Security\IAuthorizator,
-	Nette\Security\AuthenticationException;
+	Nette\Security\AuthenticationException,
+	Nette\Security\IUserStorage;
 
 /**
  * User authorization / authentication abstraction layer
@@ -75,9 +76,24 @@ class User extends vBuilder\Events\Observable {
 	/** @var IAuthorizator */
 	protected $_authorizator;
 
-	public function __construct(Nette\Security\IUserStorage $userStorage, Nette\DI\Container $context) {
+	public function __construct(IUserStorage $userStorage, Nette\DI\Container $context) {
 		$this->context = $context;
-		$this->storage = $userStorage; 
+		$this->storage = $userStorage;
+	}
+
+	/**
+	 * Sets user storage
+	 *
+	 * @param Nette\Security\IUserStorage|NULL
+	 * @return self
+	 */
+	public function setStorage(IUserStorage $userStorage = NULL) {
+		if($userStorage === NULL && !($this->storage instanceof DummyUserStorage))
+			$this->storage = new DummyUserStorage;
+		else
+			$this->storage = $userStorage;
+
+		return $this;
 	}
 
 	/**
