@@ -61,7 +61,7 @@ class DatabasePSKAuthenticator extends BaseAuthenticator {
 	/** @var StdClass */
 	protected $sessionCache;
 
-	public function __construct(\DibiConnection $dbConnection, IIdentityFactory $identityFactory) {
+	public function __construct(\DibiConnection $dbConnection, IIdentityFactory $identityFactory, Nette\DI\Container $context) {
 		parent::__construct($identityFactory);
 		$this->db = $dbConnection;
 

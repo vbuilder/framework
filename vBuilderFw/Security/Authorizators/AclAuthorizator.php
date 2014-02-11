@@ -270,6 +270,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 		// Basic roles
 		$this->addRole('guest');
 		$this->addRole('user', 'guest');
+		$this->addRole('psk', 'guest');
 
 		// Trigger registered initializators
 		foreach($this->onSetup as $cb)

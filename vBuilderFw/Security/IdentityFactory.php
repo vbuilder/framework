@@ -169,7 +169,7 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 		}
 
 		// Preshared secret
-		elseif($authenticator instanceof Authenticators\PresharedSecretAuthenticator) {
+		elseif($authenticator instanceof Authenticators\DatabasePSKAuthenticator) {
 			$uid = Strings::intoParameterizedString('psk', array($userData->key));
 			$roles[] = $uid;
 			$profile = $userData;
