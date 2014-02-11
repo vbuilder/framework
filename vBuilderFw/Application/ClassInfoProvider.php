@@ -102,14 +102,13 @@ class ClassInfoProvider extends Nette\Object {
 	 * @return array of fully qualified class names (names with namespace)
 	 */
 	public static function getIndexedClasses() {
-		$loaders = Nette\Loaders\AutoLoader::getLoaders();
-		$classes = array();
-		if(count($loaders) > 0) {
-			foreach($loaders as $loader) {
-				if($loader instanceof Nette\Loaders\RobotLoader) {
-					$classes = \array_keys($loader->getIndexedClasses());
-					break;
-				}
+		$loaders = (array) spl_autoload_functions();
+
+		foreach($loaders as $loader) {
+			if(!is_array($loader)) continue;
+			if($loader[0] instanceof Nette\Loaders\RobotLoader) {
+				$classes = array_keys($loader[0]->getIndexedClasses());
+				break;
 			}
 		}
 
