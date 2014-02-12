@@ -110,7 +110,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		if($this->httpRequest->isPost()) {
 			$cType = $this->httpRequest->getHeader('Content-Type');
 			if(strcasecmp($cType,  'application/json') === 0) {
-				$this->postData = Nette\Utils\Json::decode(file_get_contents('php://input'));
+				$this->postData = Nette\Utils\Json::decode(file_get_contents('php://input'), Nette\Utils\Json::FORCE_ARRAY);
 			}
 
 			elseif(strcasecmp($cType,  'application/x-www-form-urlencoded') === 0) {
@@ -126,6 +126,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		// Create resource instance and prepare all dependencies ---------------
 		$class = $handlerRequest->getResourceClassName();
 		$resource = new $class;
+		$resource->presenter = $this;
 		$this->systemContainer->callInjects($resource);
 
 		// Prepare and order invoke parameters ---------------------------------
@@ -170,6 +171,15 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 			return new Nette\Application\Responses\TextResponse(
 				(string) Nette\Utils\Html::el('pre', Nette\Utils\Json::encode($payload, Nette\Utils\Json::PRETTY))
 			);
+	}
+
+	/**
+	 * Returns POST data
+	 *
+	 * @return mixed
+	 */
+	public function getPostData() {
+		return $this->postData;
 	}
 
 }

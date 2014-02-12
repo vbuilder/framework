@@ -33,14 +33,19 @@ use vBuilder, Nette;
  */
 class Resource extends Nette\Object {
 
-	/** @var Nette\Http\IRequest */
-	protected $httpRequest;
+	/** @var Nette\Http\IRequest @inject */
+	public $httpRequest;
+
+	/** @var Nette\Application\IPresenter */
+	public $presenter;
 
 	/**
-	 * Connects object with primary services
+	 * Returns POST data
+	 *
+	 * @return mixed
 	 */
-	public function injectPrimary(Nette\Http\IRequest $httpRequest) {
-		$this->httpRequest = $httpRequest;
+	public function getPostData() {
+		return $this->presenter->getPostData();
 	}
 
 }
