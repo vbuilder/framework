@@ -84,6 +84,11 @@ services:
 	regionProvider:
 		class: vBuilder\Application\UI\RegionProvider
 
+	# REST APi
+	rest.router:
+		class: vBuilder\RestApi\RequestRouter
+		inject: true
+
 parameters:
 	languages: ['cs']
 
