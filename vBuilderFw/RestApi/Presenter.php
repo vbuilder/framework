@@ -238,12 +238,11 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		$ifModifiedSince = $this->httpRequest->getHeader('If-Modified-Since');
 		if($ifModifiedSince === NULL) return ;
 
-		$format = 'D, d M Y H:i:s T';
-		$ifDate = \DateTime::createFromFormat($format, $ifModifiedSince);
-		$ifDate->setTimeZone(new \DateTimeZone(date_default_timezone_get()));
+		$ifDate = vBuilder\Utils\Http::parseDateTime($ifModifiedSince);
 
-		// RFC tell us to ignore error silently
+		// RFC tell us to ignore invalid dates silently
 		if(!$ifDate) return ;
+		$ifDate->setTimeZone(new \DateTimeZone(date_default_timezone_get()));
 
 		if(is_callable($lastModificationDate)) {
 			$lastModificationDate = $lastModificationDate();
