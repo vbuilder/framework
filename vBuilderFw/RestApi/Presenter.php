@@ -24,7 +24,8 @@
 namespace vBuilder\RestApi;
 
 use vBuilder,
-	Nette;
+	Nette,
+	Nette\Application\AbortException;
 
 /**
  * Base implementation of REST API Presenter
@@ -58,10 +59,28 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	/** @var string */
 	protected $outputContentType;
 
+	/** @var Nette\Application\IResponse */
+	protected $response;
+
 	/**
 	 * @return Nette\Application\IResponse
 	 */
 	public function run(Nette\Application\Request $request) {
+
+		try {
+			$this->response = $this->process($request);
+
+		} catch(AbortException $e) {
+
+		}
+
+		return $this->response;
+	}
+
+	/**
+	 * @return Nette\Application\IResponse
+	 */
+	protected function process(Nette\Application\Request $request) {
 
 		// Query output content type -------------------------------------------
 
@@ -180,6 +199,60 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	 */
 	public function getPostData() {
 		return $this->postData;
+	}
+
+	/**
+	 * Terminates current request and sends HTTP response with
+	 * code and optionaly payload formatted for requested output content type
+	 *
+	 * @throws AbortException
+	 */
+	public function terminateWithCode($code, $payload = NULL) {
+
+		$this->httpResponse->setCode($code);
+
+		if(func_num_args() == 1)
+			$this->response = new Nette\Application\Responses\TextResponse(NULL);
+		else
+			$this->response = $this->createResponse($payload);
+
+		throw new AbortException();
+	}
+
+	/**
+	 * Terminates request and sends empty HTTP 304 response if
+	 * given date is less or equal to date send with If-Modified-Since header.
+	 *
+	 * Method takes date as a parameter. Callable returning DateTime is also
+	 * acceptable and recommended in cases when gathering of last modification date
+	 * is difficult. This way the callback will be invoked only if If-Modified-Since
+	 * is present.
+	 *
+	 * @param DateTime|callable
+	 * @throws AbortException
+	 */
+	public function terminateIfNoOlderThan($lastModificationDate) {
+		if(!($lastModificationDate instanceof \DateTime) && !is_callable($lastModificationDate))
+			throw new Nette\InvalidArgumentException("Function accepts only DateTime or callable returning DateTime");
+
+		$ifModifiedSince = $this->httpRequest->getHeader('If-Modified-Since');
+		if($ifModifiedSince === NULL) return ;
+
+		$format = 'D, d M Y H:i:s T';
+		$ifDate = \DateTime::createFromFormat($format, $ifModifiedSince);
+		$ifDate->setTimeZone(new \DateTimeZone(date_default_timezone_get()));
+
+		// RFC tell us to ignore error silently
+		if(!$ifDate) return ;
+
+		if(is_callable($lastModificationDate)) {
+			$lastModificationDate = $lastModificationDate();
+			if(!($lastModificationDate instanceof \DateTime))
+				throw new Nette\InvalidArgumentException("Callback has to return DateTime");
+		}
+
+		if($ifDate >= $lastModificationDate)
+			$this->terminateWithCode(Nette\Http\IResponse::S304_NOT_MODIFIED);
 	}
 
 }
