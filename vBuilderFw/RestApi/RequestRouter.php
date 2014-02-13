@@ -60,7 +60,7 @@ class RequestRouter extends Nette\Object {
 		if(!class_exists($className))
 			throw new Nette\InvalidArgumentException("Class $className does not exist");
 
-		if(!is_a($className, $this->resourceClass, TRUE))
+		if(!is_a($className, $this->resourceProviderClass, TRUE))
 			throw new Nette\InvalidArgumentException("Expected subclass of " . $this->resourceClass);
 
 		if(!isset($this->classes[$className]))
@@ -75,7 +75,7 @@ class RequestRouter extends Nette\Object {
 	 * @return self
 	 */
 	public function registerAllClasses() {
-		$classes = $this->classInfoProvider->getAllChildrenOf($this->resourceClass);
+		$classes = $this->classInfoProvider->getAllChildrenOf($this->resourceProviderClass);
 
 		foreach($classes as $className) {
 			if(!isset($this->classes[$className]))
@@ -86,10 +86,10 @@ class RequestRouter extends Nette\Object {
 	}
 
 	/**
-	 * Returns base Resource class
+	 * Returns base ResourceProvider class
 	 */
-	public function getResourceClass() {
-		return __NAMESPACE__ . '\\Resource';
+	public function getResourceProviderClass() {
+		return __NAMESPACE__ . '\\ResourceProvider';
 	}
 
 	// -------------------------------------------------------------------------

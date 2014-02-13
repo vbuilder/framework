@@ -31,7 +31,7 @@ use vBuilder, Nette;
  * @author Adam Staněk (velbloud)
  * @since Feb 12, 2014
  */
-class Resource extends Nette\Object {
+class ResourceProvider extends Nette\Object {
 
 	/** @var Nette\Http\IRequest @inject */
 	public $httpRequest;
@@ -48,4 +48,4 @@ class Resource extends Nette\Object {
 		return $this->presenter->getPostData();
 	}
 
-}
+ }
