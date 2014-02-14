@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -35,17 +35,17 @@ class Object extends Nette\Object {
 
 	/** @var bool event setup state */
 	private $_eventSetupCalled = false;
-	
+
 	/** @var array of event listener installers: function(Object) */
 	public $onEventSetup = array();
-	
+
 	/**
 	 * Sets up object events
 	 */
 	protected function eventSetup() {
 
 	}
-	
+
 	/**
 	 * Call to undefined method.
 	 * @param  string  method name
@@ -61,38 +61,38 @@ class Object extends Nette\Object {
 		}
 
 		// event functionality
-		if ($class->hasEventProperty($name)) {			
+		if ($class->hasProperty($name)) {
 			if(!$this->_eventSetupCalled) {
 				$this->_eventSetupCalled = true;
-				
+
 				$this->eventSetup();
 				$this->onEventSetup($this);
 			}
-			
+
 			if (is_array($list = $this->$name) || $list instanceof \Traversable) {
 				foreach ($list as $handler) {
 					callback($handler)->invokeArgs($args);
 				}
 			}
-			
+
 			return NULL;
 		}
 
 		// extension methods
-		if ($cb = $class->getExtensionMethod($name)) {
+		if ($cb = Nette\ObjectMixin::getExtensionMethod(get_class($this), $name)) {
 			array_unshift($args, $this);
 			return $cb->invokeArgs($args);
 		}
 
 		throw new Nette\MemberAccessException("Call to undefined method $class->name::$name().");
 	}
-	
+
 	/**
 	 * Allowing to emit static events through public variable
-	 * 
+	 *
 	 * @param string name
 	 * @param array of args
-	 * @return mixed 
+	 * @return mixed
 	 */
 	public static function __callStatic($name, $args) {
 		$class = new Nette\Reflection\ClassType(get_called_class());

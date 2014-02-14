@@ -53,7 +53,7 @@ class DibiRepository extends BaseRepository {
 	public function __construct(Nette\DI\Container $context) {
 		parent::__construct($context);
 
-		$this->db = $this->context->database->connection;
+		$this->db = $this->context->getByType('DibiConnection');
 	}
 
 	/**

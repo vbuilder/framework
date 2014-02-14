@@ -36,7 +36,7 @@ services:
 
 	# Authenticator against records in local DB
 	user.authenticator.dbPassword:
-		class: vBuilder\Security\Authenticators\DatabasePasswordAuthenticator(@user.passwordHasher.sha1Salted, @user.identityFactory)
+		class: vBuilder\Security\Authenticators\DatabasePasswordAuthenticator(@database.connection, @user.passwordHasher.sha1Salted, @user.identityFactory)
 
 	# Authenticator with PSK in local DB
 	user.authenticator.dbPsk:
