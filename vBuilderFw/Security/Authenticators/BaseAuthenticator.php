@@ -36,6 +36,9 @@ use vBuilder,
  */
 abstract class BaseAuthenticator extends Nette\Object implements IAuthenticator {
 
+	/** Exception error code */
+	const MAXIMUM_ATTEMPTS_EXCEEDED = 5;
+
 	/** @var IIdentityFactory */
 	protected $identityFactory;
 

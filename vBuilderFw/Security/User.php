@@ -47,6 +47,8 @@ class User extends vBuilder\Events\Observable {
 	/**/ /** Events */
 	const EVENT_ON_LOGGED_IN = 'onLoggedIn';
 	const EVENT_ON_LOGGED_OUT = 'onLoggedOut';
+	const EVENT_ON_LOGIN_ATTEMPT = 'onLoginAttempt';
+	const EVENT_ON_FAILED_LOGIN_ATTEMPT = 'onFailedLoginAttempt';
 	/**/
 
 	/**/ /** Authorization methods */
@@ -148,7 +150,10 @@ class User extends vBuilder\Events\Observable {
 	public function login($method, $source, $id) {
 
 		$this->logout(TRUE);
+
 		if (!$id instanceof IIdentity) {
+			$this->notifyObservers(self::EVENT_ON_LOGIN_ATTEMPT, $method, $id);
+
 			$handlers = $this->getAuthenticator($method, $source);
 			if(!is_array($handlers)) $handlers = array($handlers);
 
@@ -156,24 +161,27 @@ class User extends vBuilder\Events\Observable {
 			$e = NULL;
 			foreach($handlers as $handler) {
 				try {
-					$id = $handler->authenticate(array_slice(func_get_args(), 2));
+					$identity = $handler->authenticate(array_slice(func_get_args(), 2));
 					$e = NULL;
 					break;
 				} catch(AuthenticationException $e) { }
-
-				if($e !== NULL)
-					throw $e;
 			}
 
-			if(!($id instanceof IIdentity))
+			if($e !== NULL) {
+				$this->notifyObservers(self::EVENT_ON_FAILED_LOGIN_ATTEMPT, $method, $id);
+				throw $e;
+			}
+
+			if(!($identity instanceof IIdentity))
 				throw new Nette\InvalidStateException("Authenticator returned value not implementing IIdentity");
-		}
+		} else
+			$identity = $id;
 
-		$this->storage->setIdentity($id);
+		$this->storage->setIdentity($identity);
 		$this->storage->setAuthenticated(TRUE);
-		$this->notifyObservers(self::EVENT_ON_LOGGED_IN);
+		$this->notifyObservers(self::EVENT_ON_LOGGED_IN, $id);
 
-		return $id;
+		return $identity;
 	}
 
 	/**
