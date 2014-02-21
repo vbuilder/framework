@@ -83,8 +83,7 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 		// DB Password
 		if($authenticator instanceof Authenticators\DatabasePasswordAuthenticator) {
-			$uid = $userData->{$authenticator->getColumn($authenticator::ID)};
-			$roles[] = "user:$uid";
+			$uid = (int) $userData->{$authenticator->getColumn($authenticator::ID)};
 			$profile = $userData;
 		}
 
@@ -135,15 +134,13 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 			if($profile === FALSE) {
 				$boundData = array_merge($boundData, $this->bindValues($ldapData, $binding[1]));
 				$this->db->insert($tableName, $boundData)->execute();
-				$boundData[$idCol] = $uid = $this->db->getInsertId();
+				$boundData[$idCol] = $uid = (int) $this->db->getInsertId();
 				$profile = $boundData;
 			} else {
-				$uid = $profile[$idCol];
+				$uid = (int) $profile[$idCol];
 			}
 
 			$this->db->query('UNLOCK TABLES');
-
-			$roles[] = "user:$uid";
 
 			// TODO: configurable
 			$groupsDn = NULL;
@@ -190,11 +187,9 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 		// ---------------------------------------------------------------------
 
-		$dbRoles = $this->db->query("SELECT [role] FROM %n", $this->tableName[self::TABLE_ROLES], 'WHERE [user] = %s', $uid)->fetchAll();
-		foreach($dbRoles as $curr) {
-			if(!in_array($curr->role, $roles))
-				$roles[] = $curr->role;
-		}
+		// Query roles from DB if it's not PSK (has user id)
+		if(is_int($uid))
+			$roles = array_merge($this->getUserRoles($uid), $roles);
 
 		// ---------------------------------------------------------------------
 
@@ -207,6 +202,25 @@ class IdentityFactory extends Nette\Object implements IIdentityFactory {
 
 
 		return $identity;
+	}
+
+	/**
+	 * Returns roles for given user
+	 *
+	 * @warning Method does NOT check if user actually exists
+	 *
+	 * @param int
+	 * @return array
+	 */
+	public function getUserRoles($userId) {
+
+		$roles = $this->db->query(
+			"SELECT [role] FROM %n", $this->tableName[self::TABLE_ROLES],
+			"WHERE [user] = %i", $userId
+		)->fetchAssoc('[]=role');
+
+		array_unshift($roles, "user:$userId");
+		return array_unique($roles);
 	}
 
 	/**
