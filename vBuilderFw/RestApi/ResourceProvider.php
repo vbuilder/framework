@@ -36,6 +36,9 @@ class ResourceProvider extends Nette\Object {
 	/** @var Nette\Http\IRequest @inject */
 	public $httpRequest;
 
+	/** @var Nette\Http\IResponse @inject */
+	public $httpResponse;
+
 	/** @var Nette\Application\IPresenter */
 	public $presenter;
 
@@ -47,5 +50,28 @@ class ResourceProvider extends Nette\Object {
 	public function getPostData() {
 		return $this->presenter->getPostData();
 	}
+
+	/**
+	 * Returns GET data
+	 *
+	 * @return array
+	 */
+	public function getGetData() {
+		return $this->httpRequest->getQuery();
+	}
+
+	/**
+	 * Sets HTTP header for the response
+	 *
+	 * @param  string  header name
+	 * @param  string  header value
+	 * @return self
+	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 */
+	public function setHeader($name, $value) {
+		$this->httpResponse->setHeader($name, $value);
+		return $this;
+	}
+
 
  }
