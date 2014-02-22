@@ -34,6 +34,11 @@ use vBuilder,
  */
 class DatabaseLogger extends Nette\Object {
 
+	/**/ /** Keys */
+	const TIME = 'time';
+	const IP_ADDRESS = 'ipAddress';
+	/**/
+
 	/** @var DibiConnection */
 	protected $db;
 
@@ -46,6 +51,46 @@ class DatabaseLogger extends Nette\Object {
 	public function __construct(\DibiConnection $dbConnection, Nette\Http\Request $httpRequest) {
 		$this->db = $dbConnection;
 		$this->httpRequest = $httpRequest;
+	}
+
+	/**
+	 * Returns table name
+	 *
+	 * @return string
+	 */
+	public function getTableName() {
+		return $this->tableName;
+	}
+
+	/**
+	 * Sets table name
+	 *
+	 * @param string table name
+	 * @return self
+	 */
+	public function setTableName($tableName) {
+		$this->tableName = $tableName;
+		return $this;
+	}
+
+	/**
+	 * Returns last login info for given user
+	 *
+	 * @param integer user id
+	 * @return NULL|array with keys DatabaseLogger::TIME, DatabaseLogger::IP_ADDRESS
+	 */
+	public function getLastLoginInfo($userId) {
+		$lastLoginInfo = $this->db->query(
+			"SELECT [time2], [ip2] FROM %n", $this->tableName,
+			"WHERE [userId] = %i", $userId
+		)->fetch();
+
+		if($lastLoginInfo === FALSE) return NULL;
+
+		return array(
+			self::TIME => $lastLoginInfo->time2,
+			self::IP_ADDRESS => $lastLoginInfo->ip2
+		);
 	}
 
 	public function onLoggedIn(User $service) {
