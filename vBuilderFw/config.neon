@@ -92,14 +92,20 @@ services:
 	regionProvider:
 		class: vBuilder\Application\UI\RegionProvider
 
-	# REST APi
+	# REST API
 	rest.router:
 		class: vBuilder\RestApi\RequestRouter
 		inject: true
 
+	# Cryptography
+	crypto.secretKeeper:
+		class: vBuilder\Cryptography\AesCipherProvider
+
 parameters:
+	# Languages
 	languages: ['cs']
 
+	# Security policies
 	security:
 		password:
 			minLength: 6
