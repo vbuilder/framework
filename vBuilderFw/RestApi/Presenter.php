@@ -185,7 +185,10 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	 */
 	protected function createResponse($payload) {
 		if($this->outputContentType == 'application/json')
-			return new Nette\Application\Responses\JsonResponse($payload);
+			// Don't use JsonResponse because it manages the caching headers
+			return new Nette\Application\Responses\TextResponse(
+				Nette\Utils\Json::encode($payload)
+			);
 		else
 			return new Nette\Application\Responses\TextResponse(
 				(string) Nette\Utils\Html::el('pre', Nette\Utils\Json::encode($payload, Nette\Utils\Json::PRETTY))
