@@ -24,6 +24,8 @@
 namespace vBuilder\RestApi;
 
 use vBuilder,
+	vBuilder\Security\User,
+	vBuilder\RestApi\OAuth2\OAuth2ResourceProvider,
 	Nette,
 	Nette\Application\AbortException;
 
@@ -40,6 +42,19 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	/** @internal parameter keys */
 	const PARAM_KEY_PATH = 'path';
 	/**/
+
+	/**/ /** Events */
+	const ATTEMPT_IP_TOKEN   = 'ipAuthTokenAttempt';
+	/**/
+
+	/** @var vBuilder\RestApi\OAuth2\ITokenManager @inject */
+	public $tokenManager;
+
+	/** @var vBuilder\Security\User @inject */
+	public $user;
+
+	/** @var vBuilder\Security\DatabaseAttemptLogger @inject */
+	public $attemptLogger;
 
 	/** @var Nette\Http\IRequest @inject */
 	public $httpRequest;
@@ -68,19 +83,22 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	/** @var Nette\Application\Request */
 	protected $appRequest;
 
+
 	/**
 	 * @return Nette\Application\IResponse
 	 */
 	public function run(Nette\Application\Request $request) {
 
+		// Save the application request
 		$this->appRequest = $request;
 
+		// Setup authorization attempt logger
+		$this->attemptLogger->setEvent(self::ATTEMPT_IP_TOKEN, 200, '1 hour', FALSE);
+
+		// Process the request with option to abort with another response
 		try {
 			$this->response = $this->process($request);
-
-		} catch(AbortException $e) {
-
-		}
+		} catch(AbortException $e) { }
 
 		return $this->response;
 	}
@@ -133,6 +151,34 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		if($handlerRequest === NULL)
 			throw new Nette\Application\BadRequestException("No resource handler for given URL / HTTP method");
 
+		// Process Authorization header ----------------------------------------
+		if(($authHeader = $this->httpRequest->getHeader('Authorization')) !== NULL) {
+			if(preg_match('/^Bearer\\s([^\\s,;]+)/i', $authHeader, $matches)) {
+				if(!$this->attemptLogger->getRemainingAttempts(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress())) {
+					$payload = new \StdClass;
+					$payload->error = OAuth2ResourceProvider::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED;
+					$payload->error_description = 'Maximum number of authorization attempts exceeded';
+					$this->terminateWithCode(400, $payload);
+				}
+
+				$token = $this->tokenManager->getToken($matches[1]);
+				if(!$token) {
+					$this->attemptLogger->logFail(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
+
+					$payload = new \StdClass;
+					$payload->error = OAuth2ResourceProvider::ERROR_INVALID_GRANT;
+					$payload->error_description = 'Invalid authorization token';
+					$this->terminateWithCode(401, $payload);
+				}
+
+				$this->attemptLogger->logSuccess(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
+				if(isset($token->parameters->userIdentity)) {
+					$identity = unserialize($token->parameters->userIdentity);
+					$this->user->login(User::AUTHN_METHOD_INVALID, User::AUTHN_SOURCE_ALL, $identity);
+				}
+			}
+		}
+
 		// Decode POST data ----------------------------------------------------
 		if($this->httpRequest->isPost()) {
 			$cType = $this->httpRequest->getHeader('Content-Type');
@@ -179,6 +225,9 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 
 			$invokeParams[$pReflection->getName()] = $requestParams[$pReflection->getName()];
 		}
+
+		// Perform startup
+		$resource->startup();
 
 		// Invoke handler method on resource instance
 		$responsePayload = $mReflection->invokeArgs($resource, $invokeParams);

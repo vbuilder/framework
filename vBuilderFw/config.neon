@@ -102,11 +102,21 @@ services:
 		class: vBuilder\RestApi\RequestRouter
 		inject: true
 
+	# REST API: Token manager
+	rest.oauth2.databaseTokenManager:
+		class: vBuilder\RestApi\OAuth2\DatabaseTokenManager
+		inject: true
+		setup:
+			- setSecretKey(%secretKey%)
+
 	# Cryptography
 	crypto.secretKeeper:
 		class: vBuilder\Cryptography\AesCipherProvider
 
 parameters:
+	# Secret key for symmetric encryption (REST API)
+	secretKey: NULL
+
 	# Languages
 	languages: ['cs']
 

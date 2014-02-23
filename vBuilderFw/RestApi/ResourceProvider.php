@@ -42,6 +42,20 @@ class ResourceProvider extends Nette\Object {
 	/** @var Nette\Application\IPresenter */
 	public $presenter;
 
+	/** @var vBuilder\Security\User @inject */
+	public $user;
+
+	/**
+	 * Startup
+	 *
+	 * @return void
+	 */
+	public function startup() {
+
+	}
+
+	// -------------------------------------------------------------------------
+
 	/**
 	 * Returns POST data
 	 *
