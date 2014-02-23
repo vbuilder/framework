@@ -50,6 +50,9 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	/** @var vBuilder\RestApi\RequestRouter @inject */
 	public $requestRouter;
 
+	/** @var Nette\Application\Application @inject */
+	public $application;
+
 	/** @var Nette\DI\Container @inject */
 	public $systemContainer;
 
@@ -62,10 +65,15 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	/** @var Nette\Application\IResponse */
 	protected $response;
 
+	/** @var Nette\Application\Request */
+	protected $appRequest;
+
 	/**
 	 * @return Nette\Application\IResponse
 	 */
 	public function run(Nette\Application\Request $request) {
+
+		$this->appRequest = $request;
 
 		try {
 			$this->response = $this->process($request);
@@ -193,6 +201,20 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 			return new Nette\Application\Responses\TextResponse(
 				(string) Nette\Utils\Html::el('pre', Nette\Utils\Json::encode($payload, Nette\Utils\Json::PRETTY))
 			);
+	}
+
+	/**
+	 * Returns absolute URL for given resource path
+	 *
+	 * @todo there should be also implementation which transforms resource provider method
+	 *	 into resource path
+	 *
+	 * @param string resource path
+	 * @return string absolute url
+	 */
+	public function link($path = NULL) {
+		$r = new Nette\Application\Request($this->appRequest->getPresenterName(), $this->appRequest->getMethod(), array('action' => 'default', self::PARAM_KEY_PATH => $path));
+		return $this->application->getRouter()->constructUrl($r, $this->httpRequest->getUrl());
 	}
 
 	/**
