@@ -151,7 +151,7 @@ class User extends vBuilder\Events\Observable {
 
 		$this->logout(TRUE);
 
-		if (!$id instanceof IIdentity) {
+		if (!($id instanceof IIdentity)) {
 			$this->notifyObservers(self::EVENT_ON_LOGIN_ATTEMPT, $method, $id);
 
 			$handlers = $this->getAuthenticator($method, $source);
@@ -174,8 +174,10 @@ class User extends vBuilder\Events\Observable {
 
 			if(!($identity instanceof IIdentity))
 				throw new Nette\InvalidStateException("Authenticator returned value not implementing IIdentity");
-		} else
+		} else {
 			$identity = $id;
+			$id = NULL;
+		}
 
 		$this->storage->setIdentity($identity);
 		$this->storage->setAuthenticated(TRUE);

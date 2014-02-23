@@ -112,6 +112,9 @@ class LoginAttemptLogger extends Nette\Object {
 	 */
 	public function onLoggedIn(vBuilder\Security\User $userService, $uid) {
 
+		// If user is logged in by direct assignment of IIdentity
+		if($uid === NULL) return ;
+
 		$this->logger->logSuccess(self::EVENT_IP_LOGIN_ATTEMPT, $this->httpRequest->getRemoteAddress());
 		$this->logger->logSuccess(self::EVENT_USER_LOGIN_ATTEMPT, $uid);
 	}
