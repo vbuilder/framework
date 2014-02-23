@@ -11,9 +11,9 @@ services:
 			# Intentionally without @ (we are passing service name, not service itself)
 			- setAuthorizator(user.authorizator.acl)
 			- addObserver('onLoggedIn', @user.dbLogger)
-			- addObserver('onLoggedIn', @user.dbAttemptLogger)
-			- addObserver('onLoginAttempt', @user.dbAttemptLogger)
-			- addObserver('onFailedLoginAttempt', @user.dbAttemptLogger)
+			- addObserver('onLoggedIn', @user.loginAttemptLogger)
+			- addObserver('onLoginAttempt', @user.loginAttemptLogger)
+			- addObserver('onFailedLoginAttempt', @user.loginAttemptLogger)
 
 	userLegacy:
 		class: vBuilder\Security\NetteUserCompatibilityLayer
@@ -22,9 +22,14 @@ services:
 	user.dbLogger:
 		class: vBuilder\Security\DatabaseLogger
 
-	# Logger: Login attempts
+	# Logger: Authorization attempts
 	user.dbAttemptLogger:
 		class: vBuilder\Security\DatabaseAttemptLogger
+
+	# Logger: User login attempts
+	user.loginAttemptLogger:
+		class: vBuilder\Security\LoginAttemptLogger
+		arguments: [@user.dbAttemptLogger, @httpRequest]
 
 	# Identity factory
 	user.identityFactory:

@@ -42,16 +42,8 @@ use vBuilder,
  */
 class DatabaseAttemptLogger extends Nette\Object {
 
-	/**/ /** Events */
-	const EVENT_IP_LOGIN_ATTEMPT   = 'ipLoginAttempt';
-	const EVENT_USER_LOGIN_ATTEMPT = 'userLoginAttempt';
-	/**/
-
 	/** @var DibiConnection */
 	protected $dbConnection;
-
-	/** @var Nette\Http\IRequest */
-	protected $httpRequest;
 
 	/** @var string table name */
 	protected $tableName = 'security_log';
@@ -59,93 +51,105 @@ class DatabaseAttemptLogger extends Nette\Object {
 	/** @var events */
 	protected $events = array();
 
-	public function __construct(DibiConnection $dbConnection, Nette\Http\IRequest $httpRequest) {
+	/**
+	 * Constructor
+	 *
+	 * @param DibiConnection database connection
+	 */
+	public function __construct(DibiConnection $dbConnection) {
 		$this->dbConnection = $dbConnection;
-		$this->httpRequest = $httpRequest;
-
-		/// @todo configurable events
-
-		// For IPs
-		$this->events[self::EVENT_IP_LOGIN_ATTEMPT] = new \StdClass;
-		$this->events[self::EVENT_IP_LOGIN_ATTEMPT]->maxAttempts = 80;
-		$this->events[self::EVENT_IP_LOGIN_ATTEMPT]->timeWindow = '2 hours';
-		$this->events[self::EVENT_IP_LOGIN_ATTEMPT]->resetOnSuccess = FALSE;
-
-		// For user names
-		//  -> successful login resets the counter
-		$this->events[self::EVENT_USER_LOGIN_ATTEMPT] = new \StdClass;
-		$this->events[self::EVENT_USER_LOGIN_ATTEMPT]->maxAttempts = 8;
-		$this->events[self::EVENT_USER_LOGIN_ATTEMPT]->timeWindow = '1 hour';
-		$this->events[self::EVENT_USER_LOGIN_ATTEMPT]->resetOnSuccess = TRUE;
 	}
 
 	/**
-	 * Listener for {@link User::EVENT_ON_LOGIN_ATTEMPT}
+	 * Sets event properties
 	 *
-	 * Checks if number of attempts wasn't exceeded.
-	 *
-	 * @param vBuilder\Security\User user service
-	 * @param string authentication method - see {@link User::AUTHN_METHOD_INVALID}
-	 * @param string user id (depending on authentication method)
-	 *
-	 * @return void
+	 * @param string event name
+	 * @param integer maximum number of attempts allowed
+	 * @param string time window formatted for DateTime::modify()
+	 * @param bool should counter be reset on success?
+	 * @return self
+	 * @throws Nette\InvalidArgumentException if event name is invalid
 	 */
-	public function onLoginAttempt(vBuilder\Security\User $userService, $authMethod, $uid) {
+	public function setEvent($name, $maxAttempts, $timeWindow, $resetOnSuccess = TRUE) {
 
-		// IPs
-		$n = $this->getNumOfAttempts(self::EVENT_IP_LOGIN_ATTEMPT, $this->httpRequest->getRemoteAddress());
-		if(($max = $this->getMaxNumOfAttempts(self::EVENT_IP_LOGIN_ATTEMPT)) !== NULL && $n > $max)
-			throw new AuthenticationException("Maximum number of attempts exceeded for host " . $this->httpRequest->getRemoteAddress(), BaseAuthenticator::MAXIMUM_ATTEMPTS_EXCEEDED);
+		if(!is_scalar($name) || $name == "")
+			throw new Nette\InvalidArgumentException("Event name has to be non-empty string");
 
-		// Users
-		if($authMethod == User::AUTHN_METHOD_PASSWORD) {
-			$n = $this->getNumOfAttempts(self::EVENT_USER_LOGIN_ATTEMPT, $uid);
-			if(($max = $this->getMaxNumOfAttempts(self::EVENT_USER_LOGIN_ATTEMPT)) !== NULL && $n > $max)
-				throw new AuthenticationException("Maximum number of attempts exceeded for user '$uid'", BaseAuthenticator::MAXIMUM_ATTEMPTS_EXCEEDED);
-		}
+		$this->events[$name] = new \StdClass;
+		$this->events[$name]->maxAttempts = $maxAttempts;
+		$this->events[$name]->timeWindow = $timeWindow;
+		$this->events[$name]->resetOnSuccess = $resetOnSuccess;
+
+		return $this;
 	}
 
 	/**
-	 * Listener for {@link User::EVENT_ON_FAILED_LOGIN_ATTEMPT}
+	 * Returns number of remaining attempts for given event and user
 	 *
-	 * Increments attempt counters.
-	 *
-	 * @param vBuilder\Security\User user service
-	 * @param string authentication method - see {@link User::AUTHN_METHOD_INVALID}
-	 * @param string user id (depending on authentication method)
-	 *
-	 * @return void
+	 * @return integer
+	 * @throws Nette\InvalidArgumentException if event name is invalid
+	 * @throws Nette\InvalidStateException if given event was not set
 	 */
-	public function onFailedLoginAttempt(vBuilder\Security\User $userService, $authMethod, $uid) {
+	public function getRemainingAttempts($event, $uid) {
+		$this->checkEvent($event);
 
-		// IPs
-		$this->getNumOfAttempts(self::EVENT_IP_LOGIN_ATTEMPT, $this->httpRequest->getRemoteAddress(), 1);
+		$n = $this->getNumOfAttempts($event, $uid);
+		if(($max = $this->getMaxNumOfAttempts($event)) !== NULL)
+			return max($max - $n, 0);
 
-		// Users
-		if($authMethod == User::AUTHN_METHOD_PASSWORD)
-			$this->getNumOfAttempts(self::EVENT_USER_LOGIN_ATTEMPT, $uid, 1);
+		return 1;
 	}
 
 	/**
-	 * Listener for {@link User::EVENT_ON_LOGGED_IN}
+	 * Logs failed attempt for given event and user
 	 *
-	 * Resets the counters.
-	 *
-	 * @param vBuilder\Security\User user service
-	 * @param string user id (depending on authentication method)
-	 *
-	 * @return void
+	 * @param string event name
+	 * @param mixed uid
+	 * @return self
+	 * @throws Nette\InvalidArgumentException if event name is invalid
+	 * @throws Nette\InvalidStateException if given event was not set
 	 */
-	public function onLoggedIn(vBuilder\Security\User $userService, $uid) {
+	public function logFail($event, $uid) {
+		$this->checkEvent($event);
+
+		$this->getNumOfAttempts($event, $uid, 1);
+		return $this;
+	}
+
+	/**
+	 * Logs successful attempt for given event and user
+	 *
+	 * @param string event name
+	 * @param mixed uid
+	 * @return self
+	 * @throws Nette\InvalidArgumentException if event name is invalid
+	 * @throws Nette\InvalidStateException if given event was not set
+	 */
+	public function logSuccess($event, $uid) {
+		$this->checkEvent($event);
+
 		$minInt = 255<<(PHP_INT_SIZE*8)-1;
 
-		// IPs
-		if($this->getResetOnSuccess(self::EVENT_IP_LOGIN_ATTEMPT))
-			$this->getNumOfAttempts(self::EVENT_IP_LOGIN_ATTEMPT, $this->httpRequest->getRemoteAddress(), $minInt);
+		if($this->getResetOnSuccess($event))
+			$this->getNumOfAttempts($event, $uid, $minInt);
 
-		// Users
-		if($this->getResetOnSuccess(self::EVENT_USER_LOGIN_ATTEMPT))
-			$this->getNumOfAttempts(self::EVENT_USER_LOGIN_ATTEMPT, $uid, $minInt);
+		return $this;
+	}
+
+	/**
+	 * Checks event
+	 *
+	 * @param string event name
+	 * @return void
+	 * @throws Nette\InvalidArgumentException if event name is invalid
+	 * @throws Nette\InvalidStateException if given event was not set
+	 */
+	protected function checkEvent($event) {
+		if(!is_scalar($event) || $event == "")
+			throw new Nette\InvalidArgumentException("Event name has to be non-empty string");
+
+		if(!isset($this->events[$event]))
+			throw new Nette\InvalidStateException("Event '$event' not set");
 	}
 
 	/**
