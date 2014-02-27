@@ -258,7 +258,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 
 		// Invoke handler method on resource instance
 		$responsePayload = $mReflection->invokeArgs($resource, $invokeParams);
-		return $this->createResponse($responsePayload);
+		return $responsePayload === NULL ? $this->createResponse() : $this->createResponse($responsePayload);
 	}
 
 	/**
@@ -267,15 +267,17 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	 *
 	 * @return Nette\Application\IResponse
 	 */
-	protected function createResponse($payload) {
+	protected function createResponse($payload = NULL) {
 		if($this->outputContentType == 'application/json')
 			// Don't use JsonResponse because it manages the caching headers
 			return new Nette\Application\Responses\TextResponse(
-				Nette\Utils\Json::encode($payload)
+				func_num_args() ? Nette\Utils\Json::encode($payload) : NULL
 			);
 		else {
+			$text = func_num_args()
+				? (string) Nette\Utils\Html::el('pre', Nette\Utils\Json::encode($payload, Nette\Utils\Json::PRETTY))
+				: '<span style="font-style: italic;">No data</span>';
 
-			$text = (string) Nette\Utils\Html::el('pre', Nette\Utils\Json::encode($payload, Nette\Utils\Json::PRETTY));
 			$text = '<h1>HTTP ' . $this->httpResponse->getCode() . '</h1>' . $text;
 
 			return new Nette\Application\Responses\TextResponse(
@@ -327,7 +329,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		$this->httpResponse->setCode($code);
 
 		if(func_num_args() == 1)
-			$this->response = new Nette\Application\Responses\TextResponse(NULL);
+			$this->response = $this->createResponse();
 		else
 			$this->response = $this->createResponse($payload);
 
