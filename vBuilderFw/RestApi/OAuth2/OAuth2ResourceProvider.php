@@ -26,7 +26,7 @@ namespace vBuilder\RestApi\OAuth2;
 use vBuilder,
 	vBuilder\RestApi\Presenter as RestPresenter,
 	vBuilder\Security\User,
-	vBuilder\Security\BaseAuthenticator,
+	vBuilder\Security\Authenticators\BaseAuthenticator,
 	Nette,
 	Nette\Security\AuthenticationException;
 
@@ -40,6 +40,9 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 
 	/** @var vBuilder\RestApi\OAuth2\ITokenManager @inject */
 	public $tokenManager;
+
+	/** @var vBuilder\RestApi\OAuth2\IClientAuthenticator @inject */
+	public $clientAuthenticator;
 
 	/** @var vBuilder\Security\User @inject */
 	public $user;
@@ -161,16 +164,17 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 	 *
 	 * @param string client id
 	 * @param string client secret
-	 * @param bool TRUE if we should not create a new token (just check given client info)
 	 * @throws Nette\Application\AbortException on failed authorization
 	 */
-	protected function processClientAuth($clientId, $clientSecret, $justCheck = FALSE) {
-		// @todo actual client id authentication
-		// $this->terminateWithError(self::ERROR_INVALID_CLIENT, 'The client credentials are invalid');
+	protected function processClientAuth($clientId, $clientSecret) {
+
+		$client = $this->clientAuthenticator->authenticate($clientId, $clientSecret);
+		if(!$client)
+			$this->terminateWithError(self::ERROR_INVALID_CLIENT, 'The client credentials are invalid');;
 
 		// Set up token parameters
 		if(!isset($this->tokenParameters)) $this->tokenParameters = new \StdClass;
-		$this->tokenParameters->clientId = $clientId;
+		$this->tokenParameters->client = $client;
 	}
 
 	/**
@@ -192,7 +196,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 
 			// Set up token parameters
 			if(!isset($this->tokenParameters)) $this->tokenParameters = new \StdClass;
-			$this->tokenParameters->userIdentity = serialize($this->user->identity);
+			$this->tokenParameters->userIdentity = $this->user->identity;
 
 		} catch(AuthenticationException $e) {
 			if($e->getCode() == BaseAuthenticator::MAXIMUM_ATTEMPTS_EXCEEDED)
@@ -207,7 +211,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 	 * and also looks up for the HTTP Authorization header which
 	 * can be optionally used to pass those parameters
 	 *
-	 * @return array (string clientId, string clientSecret)
+	 * @return array (string clientId, string|NULL clientSecret)
 	 * @throws Nette\Application\AbortException if invalid request
 	 */
 	protected function parseClientAuthInfo() {
@@ -224,8 +228,8 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 				$_SERVER['PHP_AUTH_PW']
 			);
 
-		} elseif(isset($this->postData['client_id']) && isset($this->postData['client_secret'])) {
-			return array($this->postData['client_id'], $this->postData['client_secret']);
+		} elseif(isset($this->postData['client_id'])) {
+			return array($this->postData['client_id'], isset($this->postData['client_secret']) ? $this->postData['client_secret'] : NULL);
 
 		} else
 			$this->terminateWithError(self::ERROR_INVALID_REQUEST, 'Missing client authorization. Add client_id,client_secret params or use HTTP Basic Authorization.');

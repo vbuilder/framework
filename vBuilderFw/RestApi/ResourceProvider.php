@@ -57,6 +57,15 @@ class ResourceProvider extends Nette\Object {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Returns client information
+	 *
+	 * @return vBuilder\RestApi\OAuth2\Client|NULL
+	 */
+	public function getClient() {
+		return $this->presenter->getClient();
+	}
+
+	/**
 	 * Returns POST data
 	 *
 	 * @return mixed

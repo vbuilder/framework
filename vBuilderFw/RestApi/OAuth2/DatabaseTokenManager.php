@@ -74,7 +74,7 @@ class DatabaseTokenManager extends BaseTokenManager {
 			return FALSE;
 
 		$ttl = $existingToken->expires->getTimestamp() - time();
-		return new Token($token, $ttl, $this->generateRefreshToken($token), $existingToken->parameters === NULL ? NULL : Nette\Utils\Json::decode($existingToken->parameters));
+		return new Token($token, $ttl, $this->generateRefreshToken($token), $existingToken->parameters === NULL ? NULL : unserialize($existingToken->parameters));
 	}
 
 	/**
@@ -91,7 +91,7 @@ class DatabaseTokenManager extends BaseTokenManager {
 		$iData = array(
 			'token' => $token,
 			'expires' => $dt,
-			'parameters' => $parameters === NULL ? NULL : Nette\Utils\Json::encode($parameters)
+			'parameters' => $parameters === NULL ? NULL : serialize($parameters)
 		);
 
 		$this->dbConnection->query('INSERT INTO %n', $this->tableName, $iData);

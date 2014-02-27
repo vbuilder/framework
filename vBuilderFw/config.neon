@@ -109,6 +109,11 @@ services:
 		setup:
 			- setSecretKey(%secretKey%)
 
+	# REST API: Client authenticator
+	rest.oauth2.databaseClientAuthenticator:
+		class: vBuilder\RestApi\OAuth2\DatabaseClientAuthenticator
+		inject: true
+
 	# Cryptography
 	crypto.secretKeeper:
 		class: vBuilder\Cryptography\AesCipherProvider

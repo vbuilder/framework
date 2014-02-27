@@ -77,6 +77,9 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	/** @var string */
 	protected $outputContentType;
 
+	/** @var vBuilder\RestApi\OAuth2\Client|NULL */
+	protected $client;
+
 	/** @var Nette\Application\IResponse */
 	protected $response;
 
@@ -173,8 +176,11 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 
 				$this->attemptLogger->logSuccess(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
 				if(isset($token->parameters->userIdentity)) {
-					$identity = unserialize($token->parameters->userIdentity);
-					$this->user->login(User::AUTHN_METHOD_INVALID, User::AUTHN_SOURCE_ALL, $identity);
+					$this->user->login(User::AUTHN_METHOD_INVALID, User::AUTHN_SOURCE_ALL, $token->parameters->userIdentity);
+				}
+
+				if(isset($token->parameters->client)) {
+					$this->client = $token->parameters->client;
 				}
 			}
 		}
@@ -273,6 +279,15 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	 */
 	public function getPostData() {
 		return $this->postData;
+	}
+
+	/**
+	 * Retruns client information
+	 *
+	 * @return vBuilder\RestApi\OAuth2\Client|NULL
+	 */
+	public function getClient() {
+		return $this->client;
 	}
 
 	/**
