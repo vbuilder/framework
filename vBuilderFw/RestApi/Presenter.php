@@ -39,6 +39,13 @@ use vBuilder,
  */
 class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 
+	/**
+	 * Error responses
+	 */
+	const ERROR_INVALID_REQUEST = 'invalid_request';
+	const ERROR_INTERNAL = 'internal_error';
+	/**/
+
 	/** @internal parameter keys */
 	const PARAM_KEY_PATH = 'path';
 	/**/
@@ -101,7 +108,27 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		// Process the request with option to abort with another response
 		try {
 			$this->response = $this->process($request);
-		} catch(AbortException $e) { }
+
+		} catch(AbortException $e) {
+			// Do nothing
+
+		} catch(\Exception $e) {
+
+			// If there is no need to reformat error to the payload
+			// I will just throw it right back
+			if($this->outputContentType == 'text/html' && !$this->systemContainer->parameters['productionMode'])
+				throw $e;
+
+			Nette\Diagnostics\Debugger::log($e);
+
+			$payload = new \StdClass;
+			$payload->error = self::ERROR_INTERNAL;
+			$payload->error_description = 'Error occured while processing your request. Error has been automatically reported. Please try again later.';
+			$payload->error_report_id = md5(preg_replace('~(Resource id #)\d+~', '$1', $e));
+
+			$this->httpResponse->setCode(Nette\Http\IResponse::S500_INTERNAL_SERVER_ERROR);
+			$this->response = $this->createResponse($payload);
+		}
 
 		return $this->response;
 	}
@@ -132,14 +159,15 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		}
 
 		if($this->outputContentType === NULL)
-			throw new Nette\Application\BadRequestException("No Accept header given or not satisfiable");
+			$this->terminateWithError(self::ERROR_INVALID_REQUEST, "Accept header is missing or not satisfiable.", 406 /* Not Acceptable */);
 
 		// Find request handler ------------------------------------------------
 
 		// Gather resource path
 		$parameters = $request->getParameters();
 		$resourcePath = isset($parameters[self::PARAM_KEY_PATH]) ? trim($parameters[self::PARAM_KEY_PATH]) : NULL;
-		if(!$resourcePath) throw new Nette\Application\BadRequestException("No resource path given.");
+		if(!$resourcePath)
+			$this->terminateWithError(self::ERROR_INVALID_REQUEST, "No resource path given.", 400 /* Bad request */);
 
 		// Request router expects leading slash
 		if($resourcePath[0] != '/') $resourcePath = "/$resourcePath";
@@ -152,26 +180,19 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		);
 
 		if($handlerRequest === NULL)
-			throw new Nette\Application\BadRequestException("No resource handler for given URL / HTTP method");
+			$this->terminateWithError(self::ERROR_INVALID_REQUEST, "There is no resource handler for given URL / HTTP method.", 400 /* Bad request */);
 
 		// Process Authorization header ----------------------------------------
 		if(($authHeader = $this->httpRequest->getHeader('Authorization')) !== NULL) {
 			if(preg_match('/^Bearer\\s([^\\s,;]+)/i', $authHeader, $matches)) {
 				if(!$this->attemptLogger->getRemainingAttempts(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress())) {
-					$payload = new \StdClass;
-					$payload->error = OAuth2ResourceProvider::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED;
-					$payload->error_description = 'Maximum number of authorization attempts exceeded';
-					$this->terminateWithCode(400, $payload);
+					$this->terminateWithError(OAuth2ResourceProvider::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
 				}
 
 				$token = $this->tokenManager->getToken($matches[1]);
 				if(!$token) {
 					$this->attemptLogger->logFail(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
-
-					$payload = new \StdClass;
-					$payload->error = OAuth2ResourceProvider::ERROR_INVALID_GRANT;
-					$payload->error_description = 'Invalid authorization token';
-					$this->terminateWithCode(401, $payload);
+					$this->terminateWithError(OAuth2ResourceProvider::ERROR_INVALID_GRANT, 'Given authorization token is not valid.', 401 /* Unauthorized */);
 				}
 
 				$this->attemptLogger->logSuccess(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
@@ -197,9 +218,9 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 			}
 
 			elseif($cType === NULL)
-				throw new Nette\Application\BadRequestException("Content-Type header is mandatory for POST requests");
+				$this->terminateWithError(self::ERROR_INVALID_REQUEST, "Missing Content-Type header, which is mandatory for POST requests.", 400 /* Bad request */);
 			else
-				throw new Nette\Application\BadRequestException("Request content type of POST data is not supported");
+				$this->terminateWithError(self::ERROR_INVALID_REQUEST, "Request content type of POST data is not supported.", 415 /* Unsupported Media Type */);
 		}
 
 		// Create resource instance and prepare all dependencies ---------------
@@ -226,7 +247,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 					continue;
 				}
 
-				throw new Nette\Application\BadRequestException("Missing #$index parameter for $class::" . $mReflection->getName() . '()');
+				$this->terminateWithError(self::ERROR_INVALID_REQUEST, "Missing #$index parameter for resource handler $class::" . $mReflection->getName() . '().', 400 /* Bad request */);
 			}
 
 			$invokeParams[$pReflection->getName()] = $requestParams[$pReflection->getName()];
@@ -252,10 +273,15 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 			return new Nette\Application\Responses\TextResponse(
 				Nette\Utils\Json::encode($payload)
 			);
-		else
+		else {
+
+			$text = (string) Nette\Utils\Html::el('pre', Nette\Utils\Json::encode($payload, Nette\Utils\Json::PRETTY));
+			$text = '<h1>HTTP ' . $this->httpResponse->getCode() . '</h1>' . $text;
+
 			return new Nette\Application\Responses\TextResponse(
-				(string) Nette\Utils\Html::el('pre', Nette\Utils\Json::encode($payload, Nette\Utils\Json::PRETTY))
+				$text
 			);
+		}
 	}
 
 	/**
@@ -306,6 +332,31 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 			$this->response = $this->createResponse($payload);
 
 		throw new AbortException();
+	}
+
+	/**
+	 * Terminates current request and sends formated payload with error
+	 * class and description
+	 *
+	 * @param string error name
+	 * @param string|NULL error description
+	 * @param int HTTP code
+	 *
+	 * @throws AbortException
+	 */
+	public function terminateWithError($error, $description = NULL, $httpCode = 500) {
+		if(!is_scalar($error) || $error == "")
+			throw new Nette\InvalidArgumentException("Error name has to be non-empty string");
+
+		if(!is_scalar($description))
+			throw new Nette\InvalidArgumentException("Error description cannot be an object");
+
+		$payload = new \StdClass;
+		$payload->error = $error;
+		if($description != "")
+			$payload->error_description = $description;
+
+		$this->terminateWithCode($httpCode, $payload);
 	}
 
 	/**

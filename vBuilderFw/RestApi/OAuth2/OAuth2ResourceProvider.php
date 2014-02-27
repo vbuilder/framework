@@ -79,7 +79,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 	function postToken() {
 
 		if(!isset($this->postData['grant_type']))
-			$this->terminateWithError(self::ERROR_INVALID_REQUEST, 'grant_type is a required parameter');
+			$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, 'Parameter grant_type is required.', 400 /* Bad request */);
 
 		switch($this->postData['grant_type']) {
 
@@ -91,10 +91,10 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 				list($clientId, $clientSecret) = $this->parseClientAuthInfo();
 
 				if(!isset($this->postData['username']))
-					$this->terminateWithError(self::ERROR_INVALID_REQUEST, 'username is a required parameter');
+					$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, 'Parameter username is required.', 400 /* Bad request */);
 
 				if(!isset($this->postData['password']))
-					$this->terminateWithError(self::ERROR_INVALID_REQUEST, 'password is a required parameter');
+					$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, 'Parameter password is required.', 400 /* Bad request */);
 
 				$this->processClientAuth($clientId, $clientSecret);
 				$this->processPasswordAuth($this->postData['username'], $this->postData['password']);
@@ -120,16 +120,16 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 				list($clientId, $clientSecret) = $this->parseClientAuthInfo();
 
 				if(!isset($this->postData['refresh_token']))
-					$this->terminateWithError(self::ERROR_INVALID_REQUEST, 'refresh_token is a required parameter');
+					$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, 'Parameter refresh_token is required.', 400 /* Bad request */);
 
 				if(!$this->attemptLogger->getRemainingAttempts(RestPresenter::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress()))
-					$this->terminateWithError(self::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of attempts exceeded');
+					$this->presenter->terminateWithError(self::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
 
 				$this->processClientAuth($clientId, $clientSecret);
 				$token = $this->tokenManager->refreshToken($this->postData['refresh_token']);
 				if(!$token) {
 					$this->attemptLogger->logFail(RestPresenter::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
-					$this->terminateWithError(self::ERROR_INVALID_GRANT, 'Invalid refresh token');
+					$this->presenter->terminateWithError(self::ERROR_INVALID_GRANT, 'Given refresh token is not valid.', 401 /* Unauthorized */);
 				}
 
 				$this->attemptLogger->logSuccess(RestPresenter::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
@@ -138,13 +138,13 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 
 			// Unsupported grant_type
 			default:
-				$this->terminateWithError(self::ERROR_UNSUPPORTED_GRANT_TYPE, 'Unsupported grant_type');
+				$this->presenter->terminateWithError(self::ERROR_INVALID_CLIENT, 'Unsupported grant_type requested.', 400 /* Bad request */);
 		}
 
 		// ----------------------------
 
 		// Sanity check
-		if(!$token) throw new Nette\InvalidStateException("Excpected token");
+		if(!$token) throw new Nette\InvalidStateException("Expected token");
 
 		$this->httpResponse->setHeader('Cache-Control', 'no-store');
 
@@ -170,7 +170,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 
 		$client = $this->clientAuthenticator->authenticate($clientId, $clientSecret);
 		if(!$client)
-			$this->terminateWithError(self::ERROR_INVALID_CLIENT, 'The client credentials are invalid');;
+			$this->presenter->terminateWithError(self::ERROR_INVALID_CLIENT, 'The provided client credentials are invalid.', 401 /* Unauthorized */);
 
 		// Set up token parameters
 		if(!isset($this->tokenParameters)) $this->tokenParameters = new \StdClass;
@@ -200,9 +200,9 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 
 		} catch(AuthenticationException $e) {
 			if($e->getCode() == BaseAuthenticator::MAXIMUM_ATTEMPTS_EXCEEDED)
-				$this->terminateWithError(self::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of attempts exceeded');
+				$this->presenter->terminateWithError(self::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
 			else
-				$this->terminateWithError(self::ERROR_INVALID_CLIENT, 'The user credentials are invalid');
+				$this->presenter->terminateWithError(self::ERROR_INVALID_CLIENT, 'The provided client credentials are invalid.', 401 /* Unauthorized */);
 		}
 	}
 
@@ -218,10 +218,10 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 		$authHeader = $this->httpRequest->getHeader('Authorization');
 		if($authHeader !== NULL) {
 			if(!isset($_SERVER['PHP_AUTH_USER']) || !isset($_SERVER['PHP_AUTH_PW']))
-				$this->terminateWithError(self::ERROR_INVALID_REQUEST, 'Unsupported Authorization header');
+				$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, 'Unsupported Authorization header given.', 400 /* Bad request */);
 
 			if(isset($this->postData['client_id']) || isset($this->postData['client_secret']))
-				$this->terminateWithError(self::ERROR_INVALID_REQUEST, 'Multiple authorization data');
+				$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, 'Multiple authorization data given.', 400 /* Bad request */);
 
 			return array(
 				$_SERVER['PHP_AUTH_USER'],
@@ -232,25 +232,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 			return array($this->postData['client_id'], isset($this->postData['client_secret']) ? $this->postData['client_secret'] : NULL);
 
 		} else
-			$this->terminateWithError(self::ERROR_INVALID_REQUEST, 'Missing client authorization. Add client_id,client_secret params or use HTTP Basic Authorization.');
-	}
-
-	/**
-	 * Creates error response payload and sends it to the client
-	 *
-	 * @see http://tools.ietf.org/html/draft-ietf-oauth-v2-15#section-5.2
-	 * @throws Nette\Application\AbortException
-	 */
-	protected function terminateWithError($error, $description = NULL) {
-		$payload = new \StdClass;
-		$payload->error = $error;
-		if($description) $payload->error_description = $description;
-
-		$httpCode = ($error == self::ERROR_INVALID_CLIENT)
-			? 401 // HTTP 401 Unauthorized
-			: 400; // HTTP 400 Bad Request
-
-		$this->presenter->terminateWithCode($httpCode, $payload);
+			$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, 'Missing client authorization. Add client_id,client_secret params or use HTTP Basic Authorization.', 400 /* Bad request */);
 	}
 
 }
