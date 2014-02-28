@@ -66,14 +66,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 	/**/
 
 	/**
-	 * @Url(/oauth2/token)
-	 */
-	function getToken() {
-		// HTTP 405 Method Not Allowed
-		$this->presenter->terminateWithCode(405);
-	}
-
-	/**
+	 * @NoAuthorization
 	 * @Url(/oauth2/token)
 	 */
 	function postToken() {

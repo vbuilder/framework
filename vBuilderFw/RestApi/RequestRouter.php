@@ -102,9 +102,13 @@ class RequestRouter extends Nette\Object {
 	 * @param string HTTP method (case does not matter)
 	 * @param string resource path (expecting leading slash)
 	 *
-	 * @return Request|NULL
+	 * @return Request
+	 * @throws RequestException if there is no handler satisfying given parameters
 	 */
 	public function createRequest($method, $resourceUrl) {
+
+		$errorMessage = "No resource matching URL: $resourceUrl";
+		$errorCode = RequestException::NO_RESOURCE_MATCHING_URL;
 
 		// Go through all registered classes
 		foreach($this->classes as $class => &$info) {
@@ -113,8 +117,6 @@ class RequestRouter extends Nette\Object {
 
 			// Go through all resource handlers in current class
 			foreach($info->handlers as $handler) {
-				// Filter out handlers not matching HTTP method
-				if(strcasecmp($method, $handler->method) !== 0) continue;
 
 				// Go through all registered URLs for current handler
 				foreach($handler->urls as $url => $urlInfo) {
@@ -123,6 +125,14 @@ class RequestRouter extends Nette\Object {
 
 					// If URL matches, return request for current handler
 					if(($params = $urlInfo->matches($resourceUrl)) !== NULL) {
+
+						// Filter out handlers not matching HTTP method
+						if(strcasecmp($method, $handler->method) !== 0) {
+							$errorMessage = "HTTP method not allowed. Did you mean to use $handler->method?";
+							$errorCode = RequestException::METHOD_NOT_ALLOWED;
+							continue;
+						}
+
 						return new Request(
 							$class,
 							$handler->reflection,
@@ -133,7 +143,7 @@ class RequestRouter extends Nette\Object {
 			}
 		}
 
-		return NULL;
+		throw new RequestException($errorMessage, $errorCode);
 	}
 
 	/**

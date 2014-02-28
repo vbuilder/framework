@@ -44,6 +44,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	 */
 	const ERROR_INVALID_REQUEST = 'invalid_request';
 	const ERROR_INTERNAL = 'internal_error';
+	const ERROR_UNAUTHORIZED = 'unauthorized';
 	/**/
 
 	/** @internal parameter keys */
@@ -161,6 +162,32 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		if($this->outputContentType === NULL)
 			$this->terminateWithError(self::ERROR_INVALID_REQUEST, "Accept header is missing or not satisfiable.", 406 /* Not Acceptable */);
 
+		// Process Authorization header ----------------------------------------
+		if(($authHeader = $this->httpRequest->getHeader('Authorization')) !== NULL) {
+			if(preg_match('/^Bearer\\s([^\\s,;]+)/i', $authHeader, $matches)) {
+				if(!$this->attemptLogger->getRemainingAttempts(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress())) {
+					$this->terminateWithError(OAuth2ResourceProvider::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
+				}
+
+				$token = $this->tokenManager->getToken($matches[1]);
+				if(!$token) {
+					$this->attemptLogger->logFail(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
+
+					$this->httpResponse->addHeader('WWW-Authenticate', 'Bearer realm="'.$this->link().'"');
+					$this->terminateWithError(OAuth2ResourceProvider::ERROR_INVALID_GRANT, 'Given authorization token is not valid.', 401 /* Unauthorized */);
+				}
+
+				$this->attemptLogger->logSuccess(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
+				if(isset($token->parameters->userIdentity)) {
+					$this->user->login(User::AUTHN_METHOD_INVALID, User::AUTHN_SOURCE_ALL, $token->parameters->userIdentity);
+				}
+
+				if(isset($token->parameters->client)) {
+					$this->client = $token->parameters->client;
+				}
+			}
+		}
+
 		// Find request handler ------------------------------------------------
 
 		// Gather resource path
@@ -173,36 +200,25 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		if($resourcePath[0] != '/') $resourcePath = "/$resourcePath";
 
 		// Request router: find resource handler
-		/** @var vBuilder\RestApi\Request|NULL */
-		$handlerRequest = $this->requestRouter->createRequest(
-			$this->httpRequest->getMethod(),
-			$resourcePath
-		);
+		try {
 
-		if($handlerRequest === NULL)
-			$this->terminateWithError(self::ERROR_INVALID_REQUEST, "There is no resource handler for given URL / HTTP method.", 400 /* Bad request */);
+			/** @var vBuilder\RestApi\Request */
+			$handlerRequest = $this->requestRouter->createRequest(
+				$this->httpRequest->getMethod(),
+				$resourcePath
+			);
 
-		// Process Authorization header ----------------------------------------
-		if(($authHeader = $this->httpRequest->getHeader('Authorization')) !== NULL) {
-			if(preg_match('/^Bearer\\s([^\\s,;]+)/i', $authHeader, $matches)) {
-				if(!$this->attemptLogger->getRemainingAttempts(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress())) {
-					$this->terminateWithError(OAuth2ResourceProvider::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
-				}
+		} catch(RequestException $e) {
+			$this->terminateWithError(self::ERROR_INVALID_REQUEST, $e->getMessage(), $e->getCode() == RequestException::METHOD_NOT_ALLOWED ? 405 /* Not allowed */ : 404 /* Not found */);
+		}
 
-				$token = $this->tokenManager->getToken($matches[1]);
-				if(!$token) {
-					$this->attemptLogger->logFail(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
-					$this->terminateWithError(OAuth2ResourceProvider::ERROR_INVALID_GRANT, 'Given authorization token is not valid.', 401 /* Unauthorized */);
-				}
+		// Request authorization -----------------------------------------------
 
-				$this->attemptLogger->logSuccess(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
-				if(isset($token->parameters->userIdentity)) {
-					$this->user->login(User::AUTHN_METHOD_INVALID, User::AUTHN_SOURCE_ALL, $token->parameters->userIdentity);
-				}
-
-				if(isset($token->parameters->client)) {
-					$this->client = $token->parameters->client;
-				}
+		$handlerMethodAnnotations = $handlerRequest->getMethodReflection()->getAnnotations();
+		if(!isset($handlerMethodAnnotations['NoAuthorization']) || !$handlerMethodAnnotations['NoAuthorization'][0]) {
+			if(!$this->client) {
+				$this->httpResponse->addHeader('WWW-Authenticate', 'Bearer realm="'.$this->link().'"');
+				$this->terminateWithError(self::ERROR_UNAUTHORIZED, 'Requested resource requires authorization. Please add Authorization header with correct security token.', 401 /* Unauthorized */);
 			}
 		}
 
