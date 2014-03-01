@@ -195,7 +195,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 			if($e->getCode() == BaseAuthenticator::MAXIMUM_ATTEMPTS_EXCEEDED)
 				$this->presenter->terminateWithError(self::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
 			else
-				$this->presenter->terminateWithError(self::ERROR_INVALID_CLIENT, 'The provided client credentials are invalid.', 401 /* Unauthorized */);
+				$this->presenter->terminateWithError(self::ERROR_INVALID_GRANT, 'The provided client credentials are invalid.', 401 /* Unauthorized */);
 		}
 	}
 
