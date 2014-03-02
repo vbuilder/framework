@@ -42,6 +42,7 @@ class DatabasePSKAuthenticator extends BaseAuthenticator {
 
 	const PSK = 0;
 	const EXPIRATION = 5;
+	const NOTE = 7;
 
 	const PSK_NOT_FOUND = 5;
 	const INVALID_PSK = 6;
@@ -55,7 +56,8 @@ class DatabasePSKAuthenticator extends BaseAuthenticator {
 	/** @var array translation table for table columns */
 	protected $fieldName = array(
 		self::PSK => 'key',
-		self::EXPIRATION => 'expiration'
+		self::EXPIRATION => 'expiration',
+		self::NOTE => 'note'
 	);
 
 	/** @var StdClass */
@@ -162,17 +164,23 @@ class DatabasePSKAuthenticator extends BaseAuthenticator {
 	/**
 	 * Creates new preshared secret
 	 *
+	 * @param string|NULL note
 	 * @param DateTime|NULL expiration date
 	 * @return string[16]
+	 * @throws Nette\InvalidArgumentException if invalid expiration date
 	 */
-	public function createPsk(DateTime $expiration = NULL) {
+	public function createPsk($expiration = NULL, $note = NULL) {
+
+		if($expiration !== NULL && !($expiration instanceof \DateTime))
+			throw new Nette\InvalidArgumentException("Expected NULL or DateTime instance");
 
 		while(true) {
 			$psk = Strings::randomHumanToken(16);
 
 			$values = array(
 				$this->fieldName[self::PSK] => $psk,
-				$this->fieldName[self::EXPIRATION] => $expiration
+				$this->fieldName[self::EXPIRATION] => $expiration,
+				$this->fieldName[self::NOTE] => $note
 			);
 
 			try {
