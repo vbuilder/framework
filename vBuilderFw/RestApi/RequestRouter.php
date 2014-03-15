@@ -99,6 +99,8 @@ class RequestRouter extends Nette\Object {
 	/**
 	 * Creates request container with matching request handler
 	 *
+	 * @todo support for OPTIONS method - see RESTful Web Services chapter 14.2
+	 *
 	 * @param string HTTP method (case does not matter)
 	 * @param string resource path (expecting leading slash)
 	 *
@@ -116,10 +118,10 @@ class RequestRouter extends Nette\Object {
 			if($info === NULL) $info = $this->getClassInfo($class);
 
 			// Go through all resource handlers in current class
-			foreach($info->handlers as $handler) {
+			foreach($info->handlers as &$handler) {
 
 				// Go through all registered URLs for current handler
-				foreach($handler->urls as $url => $urlInfo) {
+				foreach($handler->urls as $url => &$urlInfo) {
 					// Load UrlMatcher if necessary
 					if($urlInfo === NULL) $urlInfo = $this->getUrlInfo($url);
 
@@ -144,6 +146,54 @@ class RequestRouter extends Nette\Object {
 		}
 
 		throw new RequestException($errorMessage, $errorCode);
+	}
+
+	/**
+	 * Creates resource URI path and array with addtional parameters
+	 *
+	 * @param string resource handler class (or it's name)
+	 * @param string name of class method
+	 * @param array of parameters
+	 *
+	 * @return array (string path, array addtionalParameters)
+	 * @throws Nette\InvalidArgumentException
+	 */
+	public function createUrl($class, $method, array $params = array()) {
+		if(is_object($class)) $class = get_class($class);
+
+		if(!array_key_exists($class, $this->classes))
+			throw new Nette\InvalidArgumentException("No registered resource handler with name $class");
+
+		// Load class info if not loaded yet
+		if($this->classes[$class] === NULL)	$this->classes[$class] = $this->getClassInfo($class);
+
+		// Go through all class handlers
+		foreach($this->classes[$class]->handlers as &$handler) {
+
+			// If we found matching handler
+			if($method == $handler->reflection->getName()) {
+
+				// Go through all handler's URLs.
+				// Ignore all errors but last. Throw the last error if not satisfied by any URL.
+				$e = NULL;
+				foreach($handler->urls as $url => &$urlInfo) {
+					// Load UrlMatcher if necessary
+					if($urlInfo === NULL) $urlInfo = $this->getUrlInfo($url);
+
+					// constructPath() removes parameters which have been used in path
+					$params2 = $params;
+					try {
+						$path = $urlInfo->constructPath($params2);
+						return array($handler->method, $path, $params2);
+
+					} catch(Nette\InvalidArgumentException $e) { }
+				}
+
+				if($e !== NULL) throw $e;
+			}
+		}
+
+		throw new Nette\InvalidArgumentException("No handler with name $method in class $class");
 	}
 
 	/**

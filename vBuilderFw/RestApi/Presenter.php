@@ -94,6 +94,9 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	/** @var Nette\Application\Request */
 	protected $appRequest;
 
+	/** @var vBuilder\RestApi\Request */
+	protected $resourceRequest;
+
 
 	/**
 	 * @return Nette\Application\IResponse
@@ -106,6 +109,12 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		// Setup authorization attempt logger
 		$this->attemptLogger->setEvent(self::ATTEMPT_IP_TOKEN, 200, '1 hour', FALSE);
 
+		// Convert trigger_error -> ErrorException (for error payload)
+		set_error_handler(function ($severity, $message, $file, $line, $context) {
+			if(($severity & error_reporting()) === $severity)
+				throw new \ErrorException($message, 0, $severity, $file, $line);
+		});
+
 		// Process the request with option to abort with another response
 		try {
 			$this->response = $this->process($request);
@@ -117,7 +126,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 
 			// If there is no need to reformat error to the payload
 			// I will just throw it right back
-			if($this->outputContentType == 'text/html' && !$this->systemContainer->parameters['productionMode'])
+			if($this->outputContentType == 'text/html' && !$this->isInProductionMode())
 				throw $e;
 
 			Nette\Diagnostics\Debugger::log($e);
@@ -142,6 +151,9 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		// Query output content type -------------------------------------------
 
 		// Accept header is comma separated fallback sequence
+		// @todo sequence should be actually sorted by the degree of specificity
+		// @todo make support for version options (ie. application/json;version=2)
+		// 		see: RESTful Web Services Cookbook page 250
 		$cTypes = preg_split('/,/', $this->httpRequest->getHeader('Accept'), 0, PREG_SPLIT_NO_EMPTY);
 		foreach($cTypes as $cType) {
 			// We ignore all the options
@@ -162,14 +174,26 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		if($this->outputContentType === NULL)
 			$this->terminateWithError(self::ERROR_INVALID_REQUEST, "Accept header is missing or not satisfiable.", 406 /* Not Acceptable */);
 
+		// Process Content-Language header -------------------------------------
+
 		// Process Authorization header ----------------------------------------
 		if(($authHeader = $this->httpRequest->getHeader('Authorization')) !== NULL) {
+
 			if(preg_match('/^Bearer\\s([^\\s,;]+)/i', $authHeader, $matches)) {
+				$tokenHash = $matches[1];
+
+				// If connection is not secured return error and invalidate sent token
+				// just in case
+				if(!$request->hasFlag(Nette\Application\Request::SECURED) && $this->isInProductionMode()) {
+					$this->tokenManager->invalidateToken($tokenHash);
+					$this->terminateWithError(self::ERROR_INVALID_REQUEST, "Secured connection required", 400);
+				}
+
 				if(!$this->attemptLogger->getRemainingAttempts(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress())) {
 					$this->terminateWithError(OAuth2ResourceProvider::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
 				}
 
-				$token = $this->tokenManager->getToken($matches[1]);
+				$token = $this->tokenManager->getToken($tokenHash);
 				if(!$token) {
 					$this->attemptLogger->logFail(self::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
 
@@ -203,7 +227,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		try {
 
 			/** @var vBuilder\RestApi\Request */
-			$handlerRequest = $this->requestRouter->createRequest(
+			$this->resourceRequest = $handlerRequest = $this->requestRouter->createRequest(
 				$this->httpRequest->getMethod(),
 				$resourcePath
 			);
@@ -274,6 +298,11 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 
 		// Invoke handler method on resource instance
 		$responsePayload = $mReflection->invokeArgs($resource, $invokeParams);
+
+		// Automatically set HTTP 204 No Content if necessary
+		if($responsePayload === NULL && $this->httpResponse->getCode() == 200)
+			$this->httpResponse->setCode(204 /* No Content */);
+
 		return $responsePayload === NULL ? $this->createResponse() : $this->createResponse($responsePayload);
 	}
 
@@ -305,15 +334,19 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 	/**
 	 * Returns absolute URL for given resource path
 	 *
-	 * @todo there should be also implementation which transforms resource provider method
-	 *	 into resource path
+	 * @internal
 	 *
 	 * @param string resource path
+	 * @param array of parameters
+	 *
 	 * @return string absolute url
 	 */
-	public function link($path = NULL) {
-		$r = new Nette\Application\Request($this->appRequest->getPresenterName(), $this->appRequest->getMethod(), array('action' => 'default', self::PARAM_KEY_PATH => $path));
-		return $this->application->getRouter()->constructUrl($r, $this->httpRequest->getUrl());
+	public function link($path = NULL, array $parameters = array()) {
+		$r = new Nette\Application\Request($this->appRequest->getPresenterName(), $this->appRequest->getMethod(), array_merge(array('action' => 'default', self::PARAM_KEY_PATH => ltrim($path, '/')), $parameters));
+
+		return $this->application->getRouter()->constructUrl(
+			$r, $this->httpRequest->getUrl()
+		);
 	}
 
 	/**
@@ -366,7 +399,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		if(!is_scalar($error) || $error == "")
 			throw new Nette\InvalidArgumentException("Error name has to be non-empty string");
 
-		if(!is_scalar($description))
+		if($description !== NULL && !is_scalar($description))
 			throw new Nette\InvalidArgumentException("Error description cannot be an object");
 
 		$payload = new \StdClass;
@@ -410,6 +443,24 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 
 		if($ifDate >= $lastModificationDate)
 			$this->terminateWithCode(Nette\Http\IResponse::S304_NOT_MODIFIED);
+	}
+
+	/**
+	 * Returns TRUE if request is run in production mode
+	 *
+	 * @return bool
+	 */
+	public function isInProductionMode() {
+		 return $this->systemContainer->parameters['productionMode'];
+	}
+
+	/**
+	 * Returns resource request
+	 *
+	 * @return vBuilder\RestApi\Request
+	 */
+	public function getResourceRequest() {
+		return $this->resourceRequest;
 	}
 
 }

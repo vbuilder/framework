@@ -43,6 +43,15 @@ interface ITokenManager {
 	function getToken($token);
 
 	/**
+	 * Invalidates existing token.
+	 * Returns FALSE if token does not exist.
+	 *
+	 * @param string token
+	 * @return TRUE|FALSE
+	 */
+	function invalidateToken($token);
+
+	/**
 	 * Creates new authorization token
 	 *
 	 * @param mixed token parameters

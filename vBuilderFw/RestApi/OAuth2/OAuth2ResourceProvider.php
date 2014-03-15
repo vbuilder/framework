@@ -67,9 +67,12 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 
 	/**
 	 * @NoAuthorization
-	 * @Url(/oauth2/token)
+	 * @Url(/oauth/token)
 	 */
 	function postToken() {
+
+		if(!$this->httpRequest->isSecured() && $this->presenter->isInProductionMode())
+			$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, "Secured connection required", 400 /* Bad request */);
 
 		if(!isset($this->postData['grant_type']))
 			$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, 'Parameter grant_type is required.', 400 /* Bad request */);

@@ -96,5 +96,92 @@ class ResourceProvider extends Nette\Object {
 		return $this;
 	}
 
+	/**
+	 * Sets HTTP response code
+	 *
+	 * @param int code
+	 * @return self
+	 * @throws Nette\InvalidStateException  if HTTP headers have been sent
+	 */
+	public function setCode($code) {
+		$this->httpResponse->setCode($code);
+		return $this;
+	}
+
+	/**
+	 * Creates absolute URL for given target
+	 *
+	 * @param string target
+	 * @param array parameters
+	 *
+	 * @return string
+	 * @throws Nette\InvalidArgumentException
+	 */
+	public function link($target = NULL, array $params = array()) {
+		list($class, $method) = $this->parseLinkTarget($target);
+
+		list($httpMethod, $path, $addtionalParams) = $this->presenter->requestRouter->createUrl(
+			$class, $method, $params
+		);
+
+		return $this->presenter->link($path, $addtionalParams);
+	}
+
+	/**
+	 * Creates payload structure for HATEOAS link
+	 *
+	 * @param string rel
+	 * @param string target
+	 * @param array parameters
+	 *
+	 * @return array
+	 * @throws Nette\InvalidArgumentException
+	 */
+	public function hateoasLink($rel = 'self', $target = NULL, array $params = array()) {
+		list($class, $method) = $this->parseLinkTarget($target);
+
+		list($httpMethod, $path, $addtionalParams) = $this->presenter->requestRouter->createUrl(
+			$class, $method, $params
+		);
+
+		return array(
+			'rel' => $rel,
+			'href' => $this->presenter->link($path, $addtionalParams),
+			'method' => $httpMethod
+		);
+	}
+
+	/**
+	 * Parses link target string to class and method
+	 *
+	 * @param string|NULL target
+	 *
+	 * @return array (string class name, string method name)
+	 * @throws Nette\InvalidArgumentException
+	 */
+	protected function parseLinkTarget($target = NULL) {
+		if($target === NULL || $target == 'this') {
+
+			$class = get_called_class();
+			$method = $this->presenter->resourceRequest->getMethodReflection()->getName();
+
+		} else if(preg_match('#^((\\\\?([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))*)(::([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))?$#', $target, $matches)) {
+			if(isset($matches[5])) {
+				$class = $matches[1];
+				$method = $matches[5];
+
+			} else {
+				$class = get_called_class();
+				$method = $matches[1];
+
+				if(Nette\Utils\Strings::contains($method, '\\'))
+					throw new Nette\InvalidArgumentException("Invalid link target '$target'");
+			}
+
+		} else
+			throw new Nette\InvalidArgumentException("Invalid link target '$target'");
+
+		return array($class, $method);
+	}
 
  }
