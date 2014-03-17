@@ -50,7 +50,13 @@ class vBuilderExtension extends Nette\Config\CompilerExtension {
 
 		// Translator gets the language from container parameters
 		$container->getDefinition('translator')
-			->addSetup('$service->lang = $this->?[\'lang\']', array('parameters'));
+			->addSetup('$service->lang = $this->?[\'lang\']', array('parameters'))
+			->addSetup('if(!$this->?[\'productionMode\']) { $service->setLogger($this->getByType(\'vBuilder\Localization\TranslationLogger\')); }', array('parameters'))
+			->addSetup('Nette\Diagnostics\Debugger::getBar()->addPanel(?)', array(
+				new Nette\DI\Statement('vBuilder\Diagnostics\TranslationBar')
+			));
+
+// Nette\Diagnostics\Debugger::addPanel(new vBuilder\Diagnostics\TranslationBar($this));
 
 		// Detect language on HTTP request
 		$container->getDefinition('httpRequest')

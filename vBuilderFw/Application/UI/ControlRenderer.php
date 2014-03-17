@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -33,49 +33,49 @@ use vBuilder,
  * @since Oct 7, 2011
  */
 class ControlRenderer extends vBuilder\Object {
-	
+
 	/** @var vBuilder\Application\UI\Control control */
 	protected $control;
-	
-	/** 
+
+	/**
 	 * @var Nette\Templating\ITemplate template
 	 * @internal
 	 */
 	private $_template;
-	
+
 	/**
-	 * @var string template directory path (absolute) 
+	 * @var string template directory path (absolute)
 	 * @internal
 	 */
 	private $_tplDir;
-	
+
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param Control owning control
 	 */
 	function __construct(Control $control) {
 		$this->control = $control;
 	}
-	
+
 	/**
 	 * Returns current context
-	 * 
+	 *
 	 * @return Nette\DI\Container
 	 */
 	final public function getControl() {
 			return $this->control;
 	}
-	
+
 	/**
 	 * Returns current context
-	 * 
+	 *
 	 * @return Nette\DI\Container
 	 */
 	final public function getContext() {
 			return $this->control->context;
 	}
-	
+
 	/**
 	 * Returns the presenter of belonging control.
 	 * @param  bool   throw exception if presenter doesn't exist?
@@ -84,26 +84,26 @@ class ControlRenderer extends vBuilder\Object {
 	final public function getPresenter($need = TRUE) {
 		return $this->control->getPresenter($need);
 	}
-	
+
 	/**
 	 * Returns current control's view
-	 * 
+	 *
 	 * @return string view name
 	 */
 	final public function getView() {
 		return $this->control->view;
 	}
-	
+
 	/**
 	 * Default action/view is always defined, so we don't throw an exception
 	 */
 	function renderDefault() {
-		
+
 	}
-	
+
 	/**
 	 * Renders matching template for current view
-	 * 
+	 *
 	 * @return void
 	 */
 	function render() {
@@ -111,60 +111,60 @@ class ControlRenderer extends vBuilder\Object {
 			// File templates
 			if($this->template instanceof Nette\Templating\IFileTemplate && !$this->template->getFile()) {
 				foreach($this->formatTemplateFiles() as $file) {
-					if(file_exists($file)) {					
+					if(file_exists($file)) {
 						$this->template->setFile($file);
-						
+
 						$this->template->render();
 						return ;
 					}
 				}
-			
+
 				throw new Nette\Application\BadRequestException("Template not found in " . implode(', ', $this->formatTemplateFiles()));
 			}
-			
+
 			// Other templates
 			$this->template->render();
 		}
 	}
-	
+
 	/**
 	 * Sets primary template directory
-	 * 
+	 *
 	 * @param string path to directory (absolute)
 	 */
 	public function setTemplateDirectory($path) {
 		if(!is_dir($path))
 			throw new \InvalidArgumentException("$path is not a directory.");
-		
+
 		$this->_tplDir = $path;
 	}
-	
+
 	/**
 	 * Return default template directory (depending on path to class file)
-	 * 
-	 * @return string path to directory 
+	 *
+	 * @return string path to directory
 	 */
 	protected function getDefaultTemplateDirectory() {
 		return dirname($this->getReflection()->getFileName()) . '/Templates';
 	}
-	
-	
+
+
 	/**
 	 * Returns path to default template file for given view
-	 * 
+	 *
 	 * @param null|string view name (if null, current view is used)
 	 * @return string absolute file path
 	 */
 	protected function getDefaultTemplateFile($view = null) {
 		if(!$view) $view = $this->view;
 		$filename = $view . '.latte';
-		
+
 		return $this->getDefaultTemplateDirectory() . '/' . $filename;
 	}
-	
+
 	/**
 	 * Retursn current template directory
-	 * 
+	 *
 	 * @return string path to directory
 	 */
 	function getTemplateDirectory() {
@@ -172,14 +172,14 @@ class ControlRenderer extends vBuilder\Object {
 							? $this->_tplDir
 							: $this->getDefaultTemplateDirectory();
 	}
-	
+
 	/**
 	 * Formats view template file names.
 	 * @return array
 	 */
 	public function formatTemplateFiles() {
 		$filename = $this->view . '.latte';
-		
+
 		if(isset($this->_tplDir)) {
 			return array(
 					$this->_tplDir . '/' . $filename,
@@ -189,11 +189,11 @@ class ControlRenderer extends vBuilder\Object {
 
 		return array($this->getDefaultTemplateDirectory() . '/' . $filename);
 	}
-	
+
 	/**
 	 * Returns template
-	 * 
-	 * @return Nette\Templating\ITemplate 
+	 *
+	 * @return Nette\Templating\ITemplate
 	 */
 	final public function getTemplate() {
 		if(!isset($this->_template)) {
@@ -205,13 +205,13 @@ class ControlRenderer extends vBuilder\Object {
 
 			$this->_template = $value;
 		}
-		
+
 		return $this->_template;
 	}
 
 	/**
 	 * Sets template
-	 * 
+	 *
 	 * @param FALSE|Nette\Templating\ITemplate new template
 	 */
 	public function setTemplate($template) {
@@ -223,12 +223,12 @@ class ControlRenderer extends vBuilder\Object {
 		$class = get_called_class();
 		throw new Nette\UnexpectedValueException("Invalid object given for $class::setTemplate. FALSE or implementation of Nette\\Templating\\ITemplate required.");
 	}
-	
+
 	/**
 	 * Template factory
-	 * 
+	 *
 	 * @param string class name to use (if null FileTemplate will be used)
-	 * 
+	 *
 	 * @return Nette\Templating\ITemplate
 	 */
 	protected function createTemplate($class = NULL) {
@@ -250,7 +250,7 @@ class ControlRenderer extends vBuilder\Object {
 		$template->basePath = preg_replace('#https?://[^/]+#A', '', $template->baseUrl);
 
 		$template->setTranslator($this->context->translator);
-		
+
 		if ($presenter instanceof Nette\Application\UI\Presenter) {
 			$template->setCacheStorage($this->context->{'nette.templateCacheStorage'});
 			$template->user = $this->context->user;
@@ -258,22 +258,22 @@ class ControlRenderer extends vBuilder\Object {
 			$template->netteCacheStorage = $this->context->getByType('Nette\Caching\IStorage');
 
 			// flash message
-			if ($presenter->hasFlashSession()) {			
+			if ($presenter->hasFlashSession()) {
 				$id = $this->control->getParameterId('flash');
 				$template->flashes = $presenter->getFlashSession()->$id;
 			}
 		}
-		
+
 		if (!isset($template->flashes) || !is_array($template->flashes)) {
 			$template->flashes = array();
 		}
 
 		return $template;
 	}
-	
+
 	/**
 	 * Compilation time templating filters
-	 * 
+	 *
 	 * @param  Nette\Templating\Template
 	 * @return void
 	 */
@@ -295,14 +295,17 @@ class ControlRenderer extends vBuilder\Object {
 
 	/**
 	 * Prepares Latte macros
-	 * 
+	 *
 	 * @param  Nette\Latte\Compiler
 	 * @return void
 	 */
 	protected function lattePrepareMacros(Nette\Latte\Compiler $compiler, Nette\Templating\Template $template) {
 		Nette\Latte\Macros\CoreMacros::install($compiler);
 		$compiler->addMacro('cache', new Nette\Latte\Macros\CacheMacro($compiler));
-		
+
+		// Must be after CoreMacros (overrides {_'xxx'})
+		vBuilder\Latte\Macros\TranslationMacros::install($compiler);
+
 		// Must be before UIMacros
 		vBuilder\Latte\Macros\SystemMacros::install($compiler);
 
@@ -316,5 +319,5 @@ class ControlRenderer extends vBuilder\Object {
 
 		vBuilder\Latte\Macros\RegionMacros::install($compiler);
 	}
-	
+
 }

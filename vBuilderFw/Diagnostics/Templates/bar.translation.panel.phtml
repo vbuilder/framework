@@ -1,0 +1,27 @@
+<h1>Translations (<?php echo htmlspecialchars(strtoupper($lang)); ?>)</h1>
+
+<?php $basePath = realpath(WWW_DIR . '/..'); ?>
+
+<div class="nette-inner nette-DumpPanel">
+	<table style="font-size: 0.9em;">
+		<?php foreach($translations as $key => $translation) : $formIndex = 0;?>
+		<tr>
+			<td><?php echo htmlspecialchars($translation['singular']); ?></td>
+			<td><?php
+				if(!$translation['isTranslated'])
+					echo '<span style="color: #cc3300; font-style: italic;">Missing</span>';
+				else
+					echo htmlspecialchars($translation);
+
+				if(count($translation['hints'])) {
+					echo "<br />From:<br />";
+					foreach($translation['hints'] as $hint) {
+						echo htmlspecialchars(substr($hint, 0, strlen($basePath) + 1) == "$basePath/" ? substr($hint, strlen($basePath)) : $hint);
+						echo "<br />";
+					}
+				}
+			?></td>
+		</tr>
+		<?php endforeach; ?>
+	</table>
+</div>

@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,28 +27,28 @@ use Nette\Diagnostics\Debugger as Debug,
 
 /**
  * Prints out debug message to standard output
- * 
+ *
  * @param string message
  * @param mixed|null optional variable to dump along with message
  */
 function debug($msg, $var = null) {
 	if(Debug::$productionMode == Debug::PRODUCTION)
 		return;
-	
+
 	if(!isset($_SERVER['HTTP_USER_AGENT'])) {
 		echo $msg . "\n";
-		
+
 		for($i = 1; $i < func_num_args(); $i++) Debug::dump(func_get_arg($i));
 	} else {
 		if(!headers_sent()) header('Content-type: text/html; charset=utf-8');
-		
+
 		$msgEl = Html::el('div', array('class' => 'vBuilderDebugMsg'))->setText($msg);
-		
+
 		echo $msgEl->startTag();
 		echo $msgEl[0];
-		
+
 		for($i = 1; $i < func_num_args(); $i++) Debug::dump(func_get_arg($i));
-		
+
 		echo $msgEl->endTag();
 	}
 }
@@ -61,20 +61,20 @@ function bd() {
 
 function dt(array $var) {
 	$firstRow = (array) reset($var);
-	
+
 	echo '<table style="border-collapse: collapse; font-size: 9pt; background: white; margin: 10px 0;"><thead><tr>';
 	echo '<td style="border: 1px solid #dddddd;">&nbsp;</td>';
 	foreach(array_keys($firstRow) as $col) {
 		echo "<td style=\"border: 1px solid #dddddd; padding: 3px 10px; text-align: center;\">$col</td>";
 	}
-	
+
 	echo '</tr><tbody>';
-	
+
 	$index = 0;
 	foreach($var as $row) {
 		echo '<tr>';
 		echo '<td style="border: 1px solid #dddddd; padding: 3px 10px; color: #cc0000;">#'.++$index.'</td>';
-		
+
 		foreach($row as $col) {
 			echo "<td style=\"border: 1px solid #dddddd; padding: 3px 10px;\">\n";
 			d($col);
@@ -82,7 +82,7 @@ function dt(array $var) {
 		}
 		echo '</tr>';
 	}
-	
+
 	echo '</tbody></tbody>';
 }
 
@@ -112,7 +112,7 @@ function d() {
 				foreach($m->fetchAll() as $entity) {
 					$data[] = $entity->data->getAllData();
 				}
-				
+
 				dt($data);
 			}
 		} else {
@@ -143,7 +143,7 @@ function dd() {
 function __($message, $count = NULL)
 {
 	return Nette\Environment::getService('translator')
-		->translate($message, $count);
+		->translate($message, func_num_args() > 2 ? $args = array_slice(func_get_args(), 1) : $count);
 }
 
 /**

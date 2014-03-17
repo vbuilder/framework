@@ -125,8 +125,12 @@ class Presenter extends Nette\Application\UI\Presenter {
 	 * @return void
 	 */
 	protected function lattePrepareMacros(Nette\Latte\Compiler $compiler, Nette\Templating\Template $template) {
+
 		Nette\Latte\Macros\CoreMacros::install($compiler);
 		$compiler->addMacro('cache', new Nette\Latte\Macros\CacheMacro($compiler));
+
+		// Must be after CoreMacros (overrides {_'xxx'})
+		vBuilder\Latte\Macros\TranslationMacros::install($compiler);
 
 		// Must be before UIMacros
 		vBuilder\Latte\Macros\SystemMacros::install($compiler);
