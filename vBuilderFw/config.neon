@@ -74,6 +74,7 @@ services:
 		class: vBuilder\Localization\Translator
 		setup:
 			- setStorage(@translatorStorage)
+			- addDictionary('translationBar', '%filesDir%', '%%dir%%/Translations/%%lang%%.mo', @translatorStorage)
 			- addDictionary('vBuilderFw', '%libsDir%/vBuilderFw/vBuilderFw', '%%dir%%/Translations/%%lang%%.mo', @translatorStorage)
 			- addDictionary('app', '%appDir%')
 

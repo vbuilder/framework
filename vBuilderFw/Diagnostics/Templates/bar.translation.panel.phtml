@@ -2,26 +2,78 @@
 
 <?php $basePath = realpath(WWW_DIR . '/..'); ?>
 
-<div class="nette-inner nette-DumpPanel">
+<div class="nette-inner nette-DumpPanel" id="vbuilder-TranslationPanel">
+	<style>
+		.vbuilder-missing-translation {
+			color: #cc3300 !important; font-style: italic !important;
+		}
+
+		.vbuilder-saved-translation {
+			color: #33bb33 !important;
+		}
+	</style>
 	<table style="font-size: 0.9em;">
 		<?php foreach($translations as $key => $translation) : $formIndex = 0;?>
 		<tr>
-			<td><?php echo htmlspecialchars($translation['singular']); ?></td>
-			<td><?php
-				if(!$translation['isTranslated'])
-					echo '<span style="color: #cc3300; font-style: italic;">Missing</span>';
-				else
-					echo htmlspecialchars($translation);
+			<td><div style="padding: 8px 0 5px 0; line-height: 11px;"><?php
+				echo htmlspecialchars($translation['singular']);
+				if(isset($translation['plural'])) echo '<br />' . htmlspecialchars($translation['plural']);
+			?></div></td>
+			<td><input type="text" class="form-control<?php if(!$translation['isTranslated']) echo ' vbuilder-missing-translation'; ?>" style="background: #fffdf3; padding: 5px; margin-top: 3px; font-size: 10px; line-height: 10px; height: auto;" <?php if(!$translation['isTranslated']) echo 'value="Missing" data-missing="true"'; else echo 'value="' . htmlspecialchars($translation['translations'][0])  . '"'; ?> data-key="<?php echo htmlspecialchars($translation['singular']); ?>"  disabled="disabled" /><?php
 
 				if(count($translation['hints'])) {
-					echo "<br />From:<br />";
-					foreach($translation['hints'] as $hint) {
+					echo "<p style=\"color: #666; font-size: 9px; margin-top: 10px;\">From:<br />";
+					foreach(array_slice($translation['hints'], 0, 3) as $hint) {
 						echo htmlspecialchars(substr($hint, 0, strlen($basePath) + 1) == "$basePath/" ? substr($hint, strlen($basePath)) : $hint);
 						echo "<br />";
 					}
+
+					if(count($translation['hints']) > 3) echo "<em>and " . (count($translation['hints']) - 3) . ' more</em>';
+					echo "</p>";
 				}
 			?></td>
 		</tr>
 		<?php endforeach; ?>
 	</table>
+	<script style="text/javascript">
+		if (typeof jQuery != 'undefined') {
+			var $panel = $('#vbuilder-TranslationPanel');
+
+			$panel.find('INPUT').prop('disabled', false);
+
+			$panel.on('focus', '.vbuilder-missing-translation', function () {
+				$(this)
+					.val('')
+					.removeClass('vbuilder-missing-translation');
+			});
+
+			$panel.on('focus', 'INPUT[type=text]', function () {
+				$(this)
+					.removeClass('vbuilder-saved-translation');
+			});
+
+			$panel.on('blur', 'INPUT[type=text]', function () {
+				var $input = $(this)
+
+				if($input.val() == '' && $input.data('missing'))
+					$input.val('Missing').addClass('vbuilder-missing-translation');
+
+				else {
+					var url = '<?php echo $actionUrl; ?>'; // Safe string
+					var data = { 'translations': [] };
+					data.translations[0] = {
+						'key': $input.data('key'),
+						'value': [ $input.val() ]
+					};
+
+					$.post(url, JSON.stringify(data), function (data, textStatus, jqXHR) {
+						$input.addClass('vbuilder-saved-translation');
+
+					}).fail(function () {
+						alert('Error occured while saving translation.');
+					});
+				}
+			});
+		}
+	</script>
 </div>

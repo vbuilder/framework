@@ -43,6 +43,12 @@ class vBuilderExtension extends Nette\Config\CompilerExtension {
 		// Default language is the first on the fallback list
 		if(!isset($container->parameters['lang']))
 			$container->parameters['lang'] = reset($container->parameters['languages']);
+
+		if(!isset($container->parameters['translationBar']))
+			$container->parameters['translationBar'] = array();
+
+		if(!isset($container->parameters['translationBar']['enabled']))
+			$container->parameters['translationBar']['enabled'] = TRUE;
 	}
 
 	public function beforeCompile() {
@@ -56,7 +62,9 @@ class vBuilderExtension extends Nette\Config\CompilerExtension {
 				new Nette\DI\Statement('vBuilder\Diagnostics\TranslationBar')
 			));
 
-// Nette\Diagnostics\Debugger::addPanel(new vBuilder\Diagnostics\TranslationBar($this));
+		// Register TranslationBar on application startup if requested
+		$container->getDefinition('application')
+			->addSetup('if($this->parameters[?][?] === TRUE && !$this->parameters[\'productionMode\']) { $service->onStartup[] = \'vBuilder\Diagnostics\TranslationBar::register\'; }', array('translationBar', 'enabled'));
 
 		// Detect language on HTTP request
 		$container->getDefinition('httpRequest')
@@ -69,11 +77,9 @@ class vBuilderExtension extends Nette\Config\CompilerExtension {
 		});
 
 		// Our implementation of Diagnostics\UserPanel
-		if(!$container->parameters['productionMode']) {
-			$container->getDefinition('user')->addSetup('Nette\Diagnostics\Debugger::getBar()->addPanel(?)', array(
-				new Nette\DI\Statement('vBuilder\Security\Diagnostics\UserPanel')
-			));
-		}
+		$container->getDefinition('user')->addSetup('Nette\Diagnostics\Debugger::getBar()->addPanel(?)', array(
+			new Nette\DI\Statement('vBuilder\Security\Diagnostics\UserPanel')
+		));
 	}
 
 }
