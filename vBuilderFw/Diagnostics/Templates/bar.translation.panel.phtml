@@ -47,10 +47,16 @@
 					.removeClass('vbuilder-missing-translation');
 			});
 
-			$panel.on('focus', 'INPUT[type=text]', function () {
-				$(this)
-					.removeClass('vbuilder-saved-translation');
-			});
+			$panel.on('focus', 'INPUT[type=text]', function (event) {
+
+					$(this).removeClass('vbuilder-saved-translation');
+
+				}).on('keyup', 'INPUT[type=text]', function (event) {
+
+					if(event.keyCode == 13) {
+						$(this).blur();
+					}
+				});
 
 			$panel.on('blur', 'INPUT[type=text]', function () {
 				var $input = $(this)

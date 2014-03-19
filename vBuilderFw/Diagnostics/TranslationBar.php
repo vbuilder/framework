@@ -125,22 +125,24 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 	 * Prepares data for the panel
 	 */
 	function gather() {
-		$this->queriedTranslations = $this->translator->getLogger()->getQueriedTranslations();
-		$ok = &$this->ok;
+		if(isset($this->queriedTranslations)) return ;
 
-		if(count($this->queriedTranslations) == 1)
-			$ok = $this->queriedTranslations[0]['isTranslated'];
+		$this->queriedTranslations = $this->translator->getLogger()
+			? $this->translator->getLogger()->getQueriedTranslations()
+			: array();
 
-		uasort($this->queriedTranslations, function (&$a, &$b) use (&$ok) {
-			if(!$a['isTranslated'] || !$b['isTranslated']) $ok = FALSE;
-
+		// Gather translations
+		foreach($this->queriedTranslations as &$translation) {
 			// @todo: support for plurals
-			if(!isset($a['translations']) && $a['isTranslated']) $a['translations'] = array(__($a['singular']));
-			if(!isset($b['translations']) && $b['isTranslated']) $b['translations'] = array(__($b['singular']));
+			if(!isset($translation['translations']) && $translation['isTranslated'])
+				$translation['translations'] = array(__($translation['singular']));
 
-			if($a['isTranslated'] && !$b['isTranslated'])
-				return 1;
+			if(!$translation['isTranslated']) $this->ok = FALSE;
+		}
 
+		// Start with the untranslated entries
+		uasort($this->queriedTranslations, function ($a, $b) {
+			if($a['isTranslated'] && !$b['isTranslated']) return 1;
 			return $a['singular'] < $a['singular'];
 		});
 	}
@@ -150,8 +152,6 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 	 * @return string
 	 */
 	function getTab() {
-		if(!$this->translator->getLogger()) return '';
-
 		$this->gather();
 		if(count($this->queriedTranslations) == 0) return '';
 
@@ -168,6 +168,9 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 	 * @return string
 	 */
 	function getPanel() {
+		$this->gather();
+		if(count($this->queriedTranslations) == 0) return '';
+
 		ob_start();
 
 		$translations = $this->queriedTranslations;
