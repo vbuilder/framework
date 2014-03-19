@@ -36,8 +36,10 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 
 	private static $registeredRoute;
 
-	private $actionUrl;
+	private $httpRequest;
 	private $translator;
+
+	private $authToken;
 	private $queriedTranslations;
 	private $ok = TRUE;
 
@@ -104,6 +106,7 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 	 */
 	function __construct(vBuilder\Localization\Translator $translator, Nette\Http\Request $httpRequest, Nette\Http\Session $session) {
 		$this->translator = $translator;
+		$this->httpRequest = $httpRequest;
 
 		if(!isset(self::$registeredRoute))
 			throw new Nette\InvalidStateException(__CLASS__ . "::register not called?");
@@ -113,12 +116,7 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 		if(!isset($session->authToken))
 			$session->authToken = vBuilder\Utils\Strings::randomHumanToken(8);
 
-		$applicationRequest = new Nette\Application\Request('Nette:Micro', 'GET', array(
-			'language' => $translator->getLang(),
-			'token' => $session->authToken
-		));
-
-		$this->actionUrl = self::$registeredRoute->constructUrl($applicationRequest, $httpRequest->getUrl());
+		$this->authToken = $session->authToken;
 	}
 
 	/**
@@ -126,6 +124,7 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 	 */
 	function gather() {
 		if(isset($this->queriedTranslations)) return ;
+		if($this->translator->getLang() == 'en') return ;
 
 		$this->queriedTranslations = $this->translator->getLogger()
 			? $this->translator->getLogger()->getQueriedTranslations()
@@ -175,7 +174,13 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 
 		$translations = $this->queriedTranslations;
 		$lang = $this->translator->getLang();
-		$actionUrl = $this->actionUrl;
+
+		$applicationRequest = new Nette\Application\Request('Nette:Micro', 'GET', array(
+			'language' => $lang,
+			'token' => $this->authToken
+		));
+
+		$actionUrl = self::$registeredRoute->constructUrl($applicationRequest, $this->httpRequest->getUrl());
 
 		require __DIR__ . '/Templates/bar.translation.panel.phtml';
 
