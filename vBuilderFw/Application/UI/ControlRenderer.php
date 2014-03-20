@@ -24,7 +24,8 @@
 namespace vBuilder\Application\UI;
 
 use vBuilder,
-		Nette;
+	vBuilder\Utils\Strings,
+	Nette;
 
 /**
  * Control rendering class
@@ -310,8 +311,19 @@ class ControlRenderer extends vBuilder\Object {
 		vBuilder\Latte\Macros\SystemMacros::install($compiler);
 
 		// Auto-extend for templates
+		$autoExtend = NULL;
 		if($template instanceof Nette\Templating\FileTemplate && $template->getFile() != "" && $template->getFile() != $this->getDefaultTemplateFile() && file_exists($this->getDefaultTemplateFile())) {
-			vBuilder\Latte\Macros\UIMacros::installWithAutoExtend($compiler, $this->getDefaultTemplateFile());
+
+			 // If the basename is same but the dir differs
+			 if(preg_match('#^(.*?)([^/]+)$#', $template->getFile(), $mCurrent) && preg_match('#^(.*?)([^/]+)$#', $this->getDefaultTemplateFile(), $mDefault)) {
+			 	if($mCurrent[2] == $mDefault[2]) {
+			 		$autoExtend = $this->getDefaultTemplateFile();
+			 	}
+			 }
+		}
+
+		if($autoExtend) {
+			vBuilder\Latte\Macros\UIMacros::installWithAutoExtend($compiler, $autoExtend);
 		} else
 			vBuilder\Latte\Macros\UIMacros::install($compiler);
 
