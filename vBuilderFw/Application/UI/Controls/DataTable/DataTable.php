@@ -618,16 +618,15 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 		$filter = array();
 		foreach($pk as $key => $val) {
-			$filter[] = array(
-				$key => array(
-					'keywords' => $val,
-					'regexp' => FALSE
-				)
+			$filter[$key] = array(
+				'keywords' => $val,
+				'regexp' => FALSE
 			);
 		}
 
-		$this->_model->setFilter($filter);
-		$it = $this->_model->getIterator(0, 1);
+		$resultSet = $this->_model->getResultSet($filter);
+		$it = $resultSet->getIterator(0, 1);
+		$it->rewind();
 		$rowData = $it->current();
 
 		$payload = array(
