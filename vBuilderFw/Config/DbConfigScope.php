@@ -11,19 +11,19 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace vBuilder\Config;
 
-use Nette, dibi;
+use Nette, DibiConnection;
 
 /**
  * Database based configuration scope
@@ -38,9 +38,6 @@ class DbConfigScope extends ConfigScope {
 	/** @var string|null scope name, if null no load/save is performed */
 	private $scopeName;
 
-	/** @var Nette\DI\Container DI */
-	protected $context;
-
 	/** @var DibiConnection DB connection */
 	protected $db;
 
@@ -50,13 +47,12 @@ class DbConfigScope extends ConfigScope {
 	/**
 	 * Constructor
 	 *
-	 * @param Nette\DI\Container DI
+	 * @param DibiConnection database connection
 	 * @param string|null scope name, if null this scope won't perform any load
 	 * @param ConfigScope|null reference to fallback config scope or null if there isn't one
 	 */
-	function __construct(Nette\DI\Container $context, $name, $fallback = null) {
-		$this->context = $context;
-		$this->db = $this->context->database->connection;
+	function __construct(DibiConnection $dbConnection, $name, $fallback = null) {
+		$this->db = $dbConnection;
 
 		// Scope name
 		if($name !== null) $this->setScopeName($name);
@@ -114,7 +110,7 @@ class DbConfigScope extends ConfigScope {
 			$results = $this->db->query('SELECT * FROM ['.self::TABLE_NAME.'] WHERE [scope] = %s', $this->scopeName)->fetchAll();
 			foreach($results as $curr) {
 				if(!$alreadyWrittenInto || !$this->has($curr['key'])) {
-					$this->set($curr['key'], $curr['value']);
+					$this->set($curr['key'], $this->convertFromDb($curr['value']));
 				}
 			}
 		}
@@ -136,7 +132,7 @@ class DbConfigScope extends ConfigScope {
 			$data[] = array(
 				 'key' => $key,
 				 'scope' => $this->scopeName,
-				 'value' => $value
+				 'value' => $this->convertToDb($value)
 			);
 		}
 
@@ -189,6 +185,28 @@ class DbConfigScope extends ConfigScope {
 		}
 
 		return $dict;
+	}
+
+	/**
+	 * Unserializes value from DB
+	 *
+	 * @param string
+	 * @return mixed
+	 */
+	protected function convertFromDb($value) {
+		// @todo
+		return $value;
+	}
+
+	/**
+	 * Serializes value for storing in DB
+	 *
+	 * @param mixed
+	 * @return string
+	 */
+	protected function convertToDb($value) {
+		// @todo
+		return $value;
 	}
 
 }

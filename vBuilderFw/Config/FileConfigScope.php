@@ -1,24 +1,24 @@
 <?php
 
 /**
- * This file is part of vManager.
- * 
+ * This file is part of vBuilder Framework (vBuilder FW).
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
- * For more information visit http://www.vmanager.cz
- * 
+ *
+ * For more information visit http://www.vbuilder.cz
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
- * vManager is distributed in the hope that it will be useful,
+ *
+ * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
- * along with vManager. If not, see <http://www.gnu.org/licenses/>.
+ * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace vBuilder\Config;
@@ -26,15 +26,15 @@ namespace vBuilder\Config;
 use Nette;
 
 /**
- * 
+ *
  *
  * @author Jirka Vebr
  */
 class FileConfigScope extends ConfigScope {
-	
+
 	private $filenames = array();
-	
-	
+
+
 	public function __construct(array $filenames, $fallback = null) {
 		foreach ($filenames as $filename) {
 			$ext = \pathinfo($filename, PATHINFO_EXTENSION);
@@ -46,31 +46,31 @@ class FileConfigScope extends ConfigScope {
 		}
 		parent::__construct($fallback);
 	}
-	
+
 	public function load() {
 		$this->isLoaded = true;
 		foreach($this->filenames as $file) {
 			$decoded = $this->decode($file);
-		
+
 			if($decoded)
 				$this->data = array_merge($this->data, $decoded);
 		}
 	}
-	
+
 	public function save() {
 		// Cascading save. Cannot throw exception.
 		// throw new \LogicException('This doesn\'t make sense...');
 	}
-	
+
 	private function decode($file) {
 		$ext = \pathinfo($file, \PATHINFO_EXTENSION);
-		
+
 		switch ($ext) {
 			case 'ini':
 				$ini = \parse_ini_file('safe://'.$file, true, \INI_SCANNER_RAW);
 				foreach ($ini as $key => $scope) {
 					foreach ($scope as $key2 => $val) {
-						$m = $this->parseBools($val);
+						$m = vBuilder\Utils\Strings::parseToBool($val, $val);
 						if (\is_numeric($m)) {
 							$m = \intval($m);
 						}
