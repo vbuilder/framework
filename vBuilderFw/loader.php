@@ -13,8 +13,6 @@ Nette\Application\UI\Form::extensionMethod('loadFromEntity', 'vBuilder\Orm\FormH
 Nette\Application\UI\Form::extensionMethod('fillInEntity', 'vBuilder\Orm\FormHelper::fillInEntity');
 Nette\Forms\Container::extensionMethod('addBootstrapSelect', 'vBuilder\Forms\Controls\BootstrapSelect::addToContainer');
 
-Nette\Diagnostics\Debugger::addPanel(new vBuilder\Diagnostics\OrmSessionBar);
-
 $container->application->onRequest[] = function (Application $app, Request $request) use ($container) {
 
 	$runningTestMode = false;

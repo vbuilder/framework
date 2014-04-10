@@ -49,6 +49,9 @@ class ResourceUrlMatcher extends Nette\Object {
 	/** @var string */
 	private $mask;
 
+	/** @var array */
+	private $sequence;
+
 	/** @var array of [value & fixity, filterIn, filterOut] */
 	private $metadata = array();
 
@@ -62,6 +65,7 @@ class ResourceUrlMatcher extends Nette\Object {
 	const VALUE = 'value';
 	const PATTERN = 'pattern';
 	const FILTER_IN = 'filterIn';
+	const FILTER_OUT = 'filterOut';
 
 	/** @internal fixity types - how to handle default value? {@link Route::$metadata} */
 	const OPTIONAL = 0,
@@ -72,7 +76,8 @@ class ResourceUrlMatcher extends Nette\Object {
 	public static $styles = array(
 		'#' => array( // default style for path parameters
 			self::PATTERN => '[^/]+',
-			self::FILTER_IN => 'rawurldecode'
+			self::FILTER_IN => 'rawurldecode',
+			self::FILTER_OUT => array(__CLASS__, 'param2path')
 		),
 	);
 
@@ -117,6 +122,74 @@ class ResourceUrlMatcher extends Nette\Object {
 		}
 
 		return $params;
+	}
+
+	public function constructPath(&$params) {
+
+		$metadata = $this->metadata;
+		foreach ($metadata as $name => $meta) {
+			if (!isset($params[$name])) {
+				continue; // retains NULL values
+			}
+
+			if (isset($meta[self::FILTER_OUT])) {
+				$params[$name] = call_user_func($meta[self::FILTER_OUT], $params[$name]);
+			}
+
+			if (isset($meta[self::PATTERN]) && !preg_match($meta[self::PATTERN], rawurldecode($params[$name]))) {
+				throw new Nette\InvalidArgumentException("Value does not match pattern for parameter '$name'");
+			}
+		}
+
+		$sequence = $this->sequence;
+		$brackets = array();
+		$required = NULL; // NULL for auto-optional
+		$url = '';
+		$i = count($sequence) - 1;
+		do {
+			$url = $sequence[$i] . $url;
+			if ($i === 0) {
+				break;
+			}
+			$i--;
+
+			$name = $sequence[$i]; $i--; // parameter name
+
+			if ($name === ']') { // opening optional part
+				$brackets[] = $url;
+
+			} elseif ($name[0] === '[') { // closing optional part
+				$tmp = array_pop($brackets);
+				if ($required < count($brackets) + 1) { // is this level optional?
+					if ($name !== '[!') { // and not "required"-optional
+						$url = $tmp;
+					}
+				} else {
+					$required = count($brackets);
+				}
+
+			} elseif ($name[0] === '?') { // "foo" parameter
+				continue;
+
+			} elseif (isset($params[$name]) && $params[$name] != '') { // intentionally ==
+				$required = count($brackets); // make this level required
+				$url = $params[$name] . $url;
+				unset($params[$name]);
+
+			} elseif (isset($metadata[$name]['fixity'])) { // has default value?
+				if ($required === NULL && !$brackets) { // auto-optional
+					$url = '';
+				} else {
+					$url = $metadata[$name]['defOut'] . $url;
+				}
+
+			} else {
+				throw new Nette\InvalidArgumentException("Missing parameter '$name'");
+				// return NULL; // missing parameter '$name'
+			}
+		} while (TRUE);
+
+		return $url;
 	}
 
 	protected function setMask($mask) {
@@ -225,7 +298,18 @@ class ResourceUrlMatcher extends Nette\Object {
 
 		$this->re = '#' . $re . '/?\z#A' . ($this->flags & self::CASE_SENSITIVE ? '' : 'iu');
 		$this->metadata = $metadata;
-		// this->sequence = $sequence;
+		$this->sequence = $sequence;
 	}
+
+	/**
+	 * Url encode.
+	 * @param  string
+	 * @return string
+	 */
+	private static function param2path($s)
+	{
+		return str_replace('%2F', '/', rawurlencode($s));
+	}
+
 
 }

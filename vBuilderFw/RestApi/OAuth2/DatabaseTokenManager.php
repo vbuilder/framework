@@ -80,6 +80,18 @@ class DatabaseTokenManager extends BaseTokenManager {
 	/**
 	 * @inheritDoc
   	 */
+	function invalidateToken($token) {
+		$this->dbConnection->query(
+			'DELETE FROM %n', $this->tableName,
+			'WHERE [token] = %s', $token
+		);
+
+		return $this->dbConnection->getAffectedRows() > 0;
+	}
+
+	/**
+	 * @inheritDoc
+  	 */
 	function createToken($parameters = NULL) {
 		$this->purgeOldTokens();
 		$this->dbConnection->begin();

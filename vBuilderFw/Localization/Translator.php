@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2012 V3Net.cz, s.r.o <info@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -23,7 +23,8 @@
 
 namespace vBuilder\Localization;
 
-use Nette;
+use Nette,
+	vBuilder;
 
 /**
  * Translator
@@ -49,14 +50,33 @@ class Translator extends Nette\FreezableObject implements ITranslator
 	/** @var string */
 	private $lang = "en";
 
+	/** @var TranslationLogger|NULL */
+	private $logger;
+
 	/**
 	 * @param \Nette\Caching\IStorage
 	 */
-	public function __construct(Nette\Caching\IStorage $cacheStorage = NULL)
-	{
+	public function __construct(Nette\Caching\IStorage $cacheStorage = NULL) {
+
 		if ($cacheStorage) {
 			$this->cache = new Nette\Caching\Cache($cacheStorage, "Nella.Translator");
 		}
+	}
+
+	/**
+	 * @return TranslationLogger|NULL
+	 */
+	public function getLogger() {
+		return $this->logger;
+	}
+
+	/**
+	 * @param TranslationLogger
+	 * @return Translator
+	 */
+	public function setLogger(TranslationLogger $logger = NULL) {
+		$this->logger = $logger;
+		return $this;
 	}
 
 	/**
@@ -157,10 +177,12 @@ class Translator extends Nette\FreezableObject implements ITranslator
 
 		$messages = (array) $message;
 		$args = (array) $count;
+
 		$form = $args ? reset($args) : NULL;
 		$form = $form === NULL ? 1 : (is_int($form) ? $form : 0);
 		$plural = $form == 1 ? 0 : 1;
 
+		$tmp = NULL;
 		$message = isset($messages[$plural]) ? $messages[$plural] : $messages[0];
 		foreach ($this->dictionaries as $dictionary) {
 			if (($tmp = $dictionary->translate(reset($messages), $form)) !== NULL) {
@@ -169,9 +191,33 @@ class Translator extends Nette\FreezableObject implements ITranslator
 			}
 		}
 
+		// Logging
+		if($this->logger) {
+			if($tmp !== NULL) call_user_func_array(array($this->logger, 'translation'), func_get_args());
+			else call_user_func_array(array($this->logger, 'missingTranslation'), func_get_args());
+		}
+
+		if(isset($args['__hint__'])) unset($args['__hint__']);
+
 		if (count($args) > 0 && reset($args) !== NULL) {
-			$message = str_replace(array("%label", "%name", "%value"), array("%%label", "%%name", "%%value"), $message);
-			$message = vsprintf($message, $args);
+
+			$map = array_flip(array_keys($args));
+    		$message = preg_replace_callback('/(^|[^%])%([a-zA-Z0-9_-]+)(\$)?/', function ($m) use ($map) {
+
+    			// Standard mapping
+    			// @see http://www.php.net/manual/en/function.sprintf.php
+    			if(in_array($m[2], array('b', 'c', 'd', 'e', 'E', 'f', 'F', 'g', 'G', 'o', 's', 'u', 'x', 'X'))) return $m[0];
+
+    			// No registered mapping
+    			if(!isset($map[$m[2]]))
+    				return $m[1].'%%'.$m[2]. (isset($m[3]) ? $m[3] : '');
+
+    			// Registered mapping
+    			return $m[1].'%'.($map[$m[2]] + 1) . (isset($m[3]) ? '$' : '$s');
+
+    		}, $message);
+
+			return vsprintf($message, $args);
 		}
 
 		return $message;

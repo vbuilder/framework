@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -33,61 +33,61 @@ use vBuilder,
  * @since Oct 22, 2011
  */
 class MailNotificator extends vBuilder\EventListener {
-	
+
 	/** @var Nette\Mail\Message */
 	private $_message;
-	
+
 	/** @var Nette\Templating\ITemplate */
 	private $_template;
-	
-	/** @var Nette\DI\Container */ 
+
+	/** @var Nette\DI\Container */
 	protected $context;
-	
+
 	/**
 	 * Constructor
-	 * 
-	 * @param Nette\DI\Container $context 
+	 *
+	 * @param Nette\DI\Container $context
 	 */
 	public function __construct(Nette\DI\Container $context) {
-		$this->context = $context;		
+		$this->context = $context;
 	}
-	
+
 	// ***************************************************************************
-	
+
 	/**
 	 * Returns mail message
-	 * 
-	 * @return Nette\Mail\Message 
+	 *
+	 * @return Nette\Mail\Message
 	 */
 	final public function getMessage() {
 		if(!isset($this->_message)) {
 			$this->_message = $this->createMessage();
 		}
-		
+
 		return $this->_message;
 	}
-	
+
 	/**
-	 * Mail message factory 
-	 * 
-	 * @return Nette\Mail\Message 
+	 * Mail message factory
+	 *
+	 * @return Nette\Mail\Message
 	 */
 	protected function createMessage() {
 		$message = new Nette\Mail\Message;
-		
+
 		// CLI
 		if($this->context->httpRequest->getUrl()->getHost() != "")
 			$message->setFrom('info@' . $this->context->httpRequest->getUrl()->getHost());
-			
+
 		return $message;
 	}
-	
+
 	// ***************************************************************************
-	
+
 	/**
 	 * Returns template
-	 * 
-	 * @return Nette\Templating\ITemplate 
+	 *
+	 * @return Nette\Templating\ITemplate
 	 */
 	final public function getTemplate() {
 		if(!isset($this->_template)) {
@@ -99,29 +99,29 @@ class MailNotificator extends vBuilder\EventListener {
 
 			$this->_template = $value;
 		}
-		
+
 		return $this->_template;
 	}
-	
+
 	/**
 	 * Mail template factory
-	 * 
+	 *
 	 * @param string class name to use (if null FileTemplate will be used)
-	 * 
+	 *
 	 * @return Nette\Templating\ITemplate
 	 */
 	protected function createTemplate($class = NULL) {
 		// No need for checking class because of getTemplate
 		$template = $class ? new $class : new Nette\Templating\FileTemplate;
 		$presenter = $this->context->application->getPresenter();
-		
+
 		$template->onPrepareFilters[] = callback($this, 'templatePrepareFilters');
 		$template->registerHelperLoader('Nette\Templating\Helpers::loader');
-		$template->setCacheStorage($this->context->nette->templateCacheStorage);
+		$template->setCacheStorage($this->context->getService('nette.templateCacheStorage'));
 
 		$template->registerHelper('printf', 'sprintf');
 		$template->setTranslator($this->context->translator);
-		
+
 		// default parameters
 		$template->mailNotificator = $this;
 		$template->presenter = $presenter;
@@ -129,10 +129,10 @@ class MailNotificator extends vBuilder\EventListener {
 		$template->baseUri = $template->baseUrl = rtrim($this->context->httpRequest->getUrl()->getBaseUrl(), '/');
 		$template->basePath = preg_replace('#https?://[^/]+#A', '', $template->baseUrl);
 		$template->user = $this->context->user;
-				
+
 		return $template;
 	}
-	
+
 	/**
 	 * Descendant can override this method to customize template compile-time filters.
 	 * @param  Nette\Templating\Template
@@ -143,7 +143,7 @@ class MailNotificator extends vBuilder\EventListener {
 
 		$template->registerFilter($engine);
 	}
-	
-	
+
+
 }
 
