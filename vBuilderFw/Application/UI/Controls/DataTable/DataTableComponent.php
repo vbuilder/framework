@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -44,17 +44,17 @@ class Component extends Nette\Object {
 
 	function __construct($name, $label = NULL) {
 		$this->_name = $name;
-		$this->_label = $label ?: $name;
+		$this->_label = $label === NULL ? $name : $label;
 	}
 
 	public function setTable(vBuilder\Application\UI\Controls\DataTable $parentTable) {
 		$this->_table = $parentTable;
 	}
-	
+
 	public function getName() {
 		return $this->_name;
 	}
-	
+
 	public function getLabel() {
 		return $this->_label;
 	}
@@ -97,7 +97,7 @@ class Component extends Nette\Object {
 			$this->_visible = $enabled;
 		else
 			$this->_visible = (bool) $enabled;
-		
+
 		return $this;
 	}
 

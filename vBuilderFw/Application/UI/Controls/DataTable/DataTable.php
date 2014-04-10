@@ -607,13 +607,14 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 *
 	 * @param  string action name
 	 * @param  object|array row data
+	 * @param  array optional addtional GET parameters
 	 * @return string absolute URL
 	 */
-	public function createActionLink($action, $rowData) {
-		$args = array(
+	public function createActionLink($action, $rowData, $addtionalParams = array()) {
+		$args = array_merge(array(
 			'action' => $action,
 			'authToken' => $this->getAuthToken()
-		);
+		), $addtionalParams);
 
 		foreach($this->_idColumns as $key => $index) {
 			$args['record' . ucfirst($key)] = $this->getDataForKey($rowData, $key, TRUE);
