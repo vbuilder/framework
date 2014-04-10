@@ -26,7 +26,8 @@ namespace vBuilder\Application\UI\Controls;
 use vBuilder,
 	Nette,
 	Nette\Application\Responses\JsonResponse,
-	vBuilder\Application\UI\Controls\DataTable\IModel;
+	vBuilder\Application\UI\Controls\DataTable\IModel,
+	vBuilder\Application\UI\Controls\DataTable\IResultSet;
 
 /**
  * Control for generating jQuery datatable
@@ -49,7 +50,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 	private $_idColumns = array();
 
 	/** @var array (columnName => direction) */
-	private $_sortColumns = array();
+	private $_defaultSortColumns = array();
 
 	/** @var helper array for lazy applying of global filter */
 	private $_globalFilter = array('keywords' => NULL, 'regexp' => FALSE);
@@ -87,7 +88,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 
 		for($i = 0; $i < $cols; $i++) {
 			$ch = chr(ord('A') + $i);
-			$dt->addColumn($ch);
+			$dt->addColumn($ch)->setSortable(true)->setSearchable(true);
 		}
 
 		return $dt;
@@ -237,8 +238,8 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 *
 	 * @return DataTable fluent interface
 	 */
-	public function addSortColumn($columnName, $direction = 'asc') {
-		$this->_sortColumns[$columnName] = $direction;
+	public function addDefaultSortColumn($columnName, $direction = 'asc') {
+		$this->_defaultSortColumns[$columnName] = $direction;
 		return $this;
 	}
 
@@ -246,16 +247,8 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 * Returns array of default sorting rules (columnName => direction)
 	 * @return array (columnName => direction)
 	 */
-	public function getSortColumns() {
-		return $this->_sortColumns;
-	}
-
-	/**
-	 * Returns array of effective sorting rules (columnName => direction)
-	 * @return array (columnName => direction)
-	 */
-	public function getEffectiveSortColumns() {
-		return isset($this->session->sortColumns) ? $this->session->sortColumns : $this->_sortColumns;
+	public function getDefaultSortColumns() {
+		return $this->_defaultSortColumns;
 	}
 
 	// -------------------------------------------------------------------------
@@ -372,53 +365,59 @@ class DataTable extends vBuilder\Application\UI\Control {
 		// First level means AND operator, second OR
 		// Index 0: will be created from global search filter if any
 		// Other items are indexed by column name
-		$filter = array(array());
+		$filter = array();
 
 		// Global filter
 		if(($globalFilter = $this->context->httpRequest->getQuery("sSearch")) != "") {
 			$globalFilter = array(
 				'keywords' => $globalFilter,
-				'regexp' => $this->context->httpRequest->getQuery("bRegex") == "true"
+				'regexp' => $this->context->httpRequest->getQuery("bRegex") == "true",
+				'columns' => array()
 			);
+
+			for($i = 0; $i < count($this->_columns); $i++) {
+				if(!$this->_columns[$i]->isSearchable()) continue;
+				if($this->context->httpRequest->getQuery("bSearchable_$i") != "true") continue;
+
+				$globalFilter['columns'][] = $this->_columns[$i]->getName();
+			}
+
+			if(count($globalFilter['columns']))
+				$filter[0] = $globalFilter;
 		}
 
 		// Column filtering
 		for($i = 0; $i < count($this->_columns); $i++) {
 			if($this->context->httpRequest->getQuery("bSearchable_$i") != "true") continue;
 
-
-			if(($keywords = $this->context->httpRequest->getQuery("sSearch_$i")) == "") {
-
-				// We use this column for global filtering only if it does not have
-				// a specified value to filter
-				if($globalFilter)
-					$filter[0][$this->_columns[$i]->getName()] = $globalFilter;
-
-				continue;
+			if(($keywords = $this->context->httpRequest->getQuery("sSearch_$i")) != "") {
+				$filter[$this->_columns[$i]->getName()] = array(
+					'keywords' => $keywords,
+					'regexp' => $this->context->httpRequest->getQuery("bRegex_$i") == "true"
+				);
 			}
-
-			$filter[$this->_columns[$i]->getName()] = array(
-				'keywords' => $keywords,
-				'regexp' => $this->context->httpRequest->getQuery("bRegex_$i") == "true"
-			);
 		}
 
-		// In case no column is searchable and global filtering was requested
-		if(count($filter) && count($filter[0]) == 0)
-			array_shift($filter);
+		// Save requested sorting to session
+		if($sortingColumns != $this->_defaultSortColumns)
+			$this->session->sortColumns = $sortingColumns;
+
+		$resultSet = $this->model->getResultSet(
+			$filter,
+			$sortingColumns
+		);
 
 		$renderedData = $this->getRenderedData(
 			intval($this->context->httpRequest->getQuery('iDisplayStart', 0)),
 			intval($this->context->httpRequest->getQuery('iDisplayLength', 0)) ?: $this->_recordsPerPage,
-			$sortingColumns,
-			$filter
+			$resultSet
 		);
 
 		// Returned structure
 		$data = array(
 			"sEcho" => intval($this->context->httpRequest->getQuery('sEcho')),
-			"iTotalRecords" => $this->model->getUnfilteredCount(),
-			"iTotalDisplayRecords" => $this->model->getCount(),
+			"iTotalRecords" => $resultSet->getUnfilteredCount(),
+			"iTotalDisplayRecords" => $resultSet->getCount(),
 			"aaData" => $renderedData
 		);
 
@@ -429,17 +428,12 @@ class DataTable extends vBuilder\Application\UI\Control {
 		$this->getPresenter(true)->sendResponse(new JsonResponse($data));
 	}
 
-	/**
-	 * Creates an array of data for deffered loading
-	 *
-	 * @return array of arrays (ordered)
-	 */
-	public function getDefferedData() {
-		return $this->getRenderedData(
-			0,
-			$this->_recordsPerPage,
-			$this->effectiveSortColumns,
-			$this->_filter
+	public function getResultSet() {
+		if(!$this->_initialized) $this->init();
+
+		return $this->model->getResultSet(
+			$this->_filter,
+			isset($this->session->sortColumns) ? $this->session->sortColumns : $this->_defaultSortColumns
 		);
 	}
 
@@ -448,29 +442,20 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 *
 	 * @param  int starting index
 	 * @param  int number of records to render
-	 * @param  array of columns to sort by
-	 * @param  array of filtering rules
+	 * @param  IResultSet result set
 	 *
 	 * @return array of arrays (ordered)
 	 */
-	public function getRenderedData($start, $length, array $sortingColumns, array $filter) {
+	public function getRenderedData($start, $length, IResultSet $resultSet) {
 		$rowData = array();
 
-		// Persistent sorting
-		if($sortingColumns != $this->_sortColumns)
-			$this->session->sortColumns = $sortingColumns;
-
-		// Setting filter
-		$this->model->setFilter($filter);
-
 		// Retrieve data iterator
-		$iterator = $this->model->getIterator(
+		$iterator = $resultSet->getIterator(
 			$start,
-			$length,
-			$sortingColumns,
-			$filter
+			$length
 		);
 
+		$iterator->rewind();
 		while($iterator->valid()) {
 			$rowData[] = $this->getRenderedRowData($iterator->current());
 			$iterator->next();
@@ -711,19 +696,18 @@ class DataTable extends vBuilder\Application\UI\Control {
 		}
 
 		// Global filter -> filtering rules
-		$globalFilterColumns = array();
-		foreach($this->_columns as $col) {
-			if($col->isSearchable())
-				$globalFilterColumns[] = $col;
-		}
+		if($this->_globalFilter['keywords'] != '') {
+			$globalFilterColumns = array();
+			foreach($this->_columns as $col) {
+				if($col->isSearchable())
+					$globalFilterColumns[] = $col->getName();
+			}
 
-		if(count($globalFilterColumns)) {
-			$this->_filter[0] = array();
-			foreach($globalFilterColumns as $col)
-				$this->_filter[0][$col->getName()] = $this->_globalFilter;
+			if(count($globalFilterColumns)) {
+				$this->_filter[0] = $this->_globalFilter;
+				$this->_filter[0]['columns'] = $globalFilterColumns;
+			}
 		}
-
-		$this->_model->setFilter($this->_filter);
 
 		$this->_initialized = true;
 	}

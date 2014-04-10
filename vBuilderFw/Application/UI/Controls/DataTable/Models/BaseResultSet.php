@@ -27,11 +27,33 @@ use vBuilder,
 	Nette;
 
 /**
- * Base model class
+ * Base result set implementation
  *
  * @author Adam Staněk (velbloud)
- * @since Sep 9, 2012
+ * @since Apr 10, 2014
  */
-abstract class BaseModel extends Nette\Object implements IModel {
+abstract class BaseResultSet extends Nette\Object implements IResultSet {
+
+	private $filteringRules;
+	private $sortingColumns;
+
+	function __construct(array $filteringRules = array(), array $sortingColumns = array()) {
+		$this->filteringRules = $filteringRules;
+		$this->sortingColumns = $sortingColumns;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getFilteringRules() {
+		return $this->filteringRules;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getSortingColumns() {
+		return $this->sortingColumns;
+	}
 
 }

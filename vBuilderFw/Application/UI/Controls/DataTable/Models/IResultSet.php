@@ -27,11 +27,49 @@ use vBuilder,
 	Nette;
 
 /**
- * Base model class
+ * Result set interface
  *
  * @author Adam Staněk (velbloud)
- * @since Sep 9, 2012
+ * @since Apr 10, 2014
  */
-abstract class BaseModel extends Nette\Object implements IModel {
+interface IResultSet {
+
+	/**
+	 * Returns applied filtering rules.
+	 *
+	 * @return array
+	 */
+	public function getFilteringRules();
+
+	/**
+	 * Returns applied sorting.
+	 *
+	 * @return array
+	 */
+	public function getSortingColumns();
+
+	/**
+	 * Returns number of records.
+	 *
+	 * @return int
+	 */
+	public function getCount();
+
+	/**
+	 * Returns number of records before filtering.
+	 * If information is not available, returns NULL.
+	 *
+	 * @return int|NULL
+	 */
+	public function getUnfilteredCount();
+
+	/**
+	 * Returns iterator of records.
+	 *
+	 * @param int start offset
+	 * @param int|NULL count
+	 * @return Iterator
+	 */
+	public function getIterator($start = 0, $count = NULL);
 
 }

@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -46,7 +46,7 @@ class Button extends Component {
 	public function setUrlCallback($callable) {
 		if(!is_callable($callable))
 			throw new Nette\InvalidArgumentException("Given URL callback is not callable");
-	
+
 		$this->_url = $callable;
 		return $this;
 	}

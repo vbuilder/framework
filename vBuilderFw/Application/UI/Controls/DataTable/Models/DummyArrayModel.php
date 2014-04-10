@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -36,17 +36,17 @@ class DummyArrayModel extends ArrayModel {
 
 	function __construct($rows = 72, $cols = 5) {
 		$data = array();
-		
+
 		for($r = 1; $r <= $rows; $r++) {
 			$row = array();
 			for($c = 0; $c < $cols; $c++) {
 				$ch = chr(ord('A') + $c);
 				$row[$ch] = "Field $r." . $ch;
 			}
-			
+
 			$data[] = $row;
 		}
-		
+
 		parent::__construct($data);
 	}
 

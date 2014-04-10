@@ -24,14 +24,45 @@
 namespace vBuilder\Application\UI\Controls\DataTable;
 
 use vBuilder,
-	Nette;
+	Nette,
+	DibiFluent;
 
 /**
- * Base model class
+ * Dibi result set implementation
  *
  * @author Adam Staněk (velbloud)
- * @since Sep 9, 2012
+ * @since Apr 10, 2014
  */
-abstract class BaseModel extends Nette\Object implements IModel {
+class DibiResultSet extends BaseResultSet {
+
+	private $fluent;
+
+	function __construct(DibiFluent $fluent, array $filteringRules = array(), array $sortingColumns = array()) {
+		parent::__construct($filteringRules, $sortingColumns);
+
+		$this->fluent = $fluent;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getCount() {
+		return $this->fluent->count();
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getUnfilteredCount() {
+		// Not supported
+		return NULL;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getIterator($start = 0, $count = NULL) {
+		return $this->fluent->getIterator($start, $count);
+	}
 
 }

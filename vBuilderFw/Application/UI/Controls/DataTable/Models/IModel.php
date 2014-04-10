@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,12 +32,14 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since Sep 9, 2012
  */
-interface IModel extends Nette\IFreezable {
+interface IModel {
 
-	public function getCount();
-	public function getUnfilteredCount();
-	public function setFilter(array $rules = array());
-	public function getFilter();
-	public function getIterator($start, $count, array $sortingColumns = array());
-	
+	/**
+	 * @param array of filtering rules
+	 * @param array of columns (column name => direction)
+	 *
+	 * @return IResultSet
+	 */
+	public function getResultSet(array $filteringRules = array(), array $sortingColumns = array());
+
 }

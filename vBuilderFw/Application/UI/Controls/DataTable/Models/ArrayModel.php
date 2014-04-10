@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -40,43 +40,16 @@ class ArrayModel extends BaseModel {
 	function __construct(array $data) {
 		$this->_data = $data;
 	}
-	
-	public function setFilter(array $rules = array()) {
-		// TODO
 
-		return $this;
-	}
-
-	public function getFilter() {
-		// TODO
-
-		return NULL;
-	}
-
-	protected function getData() {
-		$this->freeze();
-		return $this->_data;
-	}
-	
 	/**
-	 * Returns total data count
-	 * 
-	 * @return int
+	 * @inheritDoc
 	 */
-	public function getCount() {
-		return count($this->getData());
-	}
-	
-	/**
-	 * Returns iterator for given boundary
-	 *
-	 * @return ArrayIterator
-	 */
-	public function getIterator($start, $count, array $sortingColumns = array()) {
-
-		// TODO: Support for sorting and filtering or at least throw a notice
-
-		return new \ArrayIterator(array_slice($this->getData(), $start, $count));
+	public function getResultSet(array $filteringRules = array(), array $sortingColumns = array()) {
+		return new ArrayResultSet(
+			$this->_data /* passed by reference */,
+			$filteringRules,
+			$sortingColumns
+		);
 	}
 
 }

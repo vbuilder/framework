@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -38,6 +38,8 @@ class DataTableRenderer extends vBuilder\Application\UI\ControlRenderer {
 
 	public function renderDefault() {
 
+		$resultSet = $this->control->resultSet;
+
 		$this->template->columns = $this->control->getColumns();
 
 		//$this->template->visibleColumns = array();
@@ -45,20 +47,25 @@ class DataTableRenderer extends vBuilder\Application\UI\ControlRenderer {
 		foreach($this->control->getColumns() as $index => $column) {
 			//if($column->isVisible())
 				//$this->template->visibleColumns[] = $column;
-			
-			if(isset($this->control->effectiveSortColumns[$column->getName()])) {
+
+			if(isset($resultSet->sortingColumns[$column->getName()])) {
 				// $sortingColumns[] = array(columnIndex, sortingMethod)
-				$this->template->sortingColumns[] = array($index, $this->control->effectiveSortColumns[$column->getName()]);
+				$this->template->sortingColumns[] = array($index, $resultSet->sortingColumns[$column->getName()]);
 			}
 		}
 
 		// First page of records
-		$this->template->rows = $this->control->getDefferedData();
-		$this->template->total = $this->control->model->count;
-		$this->template->unfilteredTotal = $this->control->model->unfilteredCount ?: $this->control->model->count;
+		$this->template->rows = $this->control->getRenderedData(
+			0,
+			$this->control->recordsPerPage,
+			$resultSet
+		);
+
+		$this->template->total = $resultSet->count;
+		$this->template->unfilteredTotal = $resultSet->unfilteredCount ?: $resultSet->count;
 
 		$this->template->isSortable = true;
-		$this->template->filter = $this->control->model->getFilter() ?: array();
-	}	
-	 
+		$this->template->filter = $resultSet->filteringRules;
+	}
+
 }
