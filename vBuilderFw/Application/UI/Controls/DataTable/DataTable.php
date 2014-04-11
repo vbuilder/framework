@@ -615,6 +615,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 	 * @return array
 	 */
 	public function createUpdateRowPayload($pk) {
+		if(!$this->_initialized) $this->init();
 
 		$filter = array();
 		foreach($pk as $key => $val) {
