@@ -4,6 +4,7 @@ database:
 
 		'security_lastLoginInfo': '%vBuilderDir%/db/security_lastLoginInfo.sql'
 		'security_users': '%vBuilderDir%/db/security_users.sql'
+		'security_userRoles': '%vBuilderDir%/db/security_userRoles.sql'
 		'security_psk': '%vBuilderDir%/db/security_psk.sql'
 		'security_acl': '%vBuilderDir%/db/security_acl.sql'
 		'security_log': '%vBuilderDir%/db/security_log.sql'
