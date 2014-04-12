@@ -1,3 +1,16 @@
+database:
+	tables:
+		'config': '%vBuilderDir%/db/config.sql'
+
+		'security_lastLoginInfo': '%vBuilderDir%/db/security_lastLoginInfo.sql'
+		'security_users': '%vBuilderDir%/db/security_users.sql'
+		'security_psk': '%vBuilderDir%/db/security_psk.sql'
+		'security_acl': '%vBuilderDir%/db/security_acl.sql'
+		'security_log': '%vBuilderDir%/db/security_log.sql'
+
+		'oauth2_clients': '%vBuilderDir%/db/oauth2_clients.sql'
+		'oauth2_tokens': '%vBuilderDir%/db/oauth2_tokens.sql'
+
 services:
 	# Event dispatcher
 	events.dispatcher:
