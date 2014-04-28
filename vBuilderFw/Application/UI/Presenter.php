@@ -152,6 +152,10 @@ class Presenter extends Nette\Application\UI\Presenter {
 
 		$tpl->registerHelper('stripBetweenTags', 'vBuilder\\Latte\\Helpers\\FormatHelpers::stripBetweenTags');
 		$tpl->registerHelper('printf', 'sprintf');
+
+		$tpl->registerHelper('monthName', 'vBuilder\\Latte\\Helpers\\DateFormatHelpers::monthName');
+		$tpl->registerHelper('weekDayName', 'vBuilder\\Latte\\Helpers\\DateFormatHelpers::weekDayName');
+
 		$tpl->setTranslator($this->context->translator);
 
 		return $tpl;

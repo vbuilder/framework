@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -23,6 +23,8 @@
 
 namespace vBuilder\Latte\Helpers;
 
+use vBuilder;
+
 /**
  * Latte template helpers for formating output
  *
@@ -35,20 +37,15 @@ class DateFormatHelpers {
 	 * Helper for getting time in words.
 	 * Based on: http://addons.nette.org/cs/helper-time-ago-in-words by
 	 * David Grudl
-	 * 
+	 *
+	 * @note Output is translated.
+	 *
 	 * @param DateTime|int|string $time
-	 * @return string formatted time 
+	 * @return string formatted time
 	 */
 	public static function timeInWords($time) {
-		if(!$time) {
+		if(($time = self::timestamp($time)) == FALSE)
 			return FALSE;
-		} elseif(is_numeric($time)) {
-			$time = (int) $time;
-		} elseif($time instanceof \DateTime) {
-			$time = $time->format('U');
-		} else {
-			$time = strtotime($time);
-		}
 
 		$delta = time() - $time;
 
@@ -102,6 +99,54 @@ class DateFormatHelpers {
 			return __('a year ago');
 
 		return _nx('%d year ago', '%d years ago', round($delta / 525960), array(round($delta / 525960)));
+	}
+
+	/**
+	 * Helper for getting name of the day of the week.
+	 *
+	 * @note Output is translated.
+	 *
+	 * @param DateTime|int|string $time
+	 * @return string month name
+	 */
+	public static function monthName($time) {
+		if(($time = self::timestamp($time)) == FALSE)
+			return FALSE;
+
+		return vBuilder\Utils\DateTime::monthName((int) date('n', $time));
+	}
+
+	/**
+	 * Helper for getting name of the day of the week.
+	 *
+	 * @note Output is translated.
+	 *
+	 * @param DateTime|int|string $time
+	 * @return string name of the day of the week
+	 */
+	public static function weekDayName($time) {
+		if(($time = self::timestamp($time)) == FALSE)
+			return FALSE;
+
+		return vBuilder\Utils\DateTime::weekDayName((int) date('N', $time));
+	}
+
+	/**
+	 * Tries to convert given value to unix timestamp
+	 *
+	 * @param DateTime|int|string
+	 * @return int|false
+	 */
+	private static function timestamp($time) {
+		if(is_numeric($time)) {
+			return (int) $time;
+		} elseif($time instanceof \DateTime) {
+			return $time->format('U');
+		} else {
+			return strtotime($time);
+		}
+
+		return FALSE;
 	}
 
 }
