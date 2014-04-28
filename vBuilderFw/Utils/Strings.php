@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -48,7 +48,7 @@ class Strings extends Nette\Utils\Strings {
 		else
 			return parent::contains(self::lower($haystack), self::lower($needle));
 	}
-	
+
 	/**
 	 * Replaces multiple spaces with one and removes spaces
 	 * from the begining and end of string.
@@ -59,10 +59,10 @@ class Strings extends Nette\Utils\Strings {
 	 */
 	public static function simplify($input, $trim = true) {
 		$simplified = preg_replace("/[[:blank:]]+/", " ", $input);
-		
+
 		return $trim ? trim($simplified) : $simplified;
 	}
-	
+
 	/**
 	 * Creates parametrized string
 	 * Ex. something:123,abcd,a b aa \, d,something=true
@@ -74,13 +74,13 @@ class Strings extends Nette\Utils\Strings {
 	public static function intoParameterizedString($key, $params = array()) {
 		$key = str_replace(':', '\\:', $key);
 		if(count($params) == 0) return $key;
-		
+
 		$p = array();
 		foreach($params as $k => $v) {
 			if(is_bool($v)) {
 				$v = $v ? 'true' : 'false';
 			}
-		
+
 			if(!is_int($k)) {
 				$p[] = str_replace(array('\\', ',', '='), array('\\\\', '\\,', '\\='), $k)
 					   . '=' .
@@ -89,10 +89,10 @@ class Strings extends Nette\Utils\Strings {
 				$p[] = str_replace(array('\\', ',', '='), array('\\\\', '\\,', '\\='), $v);
 			}
 		}
-		
+
 		return $key . ':' . implode($p, ',');
 	}
-	
+
 	/**
 	 * Parses string coded by Strings::intoParameterizedString
 	 * Usage: list($key, $parameters) = Strings::parseParametrizedString($str);
@@ -105,7 +105,7 @@ class Strings extends Nette\Utils\Strings {
 		$parsed = array('');
 		$associative = false;
 		$key = 0;
-		
+
 		for($i = 0; $i < strlen($str); $i++) {
 			if(!$escaped) {
 				if($str[$i] == '\\') {
@@ -113,35 +113,35 @@ class Strings extends Nette\Utils\Strings {
 				} elseif($str[$i] == ':') {
 					$key++;
 					$parsed[$key] = '';
-					
+
 				} elseif($str[$i] == '=' && count($parsed) > 1) {
 					$tmp = $parsed[$key];
 					unset($parsed[$key]);
 					$key = $tmp;
 					$parsed[$key] = '';
-					
+
 				} elseif($str[$i] == ',' && count($parsed) > 1) {
 					$parsed[$key] = self::parseToBool($parsed[$key], $parsed[$key]);
-				
+
 					$key = count($parsed);
 					$parsed[$key] = '';
-					
+
 				} else {
 					$parsed[$key] .= $str[$i];
 				}
 			} else {
-				$escaped = false;	
+				$escaped = false;
 				$parsed[$key] .= $str[$i];
 			}
 		}
-		
+
 		$parsed[$key] = self::parseToBool($parsed[$key], $parsed[$key]);
-		
+
 		return count($parsed) > 1
 				? array($parsed[0], array_slice($parsed, 1))
 				: array($parsed[0], array());
 	}
-	
+
 	/**
 	 * Parses TRUE or FALSE strings into their boolean representation
 	 *
@@ -155,7 +155,7 @@ class Strings extends Nette\Utils\Strings {
 
 		return $onFailValue;
 	}
-	
+
 	/**
 	 * Parses numeric string into FLOAT variable.
 	 * Automatically converts decimal comma into dot and removes any spaces
@@ -166,7 +166,7 @@ class Strings extends Nette\Utils\Strings {
 	 * Tested for: "1,231.123", "-13", "1,22", "0", "", "+13.22",
 	 *		"123,122,123", "123 122,123", "some garbage 11.3 some other garbage",
 	 *		".12", ",12", "123.123.123", "123.123,12"
-	 * 
+	 *
 	 * @param string
 	 * @param mixed value, which will be returned if given string can't be parsed into float
 	 *
@@ -175,28 +175,28 @@ class Strings extends Nette\Utils\Strings {
 	public static function parseToFloat($str, $onFailValue = NULL) {
 
 		if(preg_match_all("/([^0-9]+)?([0-9]+)/", $str, $matches)) {
-		
+
 			$sgn = strpos($matches[1][0], '-') !== FALSE ? -1 : 1;
 			$point = -1;
 			$commaCount = 0;
 			$dotCount = 0;
 			foreach($matches[1] as $key=>$sep) {
-				if(strpos($sep, '.') !== FALSE) 
+				if(strpos($sep, '.') !== FALSE)
 					$point = ++$dotCount < 2 ? $key : -1;
-					
+
 				elseif(strpos($sep, ',') !== FALSE)
 					$point = ++$commaCount < 2 ? $key : -1;
 			}
-			
+
 			$nStr = '';
 			foreach($matches[2] as $key=>$n) {
 				if($key == $point) $nStr .= '.';
 				$nStr .= $n;
 			}
-			
+
 			return $sgn * floatval($nStr);
 		}
-		
+
 		return $onFailValue;
 	}
 
@@ -204,7 +204,7 @@ class Strings extends Nette\Utils\Strings {
 	 * Generates random human readable token.
 	 * Ambiguous chars like 0 and O are ommitted.
 	 * Combines vowels with consonants and numbers.
-	 * 
+	 *
 	 * @author Pavel Maca
 	 *
 	 * @param  int length
@@ -235,11 +235,64 @@ class Strings extends Nette\Utils\Strings {
 	 * @param string string to split
 	 * @param string separator
 	 * @param string escape sequence
-	 * 
+	 * @param bool ignore empty tokens?
+	 *
 	 * @return string
+	 * @throws Nette\InvalidArgumentException
 	 */
-	public static function splitWithEscape($str, $separator = '/', $escape = '\\') {
-		return preg_split('#(.*?[^' . preg_quote($escape, '#') . ']|.*' . preg_quote($escape . $escape, '#') . ')' . preg_quote($separator, '#') . '#', $str, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+	public static function splitWithEscape($str, $separator = '/', $escape = '\\', $ignoreEmpty = true) {
+
+		if(!is_string($str))
+			throw new Nette\InvalidArgumentException("First argument has to be string");
+
+		if(!is_string($separator))
+			throw new Nette\InvalidArgumentException("Second argument has to be string");
+
+		if(!is_string($escape))
+			throw new Nette\InvalidArgumentException("Second argument has to be string");
+
+		if($separator == $escape)
+			throw new Nette\InvalidArgumentException("Separator cannot be equal to escape");
+
+		// ----
+
+		$tokens = array();
+		$index = 0;
+		$escaped = false;
+		for($i = 0; $i < mb_strlen($str); ) {
+
+			if($escaped) {
+				$escaped = false;
+				$i++;
+				continue;
+			}
+
+			// ...ESCAPE
+			//    ^
+			if(mb_substr($str, $i, mb_strlen($escape)) == $escape) {
+				$escaped = true;
+				$str = mb_substr($str, 0, $i) . mb_substr($str, $i + mb_strlen($escape));
+				continue;
+			}
+
+			// ...SEPARATOR
+			//    ^
+			if(mb_substr($str, $i, mb_strlen($separator)) == $separator) {
+				if($i - $index > 0 || !$ignoreEmpty)
+					$tokens[] = mb_substr($str, $index, $i - $index);
+
+				$i += mb_strlen($separator);
+				$index = $i;
+				continue;
+			}
+
+			$i++;
+		}
+
+		if($i - $index > 0 || !$ignoreEmpty)
+			$tokens[] = mb_substr($str, $index, $i - $index);
+
+		return $tokens;
 	}
 
 }
