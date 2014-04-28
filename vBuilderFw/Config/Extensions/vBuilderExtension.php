@@ -58,7 +58,7 @@ class vBuilderExtension extends Nette\Config\CompilerExtension {
 		$container->getDefinition('translator')
 			->addSetup('$service->lang = $this->?[\'lang\']', array('parameters'))
 			->addSetup('if(!$this->?[\'productionMode\']) { $service->setLogger($this->getByType(\'vBuilder\Localization\TranslationLogger\')); }', array('parameters'))
-			->addSetup('if($this->parameters[?][?] === TRUE && !$this->parameters[\'productionMode\']) { Nette\Diagnostics\Debugger::getBar()->addPanel(?); }', array(
+			->addSetup('if($this->parameters[?][?] === TRUE && !$this->parameters[\'productionMode\'] && !$this->parameters[\'consoleMode\']) { Nette\Diagnostics\Debugger::getBar()->addPanel(?); }', array(
 				'translationBar', 'enabled',
 				new Nette\DI\Statement('vBuilder\Diagnostics\TranslationBar')
 			));
