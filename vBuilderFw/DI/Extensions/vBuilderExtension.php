@@ -11,17 +11,17 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace vBuilder\Config\Extensions;
+namespace vBuilder\DI\Extensions;
 
 use Nette;
 
@@ -31,7 +31,19 @@ use Nette;
  * @author Adam Staněk (velbloud)
  * @since Aug 30, 2012
  */
-class vBuilderExtension extends Nette\Config\CompilerExtension {
+class vBuilderExtension extends Nette\DI\CompilerExtension {
+
+	public function setCompiler(Nette\DI\Compiler $compiler, $name) {
+		parent::setCompiler($compiler, $name);
+
+		// We have to set this BEFORE loadConfiguration(), because this
+		// variable is already used in our config.neon
+		$libraryPath = realpath(__DIR__ . '/../../../');
+		$this->getContainerBuilder()->parameters['vBuilderFwDir'] = $libraryPath;
+
+		return $this;
+	}
+
 
 	public function loadConfiguration() {
 		$container = $this->getContainerBuilder();
@@ -65,7 +77,13 @@ class vBuilderExtension extends Nette\Config\CompilerExtension {
 
 		// Register TranslationBar on application startup if requested
 		$container->getDefinition('application')
-			->addSetup('if($this->parameters[?][?] === TRUE && !$this->parameters[\'productionMode\']) { $service->onStartup[] = \'vBuilder\Diagnostics\TranslationBar::register\'; }', array('translationBar', 'enabled'));
+			->addSetup('if($this->parameters[?][?] === TRUE && !$this->parameters[\'productionMode\']) { $service->onStartup[] = \'vBuilder\Diagnostics\TranslationBar::register\'; }', array('translationBar', 'enabled'))
+			->addSetup(
+				'$container = $this; $service->onRequest[] = function () use ($container) {' .
+				' call_user_func_array(?, array_merge(func_get_args(), array($container)) );' .
+				' }'
+				, array('vBuilder\Application\ConstructionMode::onApplicationRequest')
+			);
 
 		// Detect language on HTTP request
 		$container->getDefinition('httpRequest')
@@ -78,8 +96,8 @@ class vBuilderExtension extends Nette\Config\CompilerExtension {
 		});
 
 		// Our implementation of Diagnostics\UserPanel
-		$container->getDefinition('user')->addSetup('Nette\Diagnostics\Debugger::getBar()->addPanel(?)', array(
-			new Nette\DI\Statement('vBuilder\Security\Diagnostics\UserPanel')
+		$container->getDefinition('user')->addSetup('Nette\Diagnostics\Debugger::getBar()->addPanel(new vBuilder\Security\Diagnostics\UserPanel(?, $service))', array(
+			$container->expand('%vendorDir%/nette')
 		));
 	}
 

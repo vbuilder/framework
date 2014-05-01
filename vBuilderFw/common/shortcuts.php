@@ -23,6 +23,7 @@
 use Nette\Diagnostics\Debugger as Debug,
 	Nette\Utils\Html,
 	Nette\Environment,
+	Nette\Application\Routers\Route,
 	vBuilder\Diagnostics\Helpers;
 
 /**
@@ -193,3 +194,38 @@ function _nx($single, $plural, $number, array $args)
 	return Nette\Environment::getService('translator')
 		->translate(array($single, $plural), array_merge(array($number), $args));
 }
+
+// -----------------------------------------------------------------------------
+// Extension methods
+// -----------------------------------------------------------------------------
+
+Nette\Application\UI\Form::extensionMethod('loadFromEntity', 'vBuilder\Orm\FormHelper::loadFromEntity');
+Nette\Application\UI\Form::extensionMethod('fillInEntity', 'vBuilder\Orm\FormHelper::fillInEntity');
+Nette\Forms\Container::extensionMethod('addBootstrapSelect', 'vBuilder\Forms\Controls\BootstrapSelect::addToContainer');
+
+// -----------------------------------------------------------------------------
+// Some predefines Route classes
+// -----------------------------------------------------------------------------
+
+Route::addStyle('#month');
+
+/// @todo this should accept all translations (because we don't know the language yet)
+Route::setStyleProperty('#month', Route::FILTER_IN, function ($val) {
+	if(preg_match('/^([a-z]+)-([1-9][0-9]{3})/i', $val, $m)) {
+		$months = array_flip(array_map('Nette\Utils\Strings::webalize', vBuilder\Utils\DateTime::monthName()));
+		if(isset($months[$m[1]]))
+			return $m[2] . '-' . str_pad($months[$m[1]], 2, "0", STR_PAD_LEFT);
+	}
+
+	return NULL;
+});
+
+// This knows the language so it's ok
+Route::setStyleProperty('#month', Route::FILTER_OUT, function ($val) {
+	if(preg_match('/^([1-9][0-9]{3})-([0-9]{1,2})/i', $val, $m)) {
+		$months = array_map('Nette\Utils\Strings::webalize', vBuilder\Utils\DateTime::monthName());
+		return $months[(int) $m[2]] . '-' . $m[1];
+	}
+
+	return NULL;
+});

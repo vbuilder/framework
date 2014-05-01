@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -41,10 +41,10 @@ class UserPanel extends Nette\Object implements Nette\Diagnostics\IBarPanel
 
 	private $tplDir;
 
-	public function __construct(vBuilder\Security\User $user)
+	public function __construct($netteDir, vBuilder\Security\User $user)
 	{
 		$this->user = $user;
-		$this->tplDir = LIBS_DIR . '/nette/Nette/Security/Diagnostics/templates';
+		$this->tplDir = $netteDir . '/Nette/Security/Diagnostics/templates';
 	}
 
 

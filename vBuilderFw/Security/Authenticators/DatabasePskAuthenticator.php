@@ -38,7 +38,7 @@ use vBuilder,
  * @author Adam Staněk (V3lbloud)
  * @since Aug 3, 2013
  */
-class DatabasePSKAuthenticator extends BaseAuthenticator {
+class DatabasePskAuthenticator extends BaseAuthenticator {
 
 	const PSK = 0;
 	const EXPIRATION = 5;

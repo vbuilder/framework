@@ -25,7 +25,8 @@ namespace vBuilder\Application;
 
 use vBuilder,
 	vBuilder\Utils\Strings,
-	Nette;
+	Nette,
+	Composer;
 
 /**
  * Provider of class information
@@ -104,11 +105,20 @@ class ClassInfoProvider extends Nette\Object {
 	public static function getIndexedClasses() {
 		$loaders = (array) spl_autoload_functions();
 
+		$classes = array();
 		foreach($loaders as $loader) {
 			if(!is_array($loader)) continue;
 			if($loader[0] instanceof Nette\Loaders\RobotLoader) {
-				$classes = array_keys($loader[0]->getIndexedClasses());
-				break;
+				foreach($loader[0]->getIndexedClasses() as $class => $file) {
+					if($file && !in_array($class, $classes))
+						$classes[] = $class;
+				}
+
+			} elseif($loader[0] instanceof Composer\Autoload\ClassLoader) {
+				foreach($loader[0]->getClassMap() as $class => $file) {
+					if($file && !in_array($class, $classes))
+						$classes[] = $class;
+				}
 			}
 		}
 
