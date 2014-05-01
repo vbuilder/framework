@@ -1,0 +1,20 @@
+{
+	"name": "vbuilder/framework",
+	"type": "library",
+	"description": "vBuilder Framework Library",
+	"keywords": ["framework", "nette"],
+	"homepage": "http://www.vbuilder.cz",
+	"authors": [
+		{
+			"name": "V3Net.cz, s.r.o.",
+			"homepage": "http://www.v3net.cz"
+		}
+	],
+	"require": {
+		"php": ">=5.3.1",
+	},
+	"autoload": {
+		"classmap": ["vBuilder/"],
+		"files": ["vBuilderFw/Utils/shortcuts.php"]
+	}
+}
