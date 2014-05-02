@@ -66,6 +66,10 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 	public function beforeCompile() {
 		$container = $this->getContainerBuilder();
 
+		/* $container->getDefinition('router')
+			->addSetup('$this->getService(?)->notify($service, ?)',
+					array('events.dispatcher', 'onRouterSetup')); */
+
 		// Translator gets the language from container parameters
 		$container->getDefinition('translator')
 			->addSetup('$service->lang = $this->?[\'lang\']', array('parameters'))
@@ -97,7 +101,7 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 
 		// Our implementation of Diagnostics\UserPanel
 		$container->getDefinition('user')->addSetup('Nette\Diagnostics\Debugger::getBar()->addPanel(new vBuilder\Security\Diagnostics\UserPanel(?, $service))', array(
-			$container->expand('%vendorDir%/nette')
+			$container->expand('%vendorDir%/nette/nette')
 		));
 	}
 

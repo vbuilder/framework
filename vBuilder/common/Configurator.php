@@ -157,6 +157,8 @@ class Configurator extends Nette\Configurator {
 
 				return $extensions;
 			});
+
+			bd($this->extensions);
 		}
 
 		return $this->extensions;

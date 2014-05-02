@@ -14,7 +14,7 @@
 		"php": ">=5.3.1"
 	},
 	"autoload": {
-		"classmap": ["vBuilderFw/"],
-		"files": ["vBuilderFw/common/shortcuts.php"]
+		"classmap": ["vBuilder/"],
+		"files": ["vBuilder/common/shortcuts.php"]
 	}
 }

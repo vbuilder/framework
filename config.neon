@@ -2,6 +2,16 @@ extensions:
 	database: DibiNette21Extension
 	vBuilder: vBuilder\DI\Extensions\vBuilderExtension
 
+nette:
+	application:
+		mapping:
+			vBuilder: vBuilderModule\*Presenter
+
+	routing:
+		routes:
+			'<type js>/<file [a-f0-9]{32}\.js>': 'vBuilder:WebFile:default'
+			'<type css>/<file [a-f0-9]{32}\.css>': 'vBuilder:WebFile:default'
+
 database:
 	tables:
 		'config': '%vBuilderFwDir%/db/config.sql'
@@ -39,9 +49,14 @@ database:
 			data: false
 
 services:
+	# WebFilesRouteFactory
+	# - vBuilder\Application\Routers\WebFilesRouteFactory('%tempDir%/webfiles')
+
 	# Event dispatcher
 	events.dispatcher:
 		class: vBuilder\Events\Dispatcher
+		# setup:
+			# - subscribe('Nette\Application\Routers\RouteList', 'onRouterSetup', @vBuilder\Application\Routers\WebFilesRouteFactory)
 
 	# Authentication / authorization layer
 	user:
