@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<meta name=robots content=noindex>
+<meta name=generator content='vBuilder @ Nette Framework'>
+<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+
+
+<style type="text/css">
+	body { color:#333;background:white;width:500px;margin:100px auto }
+	h1 { font:bold 47px/1.5 sans-serif;margin:.6em 0 .1em 0 }
+	h2 { font:bold 27px/1.0 sans-serif;margin: 0 0 .6em 0 }
+	p { font:21px/1.5 Georgia,serif;margin:1.5em 0 0 0 }
+	p.tr { font:21px/1.5 Georgia,serif;margin:1.5em 0; padding: 1.5em 0 0 0; border-top: 1px solid #ccc; color: grey }
+	p.date { margin: 0 !important; font-size: 1em; }
+	small { font-size:70%;color:gray }
+	.hash { font-family: Courier; }
+	#reportFormWrapper { margin:1.5em 0; padding: 1.5em 0 0 0; border-top: 1px solid #ccc; }
+	#reportLinkBlock { display: none; margin: 1em 0 0 0; }
+	#reportErrorLink { margin-left: 40px; font-size: 1em; display: block; padding-left: 45px; line-height: 40px; display: block; background: url(data:image/png;base64,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%3D%3D) left center no-repeat; }
+	
+	UL.flashes {
+		color: green;
+		list-style: none;
+		padding: 0;
+		text-align: center;
+		border-top: 1px solid #ccc;
+		margin: 1.5em 0 0 0;
+		padding: 1em 1em 0 1em;
+	}
+	
+	A { color:#a33; }
+	A:hover { text-decoration: none; }
+</style>
+
+<title>Server Error</title>
+<body>
+	<h1>Chyba serveru</h1>
+	<h2>Server Error</h2>
+
+	<p>Na serveru se vyskytla chyba a systém nebyl schopen dokončit Váš požadavek.</p>
+	<p style="margin-top: 0.5em;">Zkuste prosím navštívit <a href="{$baseUrl}" style="color: #3030f3;">úvodní stránku</a>.<br /> Pokud problém setrvává zkuste to prosím později.</p>
+
+	<ul n:if="!empty($flashes)" class="flashes"><li n:foreach="$flashes as $item">{$item->message}</li></ul>
+	<p id="reportLinkBlock"><a href="#" id="reportErrorLink" n:if="$allowForm">Ohlásit chybu</a></p>
+	<div id="reportFormWrapper" n:if="$allowForm">{control reportErrorForm}</div>
+	
+	<p class="tr">The server encountered an internal error and was unable to complete your request. Please try again later.</p>
+
+	<p><small>error 500, <span class="hash">{$hash}</span></small></p>
+	<p class="date"><small>{= date('Y-m-d H-i-s')}</small></p>
+	
+	<script type="text/javascript" n:if="$allowForm">
+		$(function () {
+			var wrapper = $('#reportFormWrapper').hide(),
+				link = $('#reportErrorLink'),
+				linkBlock = $('#reportLinkBlock');
+				
+			{if empty($flashes)}linkBlock.show();{/if}
+				
+			link.click(function (e) {
+				linkBlock.slideToggle();
+				wrapper.slideToggle();
+				e.preventDefault();
+			});
+		});
+	</script>
+</body>
