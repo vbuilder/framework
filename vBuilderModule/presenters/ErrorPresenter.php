@@ -24,7 +24,8 @@
 namespace vBuilderModule;
 
 use vBuilder,
-	Nette;
+	Nette,
+	Nette\Diagnostics\Debugger;
 
 /**
  * Error presenter
@@ -32,14 +33,13 @@ use vBuilder,
  * @author Adam Staněk (V3lbloud)
  * @since May 2, 2014
  */
-class ErrorPresenter implements Nette\Application\UI\Presenter {
+class ErrorPresenter extends Nette\Application\UI\Presenter {
 
 	/**
 	 * @param  Exception
 	 * @return void
 	 */
 	public function renderDefault($exception) {
-		dd("OK?");
 
 		if ($exception instanceof Nette\Application\BadRequestException) {
 			if($exception instanceof vBuilder\Application\UnsupportedBrowserException) {
@@ -53,7 +53,7 @@ class ErrorPresenter implements Nette\Application\UI\Presenter {
 				Debugger::log("HTTP code $code: {$exception->getMessage()} in {$exception->getFile()}:{$exception->getLine()}", 'access');
 			}
 
-		} elseif($exception instanceof vBuilder\Application\UnderConstructionException)
+		} elseif($exception instanceof vBuilder\Application\UnderConstructionException) {
 			$this->setView('underConstruction');
 
 		} else {
