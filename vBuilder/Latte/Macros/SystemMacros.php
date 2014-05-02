@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -42,7 +42,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 
 	/**
 	 * Installs redactions macros to parser
-	 * 
+	 *
 	 * @param Nette\Latte\Parser $parser
 	 * @return RedactionMacros
 	 */
@@ -51,7 +51,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 
 		$me->addMacro('addCss', array($me, 'macroWebFile'));
 		$me->addMacro('addJs', array($me, 'macroWebFile'));
-		
+
 		$me->addMacro('meta', array($me, 'macroMeta'));
 		$me->addMacro('iftest', array($me, 'macroTest'), array($me, 'macroEndTest'));
 		$me->addMacro('ifTest', array($me, 'macroTest'), array($me, 'macroEndTest'));
@@ -74,14 +74,14 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	function finalize() {
 		return array(implode($this->_prolog[$this->compiler->templateId], "\n"), '');
 	}
-	
+
 	/**
 	 * {addCss ...}
 	 * {addJs ...}
-	 * 
+	 *
 	 * @param MacroNode $node
 	 * @param type $writer
-	 * @return string 
+	 * @return string
 	 */
 	function macroWebFile(MacroNode $node, $writer) {
 
@@ -89,10 +89,10 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		$cmd = '$context->webFilesGenerator->addFile('
 			. $node->args . ', '
 			. "'$lang', "
-			. 'array(dirname($template->getFile()), WWW_DIR)'
+			. 'array(dirname($template->getFile()), $context->parameters[\'wwwDir\'])'
 			. ');';
 
-		
+
 		// ---------
 
 		// Pokud se macro vyskytuje bez nejakeho parent bloku musime ho zapsat v prologu,
@@ -102,7 +102,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		if($node->parentNode == NULL) {
 			$cmd = 'if(!$_control->snippetMode) ' . $cmd;
 			$this->_prolog[$this->compiler->templateId][] = $cmd;
-		} else 
+		} else
 			return $writer->write($cmd);
 	}
 
@@ -114,10 +114,10 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	 * {meta !title 'Something'}
 	 * {meta og:type 'article'}
 	 * {meta og:image[] 'http://www.myweb.tld/images/image.png'}
-	 * 
+	 *
 	 * @param MacroNode $node
 	 * @param type $writer
-	 * @return string 
+	 * @return string
 	 */
 	function macroMeta(MacroNode $node, $writer) {
 
@@ -133,7 +133,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		// 0: No symbol yet
 		// 1: Symbol found, wating for whitespace
 		// 2: Whitespace found -> everything else is a value
-		$state = 0;	
+		$state = 0;
 
 		$prev = NULL;
 		foreach($node->tokenizer->tokens as $token) {
@@ -162,7 +162,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 				// ! before any symbol
 				elseif($token[Tokenizer::VALUE] == '!' && $state == 0) {
 					$force = true;
-					
+
 				} else
 					throw new Nette\InvalidStateException("Invalid meta declaration: " . $node->name . " " . $node->args . $node->modifiers);
 
@@ -202,14 +202,14 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 
 		if(!$force && $operator == '=')
 			$cmd = "{ if(!$getMethod() && $getMethod() !== FALSE) $cmd }";
-				
+
 		// ---------
 
 		// Pokud se macro vyskytuje bez nejakeho parent bloku musime ho zapsat v prologu,
 		// protoze jinak by se nemuselo vubec zavolat kvuli dedicnosti sablon
 		if($node->parentNode == NULL) {
 			$this->_prolog[$this->compiler->templateId][] = $cmd;
-		} else 
+		} else
 			return $writer->write($cmd);
 	}
 

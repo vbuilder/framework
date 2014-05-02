@@ -220,8 +220,9 @@ class Presenter extends Nette\Application\UI\Presenter {
 			$webFiles = $this->context->webFilesGenerator;
 
 			// Generates web files
-			$webFiles->registerOutput(TEMP_DIR . '/webfiles/' . $webFiles->getHash(WebFilesGenerator::JAVASCRIPT) . '.js', WebFilesGenerator::JAVASCRIPT);
-			$webFiles->registerOutput(TEMP_DIR . '/webfiles/' . $webFiles->getHash(WebFilesGenerator::STYLESHEET) . '.css', WebFilesGenerator::STYLESHEET);
+			$tempDir = $this->context->parameters['tempDir'];
+			$webFiles->registerOutput($tempDir . '/webfiles/' . $webFiles->getHash(WebFilesGenerator::JAVASCRIPT) . '.js', WebFilesGenerator::JAVASCRIPT);
+			$webFiles->registerOutput($tempDir . '/webfiles/' . $webFiles->getHash(WebFilesGenerator::STYLESHEET) . '.css', WebFilesGenerator::STYLESHEET);
 
 			foreach($webFileTypes as $fileType) {
 				if($webFiles->isCached($fileType) === false || $this->snippetMode) {

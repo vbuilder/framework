@@ -65,29 +65,37 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 
 	public function beforeCompile() {
 		$container = $this->getContainerBuilder();
-
-		/* $container->getDefinition('router')
-			->addSetup('$this->getService(?)->notify($service, ?)',
-					array('events.dispatcher', 'onRouterSetup')); */
+		// Note: we can make parameter conditions here,
+		//    because container is regenerated everytime parameters are changed.
 
 		// Translator gets the language from container parameters
 		$container->getDefinition('translator')
-			->addSetup('$service->lang = $this->?[\'lang\']', array('parameters'))
-			->addSetup('if(!$this->?[\'productionMode\']) { $service->setLogger($this->getByType(\'vBuilder\Localization\TranslationLogger\')); }', array('parameters'))
-			->addSetup('if($this->parameters[?][?] === TRUE && !$this->parameters[\'productionMode\'] && !$this->parameters[\'consoleMode\']) { Nette\Diagnostics\Debugger::getBar()->addPanel(?); }', array(
-				'translationBar', 'enabled',
-				new Nette\DI\Statement('vBuilder\Diagnostics\TranslationBar')
-			));
+			->addSetup('$service->lang = $this->?[\'lang\']', array('parameters'));
 
 		// Register TranslationBar on application startup if requested
-		$container->getDefinition('application')
-			->addSetup('if($this->parameters[?][?] === TRUE && !$this->parameters[\'productionMode\']) { $service->onStartup[] = \'vBuilder\Diagnostics\TranslationBar::register\'; }', array('translationBar', 'enabled'))
-			->addSetup(
-				'$container = $this; $service->onRequest[] = function () use ($container) {' .
-				' call_user_func_array(?, array_merge(func_get_args(), array($container)) );' .
-				' }'
-				, array('vBuilder\Application\ConstructionMode::onApplicationRequest')
-			);
+		if(!$container->parameters['productionMode'] && $container->parameters['translationBar']['enabled']) {
+			$container->getDefinition('application')
+				->addSetup('$service->onStartup[] = ?', array('vBuilder\Diagnostics\TranslationBar::register'));
+
+			$container->getDefinition('translator')
+				->addSetup('$service->setLogger($this->getByType(?))', array('vBuilder\Localization\TranslationLogger'));
+
+			if(!$container->parameters['consoleMode']) {
+				$container->getDefinition('translator')
+					->addSetup('Nette\Diagnostics\Debugger::getBar()->addPanel(?)', array(new Nette\DI\Statement('vBuilder\Diagnostics\TranslationBar')));
+			}
+		}
+
+		// Support for construction mode
+		if($container->parameters['productionMode']) {
+			$container->getDefinition('application')
+				->addSetup(
+					'$container = $this; $service->onRequest[] = function () use ($container) {' .
+					' call_user_func_array(?, array_merge(func_get_args(), array($container)) );' .
+					' }'
+					, array('vBuilder\Application\ConstructionMode::onApplicationRequest')
+				);
+		}
 
 		// Detect language on HTTP request
 		$container->getDefinition('httpRequest')

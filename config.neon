@@ -50,14 +50,9 @@ database:
 			data: false
 
 services:
-	# WebFilesRouteFactory
-	# - vBuilder\Application\Routers\WebFilesRouteFactory('%tempDir%/webfiles')
-
 	# Event dispatcher
 	events.dispatcher:
 		class: vBuilder\Events\Dispatcher
-		# setup:
-			# - subscribe('Nette\Application\Routers\RouteList', 'onRouterSetup', @vBuilder\Application\Routers\WebFilesRouteFactory)
 
 	# Authentication / authorization layer
 	user:
@@ -131,7 +126,7 @@ services:
 		setup:
 			- setStorage(@translatorStorage)
 			- addDictionary('translationBar', '%filesDir%', '%%dir%%/Translations/%%lang%%.mo', @translatorStorage)
-			- addDictionary('vBuilderFw', '%libsDir%/vBuilderFw/vBuilderFw', '%%dir%%/Translations/%%lang%%.mo', @translatorStorage)
+			- addDictionary('vBuilderFw', '%libsDir%/vbuilder/framework/vBuilder', '%%dir%%/Translations/%%lang%%.mo', @translatorStorage)
 			- addDictionary('app', '%appDir%')
 
 	# Translator storage

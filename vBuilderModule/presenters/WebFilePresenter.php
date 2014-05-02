@@ -47,7 +47,6 @@ class WebFilePresenter extends Nette\Object implements Nette\Application\IPresen
 			if(!$dir)
 				throw new Nette\Application\BadRequestException("File not found");
 
-			list($request) = $app->getRequests();
 			$filePath = $dir . '/' . $request->parameters['file'];
 
 			$this->httpResponse->setContentType(

@@ -45,9 +45,6 @@ class ConstructionMode {
 		// Forwardy (jako je napr. presmerovani na error presenter neresim)
 		if($request->method != Request::FORWARD) {
 
-			// Pokud jsem v development modu, tak je vse OK
-			if(!$container->parameters['productionMode']) return ;
-
 			$host = $container->httpRequest->url->host;
 
 			// Pokud jsem v produkcnim rezimu, musim zkontrolovat, jestli stranka neni ve vystavbe
@@ -56,7 +53,7 @@ class ConstructionMode {
 				// Pokud je stranka ve vystavbe a nejsem na testovaci domene, vyhodim vyjimku
 				// Akceptovany jsou domeny koncici na test.*.* nebo .bilahora.v3net.cz
 				if(!Strings::match($host, '#^(.+?\.)?test\.[^\.]+\.[^\.]+$#') && !Strings::match($host, '#\.bilahora\.v3net\.cz$#')) {
-					if(!defined('VBUILDER_CONNECTOR') || !VBUILDER_CONNECTOR)
+					/// @todo co kdyz je to pozadavek z admina?
 						throw new vBuilder\Application\UnderConstructionException();
 
 					return ;
