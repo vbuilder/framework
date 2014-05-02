@@ -134,11 +134,14 @@ class Configurator extends Nette\Configurator {
 				$dependencies[Cache::FILES] = array($composerLockFile);
 
 				$composerLock = json_decode(file_get_contents($composerLockFile));
+
+				// Pozor, balicky nejsou v poradi v jakem byly definovany v require!
 				$packages = array_merge(
 					isset($composerLock->{"packages"}) ? $composerLock->{"packages"} : array(),
 					isset($composerLock->{"packages-dev"}) ? $composerLock->{"packages-dev"} : array()
 				);
 
+				/// @todo nabidnout v ramci parametru verze balicku a jejich umisteni
 				$extensions = array(
 					'configFiles' => array(),
 					'robotLoaderDirectories' => array()
@@ -157,8 +160,6 @@ class Configurator extends Nette\Configurator {
 
 				return $extensions;
 			});
-
-			bd($this->extensions);
 		}
 
 		return $this->extensions;

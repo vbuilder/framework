@@ -4,6 +4,7 @@ extensions:
 
 nette:
 	application:
+		errorPresenter: vBuilder:Error
 		mapping:
 			vBuilder: vBuilderModule\*Presenter
 
