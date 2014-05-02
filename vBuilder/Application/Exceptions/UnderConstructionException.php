@@ -23,6 +23,8 @@
 
 namespace vBuilder\Application;
 
+use Nette;
+
 /**
  * Custom exception for state when site is under construction and
  * stranger comes to visit.

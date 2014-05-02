@@ -21,6 +21,8 @@
  */
 namespace vBuilder\Application;
 
+use Nette;
+
 /**
  * Custom exception for request from unsupported browser
  *
