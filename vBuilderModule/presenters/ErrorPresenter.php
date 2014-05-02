@@ -57,7 +57,7 @@ class ErrorPresenter extends Nette\Application\UI\Presenter {
 			$this->setView('underConstruction');
 
 		} else {
-			$this->setView('500'); // load template 500.latte
+			$this->setView('default');
 			Debugger::log($exception, Debugger::ERROR); // and log exception
 		}
 
