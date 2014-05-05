@@ -24,7 +24,7 @@
 namespace vBuilder\Diagnostics;
 
 use vBuilder,
-		Nette;
+	Nette;
 
 /**
  * Debug bar for displaying current session tables of ORM
@@ -34,13 +34,20 @@ use vBuilder,
  */
 class OrmSessionBar implements Nette\Diagnostics\IBarPanel {
 	
+	public function getContext() {
+		global $context;
+		return $context;
+	}
+	
 	/**
 	 * Renders HTML code for custom tab.
 	 * @return string
 	 */
 	public function getTab() {
+		if(!$this->getContext()->session->isStarted()) return ;
+	
 		ob_start();
-		
+				
 		require __DIR__ . '/Templates/bar.orm.session.tab.phtml';
 		
 		return ob_get_clean();
@@ -51,6 +58,8 @@ class OrmSessionBar implements Nette\Diagnostics\IBarPanel {
 	 * @return string
 	 */
 	public function getPanel() {
+		if(!$this->getContext()->session->isStarted()) return;
+	
 		ob_start();
 		
 		require __DIR__ . '/Templates/bar.orm.session.panel.phtml';

@@ -38,6 +38,16 @@ class Control extends Nette\Application\UI\Control {
 	private $renderCalled = false;
 	
 	/**
+	 * Array of callbacks which will be called when
+	 * this control receives any signal
+	 *
+	 * (Control $control, $signalName)
+	 * 
+	 * @var array
+	 */
+	public $onSignalReceived = array();
+
+	/**
 	 * @var array 
 	 */
 	protected $renderParams = array();
@@ -199,6 +209,8 @@ class Control extends Nette\Application\UI\Control {
 	public function signalReceived($signal) {		
 		$this->actionHandled = true;
 		
+		$this->onSignalReceived($this, $signal);
+
 		if(!$this->tryCall($this->formatHandleMethod($signal), $this->params)) {
 			$this->view = $signal;
 			
@@ -210,6 +222,15 @@ class Control extends Nette\Application\UI\Control {
 			}	
 			
 		}
+	}
+
+	/**
+	 * Returns true if this control received a signal
+	 * 
+	 * @return boolean
+	 */
+	public function isSignalReceived() {
+		return $this->actionHandled === TRUE;
 	}
 	
 	/**
@@ -324,11 +345,19 @@ class Control extends Nette\Application\UI\Control {
 			
 			return ;
 		}
-		
-		if($code == 'this') $code = $this->view;
-		elseif($destination == 'this') $destination = $this->view;
-		
-		parent::redirect($code, $destination, $args);
+
+		else if(func_num_args() < 3) {
+			$args = $destination;
+			$destination = $code;
+			$code = NULL;
+		}
+
+		if($destination == 'this') $destination = $this->view;
+
+		if($code)
+			parent::redirect($code, $destination, $args);
+		else
+			parent::redirect($destination, $args);
 	} 
 	
 	/**
@@ -353,9 +382,10 @@ class Control extends Nette\Application\UI\Control {
 	 */
 	public function __call($methodName, $args) {		
 		if(Nette\Utils\Strings::startsWith($methodName, 'render')) {
+			
 			// Signaly maji prednost pred view ze sablony
 			if(!$this->actionHandled) {
-				$this->changeView(strtolower(substr($methodName, 6)));
+				$this->changeView(lcfirst(substr($methodName, 6)));
 				return call_user_func_array(array($this, 'render'), $args);
 			} else {
 				$this->render();

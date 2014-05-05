@@ -34,5 +34,15 @@ use vBuilder,
  */
 abstract class BaseModel extends Nette\FreezableObject implements IModel {
 
+	/**
+	 * Returns number of records before any filtering has been applied
+	 * 
+	 * @return int
+	 */
+	public function getUnfilteredCount() {
+		// Default implementation
+		// NULL = Unfiltered count not supported by the model
+		return NULL; 
+	}
 
 }

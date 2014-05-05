@@ -37,11 +37,11 @@ class FormatHelpers {
 	
 	public static function postalCode($value) {
 		$s = preg_replace("#\s+#", "", $value);
-		return mb_substr($s, 0, 3) . "\xc2\xa0" . mb_substr($s, 0, 3);
+		return mb_substr($s, 0, 3) . "\xc2\xa0" . mb_substr($s, 3);
 	}
 	
 	public static function formatNumericValue($n, $unit = null) {
-		if($n == '')
+		if($n === '' || $n === NULL)
 			return '-';
 			
 		return str_replace(" ", "\xc2\xa0", number_format ($n, 1, ',', ' '))

@@ -48,6 +48,13 @@ class HeadGenerator extends Nette\Application\UI\Control {
 		$this->template->isInProductionMode = !$this->template->isInDevelopmentMode && !$this->template->isUnderConstruction;
 		
 		$this->template->metadata = $context->metadata;
+
+		$og = $context->metadata->og;
+		if(!$og->getUrl() && $og->getUrl() !== FALSE) $og->setUrl($this->getPresenter(true)->link("//this"));
+		if(!$og->getTitle() && $og->getTitle() !== FALSE) $og->setTitle($context->metadata->getTitle());
+		if(!$og->getSiteName() && $og->getSiteName() !== FALSE) $og->setSiteName($context->metadata->getTitleSuffix());
+		if(!$og->getDescription() && $og->getDescription() !== FALSE) $og->setDescription($context->metadata->getDescription());
+
 		$this->template->metadata->freeze();
 		
 		if(isset($params['gaAccount']))

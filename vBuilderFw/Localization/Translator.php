@@ -87,7 +87,7 @@ class Translator extends Nette\FreezableObject implements ITranslator
 	 * @param IStorage
 	 * @throws \Nette\InvalidArgumentException
 	 */
-	public function addDictionary($name, $dir, IStorage $storage = NULL)
+	public function addDictionary($name, $dir, $fileMask = '%dir%/lang/%lang%.mo', IStorage $storage = NULL)
 	{
 		if (!file_exists($dir)) {
 			throw new \Nette\InvalidArgumentException("Directory '$dir' not exist");
@@ -96,7 +96,7 @@ class Translator extends Nette\FreezableObject implements ITranslator
 		$dir = realpath($dir);
 
 		$storage = $storage ?: $this->getStorage();
-		$this->dictionaries[$name] = new Dictionary($dir, $storage);
+		$this->dictionaries[$name] = new Dictionary($dir, $fileMask, $storage);
 		return $this;
 	}
 

@@ -807,7 +807,7 @@ class Entity extends vBuilder\Object {
 		
 		// Nactu implementace chovani entit
 		if(self::$_behaviorImplementations === null)
-			self::searchForOrmClasses();  
+			self::searchForOrmClasses($this->context);  
 		
 		if(!isset(self::$_behaviorImplementations[$behaviorName]))
 			throw new EntityException("Entity behavior '$behaviorName' was not defined", EntityException::ENTITY_BEHAVIOR_NOT_DEFINED);
@@ -818,12 +818,12 @@ class Entity extends vBuilder\Object {
 	/**
 	 * Searches for all data type and behavior implementations
 	 */
-	private static function searchForOrmClasses() {
+	private static function searchForOrmClasses($context) {
 		self::$_dataTypesImplementations = array();
 		self::$_behaviorImplementations = array();
 
-		$dataTypeClasses = vBuilder\Utils\ClassInfo::getAllClassesImplementing('vBuilder\\Orm\\IDataType');
-		$behaviorClasses = vBuilder\Utils\ClassInfo::getAllClassesImplementing('vBuilder\\Orm\\IBehavior');
+		$dataTypeClasses = $context->classInfo->getAllClassesImplementing('vBuilder\\Orm\\IDataType');
+		$behaviorClasses = $context->classInfo->getAllClassesImplementing('vBuilder\\Orm\\IBehavior');
 			
 		foreach($dataTypeClasses as $className) 
 			self::$_dataTypesImplementations = \array_merge((array) self::$_dataTypesImplementations, \array_fill_keys($className::acceptedDataTypes(), $className));

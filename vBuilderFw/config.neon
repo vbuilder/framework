@@ -1,11 +1,35 @@
 services:
-	authenticator:
-		class: vBuilder\Security\Authenticator('vBuilder\Security\User')
-	
-	# Hash provider
-	passwordHashProvider:
-		class: vBuilder\Security\Sha1SaltedHashProvider
-	
+	# Authentication / authorization layer
+	user:
+		class: vBuilder\Security\User
+		setup:
+			# Intentionally without @ (we are passing service name, not service itself)
+			- setAuthorizator(user.authorizator.acl)
+
+	# Identity factory
+	user.identityFactory:
+		class: vBuilder\Security\IdentityFactory
+
+	# Password hash provider
+	user.passwordHasher.sha1Salted:
+		class: vBuilder\Security\PasswordHashers\Sha1SaltedPasswordHasher
+
+	# Authenticator against records in local DB
+	user.authenticator.dbPassword:
+		class: vBuilder\Security\Authenticators\DatabasePasswordAuthenticator(@user.passwordHasher.sha1Salted, @user.identityFactory)
+
+	# Authenticator with PSK in local DB
+	user.authenticator.dbPsk:
+		class: vBuilder\Security\Authenticators\PresharedSecretAuthenticator(@user.identityFactory)
+
+	# ACL authorizator
+	user.authorizator.acl:
+		class: vBuilder\Security\Authorizators\AclAuthorizator
+
+	# ACL authorizator with DB storage
+	user.authorizator.dbAcl:
+		class: vBuilder\Security\Authorizators\DatabaseAclAuthorizator	
+
 	# User config
 	userConfig:
 		factory: vBuilder\Config\DbUserConfig::createService(['%appDir%/config/userdefaults.neon'])		
@@ -24,7 +48,13 @@ services:
 	translator:
 		class: vBuilder\Localization\Translator
 		setup:
+			- setStorage(@translatorStorage)
+			- addDictionary('vBuilderFw', '%libsDir%/vBuilderFw/vBuilderFw', '%%dir%%/Translations/%%lang%%.mo', @translatorStorage)
 			- addDictionary('app', '%appDir%')
+
+	# Translator storage
+	translatorStorage:
+		class: vBuilder\Localization\Storages\Gettext
 	
 	# Page metadata
 	metadata:
@@ -33,7 +63,19 @@ services:
 	# Web files generator (Css, Js, ...)
 	webFilesGenerator:
 		class: vBuilder\Application\WebFilesGenerator
+
+	# Class info provider
+	classInfo:
+		class: vBuilder\Application\ClassInfoProvider
+
+	# UI Region provider
+	regionProvider:
+		class: vBuilder\Application\UI\RegionProvider
 		
 parameters:
 	languages: ['cs']
+
+	security:
+		password:
+			minLength: 6
 		

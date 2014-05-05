@@ -36,6 +36,8 @@ abstract class BaseRepository extends vBuilder\Object implements IRepository {
 	/** @var Nette\DI\IContainer DI */
 	protected $_context;
 	private $_context2;
+	
+	private $entityCache = array();
 
 	/**
 	 * Constructor
@@ -86,6 +88,23 @@ abstract class BaseRepository extends vBuilder\Object implements IRepository {
 	 */
 	public function create($entityName) {
 		return $this->get($entityName);
+	}
+	
+	/**
+	 * Returns entity cache model
+	 *
+	 * @return vBuilder\Orm\Cache
+	 */
+	public function cache($entityName) {
+		$class = $this->getEntityClass($entityName);
+			
+		if(!isset($this->entityCache[$class])) {
+			if($class === false) throw new EntityException("Entity '$entity' does not exist", EntityException::ENTITY_TYPE_NOT_DEFINED);
+			
+			$this->entityCache[$class] = new Cache($this, $class, $this->context->cacheStorage);
+		}
+	
+		return $this->entityCache[$class]; 		
 	}
 	
 	/**

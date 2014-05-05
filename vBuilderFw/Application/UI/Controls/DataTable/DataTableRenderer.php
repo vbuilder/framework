@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -37,7 +37,28 @@ use vBuilder,
 class DataTableRenderer extends vBuilder\Application\UI\ControlRenderer {
 
 	public function renderDefault() {
-		$this->template->columns = $this->control->columns();
+
+		$this->template->columns = $this->control->getColumns();
+
+		//$this->template->visibleColumns = array();
+		$this->template->sortingColumns = array();
+		foreach($this->control->getColumns() as $index => $column) {
+			//if($column->isVisible())
+				//$this->template->visibleColumns[] = $column;
+			
+			if(isset($this->control->effectiveSortColumns[$column->getName()])) {
+				// $sortingColumns[] = array(columnIndex, sortingMethod)
+				$this->template->sortingColumns[] = array($index, $this->control->effectiveSortColumns[$column->getName()]);
+			}
+		}
+
+		// First page of records
+		$this->template->rows = $this->control->getDefferedData();
+		$this->template->total = $this->control->model->count;
+		$this->template->unfilteredTotal = $this->control->model->unfilteredCount ?: $this->control->model->count;
+
+		$this->template->isSortable = true;
+		$this->template->filter = $this->control->model->getFilter() ?: array();
 	}	
 	 
 }

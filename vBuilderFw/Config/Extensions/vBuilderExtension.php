@@ -47,7 +47,7 @@ class vBuilderExtension extends Nette\Config\CompilerExtension {
 
 	public function beforeCompile() {
 		$container = $this->getContainerBuilder();
-	
+
 		// Translator gets the language from container parameters
 		$container->getDefinition('translator')
 			->addSetup('$service->lang = $this->?[\'lang\']', 'parameters');
@@ -55,6 +55,19 @@ class vBuilderExtension extends Nette\Config\CompilerExtension {
 		// Detect language on HTTP request
 		$container->getDefinition('httpRequest')
 			->addSetup('if(($lang = $service->detectLanguage(?*)) != NULL) { $this->parameters[\'lang\'] = $lang; if($this->isCreated(\'translator\')) $translator->setLang($lang); }', array(array('%languages%')));
+	
+		// Nette automatically adds Nette\Security\Diagnostics\UserPanel to User service setup
+		// we want to use our own
+		$container->getDefinition('user')->setup = array_filter($container->getDefinition('user')->setup, function ($item) {
+			return $item->entity != 'Nette\Diagnostics\Debugger::$bar->addPanel(?)';
+		});
+
+		// Our implementation of Diagnostics\UserPanel
+		if(!$container->parameters['productionMode']) {
+			$container->getDefinition('user')->addSetup('Nette\Diagnostics\Debugger::$bar->addPanel(?)', array(
+				new Nette\DI\Statement('vBuilder\Security\Diagnostics\UserPanel')
+			));
+		}
 	}
 
 }

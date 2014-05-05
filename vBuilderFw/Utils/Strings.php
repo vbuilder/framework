@@ -199,5 +199,47 @@ class Strings extends Nette\Utils\Strings {
 		
 		return $onFailValue;
 	}
-	
+
+	/**
+	 * Generates random human readable token.
+	 * Ambiguous chars like 0 and O are ommitted.
+	 * Combines vowels with consonants and numbers.
+	 * 
+	 * @author Pavel Maca
+	 *
+	 * @param  int length
+	 * @return string
+	 */
+	public static function randomHumanToken($length = 8) {
+		$numbers = '123456789';
+		$vowels = 'aeiuy';
+		$consonants = 'bcdfghjkmnpqrstvwxz';
+		$s = '';
+		for ($i = 0; $i < $length; $i++) {
+			if(mt_rand(0, 10) % 3 === 0){
+				$group = $numbers;
+				$s .= $group{mt_rand(0, strlen($group) - 1)};
+				continue;
+			}
+			$group = $i % 2 === 0 ? $consonants : $vowels;
+			$s .= $group{mt_rand(0, strlen($group) - 1)};
+		}
+		return $s;
+	}
+
+
+	/**
+	 * Splits string into tokens using specified separator with maintaining
+	 * posibility to use escaped separator within string.
+	 *
+	 * @param string string to split
+	 * @param string separator
+	 * @param string escape sequence
+	 * 
+	 * @return string
+	 */
+	public static function splitWithEscape($str, $separator = '/', $escape = '\\') {
+		return preg_split('#(.*?[^' . preg_quote($escape, '#') . ']|.*' . preg_quote($escape . $escape, '#') . ')' . preg_quote($separator, '#') . '#', $str, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+	}
+
 }

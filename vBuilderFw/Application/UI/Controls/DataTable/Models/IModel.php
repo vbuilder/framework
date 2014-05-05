@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -35,6 +35,9 @@ use vBuilder,
 interface IModel extends Nette\IFreezable {
 
 	public function getCount();
-	public function getIterator($start, $count);
+	public function getUnfilteredCount();
+	public function setFilter(array $rules = array());
+	public function getFilter();
+	public function getIterator($start, $count, array $sortingColumns = array());
 	
 }

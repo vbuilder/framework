@@ -107,27 +107,24 @@ class ControlRenderer extends vBuilder\Object {
 	 * @return void
 	 */
 	function render() {
-		// File templates
-		if($this->template instanceof Nette\Templating\IFileTemplate && !$this->template->getFile()) {
-			foreach($this->formatTemplateFiles() as $file) {
-				if(file_exists($file)) {					
-					$this->template->setFile($file);
-					
-					// Automaticky extend
-					if(!isset($this->template->_extends) && $file != $this->getDefaultTemplateFile() && file_exists($this->getDefaultTemplateFile())) {
-						$this->template->_extends = $this->getDefaultTemplateFile();
+		if($this->template !== FALSE) {
+			// File templates
+			if($this->template instanceof Nette\Templating\IFileTemplate && !$this->template->getFile()) {
+				foreach($this->formatTemplateFiles() as $file) {
+					if(file_exists($file)) {					
+						$this->template->setFile($file);
+						
+						$this->template->render();
+						return ;
 					}
-					
-					$this->template->render();
-					return ;
 				}
+			
+				throw new Nette\Application\BadRequestException("Template not found in " . implode(', ', $this->formatTemplateFiles()));
 			}
-		
-			throw new Nette\Application\BadRequestException("Page not found. Missing template '$file'.");
+			
+			// Other templates
+			$this->template->render();
 		}
-		
-		// Other templates
-		$this->template->render();
 	}
 	
 	/**
@@ -211,6 +208,21 @@ class ControlRenderer extends vBuilder\Object {
 		
 		return $this->_template;
 	}
+
+	/**
+	 * Sets template
+	 * 
+	 * @param FALSE|Nette\Templating\ITemplate new template
+	 */
+	public function setTemplate($template) {
+		if($template === FALSE || $template instanceof Nette\Templating\ITemplate) {
+			 $this->_template = $template;
+			 return ;
+		}
+
+		$class = get_called_class();
+		throw new Nette\UnexpectedValueException("Invalid object given for $class::setTemplate. FALSE or implementation of Nette\\Templating\\ITemplate required.");
+	}
 	
 	/**
 	 * Template factory
@@ -227,6 +239,7 @@ class ControlRenderer extends vBuilder\Object {
 		$template->registerHelperLoader('Nette\Templating\Helpers::loader');
 
 		$template->registerHelper('stripBetweenTags', 'vBuilder\Latte\Helpers\FormatHelpers::stripBetweenTags');
+		$template->registerHelper('printf', 'sprintf');
 
 		// default parameters
 		$template->renderer = $this;
@@ -235,6 +248,8 @@ class ControlRenderer extends vBuilder\Object {
 		$template->context = $this->context;
 		$template->baseUri = $template->baseUrl = rtrim($this->context->httpRequest->getUrl()->getBaseUrl(), '/');
 		$template->basePath = preg_replace('#https?://[^/]+#A', '', $template->baseUrl);
+
+		$template->setTranslator($this->context->translator);
 		
 		if ($presenter instanceof Nette\Application\UI\Presenter) {
 			$template->setCacheStorage($this->context->{'nette.templateCacheStorage'});
@@ -257,15 +272,49 @@ class ControlRenderer extends vBuilder\Object {
 	}
 	
 	/**
-	 * Descendant can override this method to customize template compile-time filters.
+	 * Compilation time templating filters
+	 * 
 	 * @param  Nette\Templating\Template
 	 * @return void
 	 */
-	public function templatePrepareFilters($template, &$engine = null) {
-		if(!$engine) $engine = new Nette\Latte\Engine;
+	final public function templatePrepareFilters($template) {
+
+		// We cannot use Nette\Latte\Engine class directly, because we need our UIMacros patch
+		// $this->getPresenter()->getContext()->nette->createLatte()
+
+		$parser = new Nette\Latte\Parser;
+		$compiler = new Nette\Latte\Compiler;
+		$compiler->defaultContentType = Nette\Latte\Compiler::CONTENT_XHTML;
+
+		$this->lattePrepareMacros($compiler, $template);
+
+		$template->registerFilter(function ($s) use ($compiler, $parser) {
+			return $compiler->compile($parser->parse($s));
+		});
+	}
+
+	/**
+	 * Prepares Latte macros
+	 * 
+	 * @param  Nette\Latte\Compiler
+	 * @return void
+	 */
+	protected function lattePrepareMacros(Nette\Latte\Compiler $compiler, Nette\Templating\Template $template) {
+		Nette\Latte\Macros\CoreMacros::install($compiler);
+		$compiler->addMacro('cache', new Nette\Latte\Macros\CacheMacro($compiler));
 		
-		vBuilder\Latte\Macros\SystemMacros::install($engine->compiler);
-		$template->registerFilter($engine);
+		// Must be before UIMacros
+		vBuilder\Latte\Macros\SystemMacros::install($compiler);
+
+		// Auto-extend for templates
+		if($template instanceof Nette\Templating\FileTemplate && $template->getFile() != "" && $template->getFile() != $this->getDefaultTemplateFile() && file_exists($this->getDefaultTemplateFile())) {
+			vBuilder\Latte\Macros\UIMacros::installWithAutoExtend($compiler, $this->getDefaultTemplateFile());
+		} else
+			vBuilder\Latte\Macros\UIMacros::install($compiler);
+
+		Nette\Latte\Macros\FormMacros::install($compiler);
+
+		vBuilder\Latte\Macros\RegionMacros::install($compiler);
 	}
 	
 }

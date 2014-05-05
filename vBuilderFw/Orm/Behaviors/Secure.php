@@ -24,9 +24,9 @@
 namespace vBuilder\Orm\Behaviors;
 
 use vBuilder,
-	 Nette,
-	 vBuilder\Orm\Entity,
-	 vBuilder\Security\SecurityException;
+	Nette,
+	Nette\Application\ForbiddenRequestException,
+	vBuilder\Orm\Entity;
 
 /**
  * Behavior takes care of authorizing all entity actions against Nette\Security ACL
@@ -93,7 +93,7 @@ class Secure implements vBuilder\Orm\IBehavior {
 	 * This function is called before first read of any data (except for ID fields).
 	 * It takes care of checking for read permission.
 	 * 
-	 * @throws SecurityException if user does not have permission to read this entity
+	 * @throws ForbiddenRequestException if user does not have permission to read this entity
 	 */
 	public function readSecurityCheck() {		
 		$this->checkPermission(self::ACL_PERMISSION_READ);
@@ -102,7 +102,7 @@ class Secure implements vBuilder\Orm\IBehavior {
 	/**
 	 * This function is called before insert command is commited to DB
 	 * 
-	 * @throws SecurityException if user does not have permission to create this entity
+	 * @throws ForbiddenRequestException if user does not have permission to create this entity
 	 */
 	public function createSecurityCheck() {
 		$this->checkPermission(self::ACL_PERMISSION_CREATE);
@@ -111,7 +111,7 @@ class Secure implements vBuilder\Orm\IBehavior {
 	/**
 	 * This function is called before update command is commited to DB
 	 * 
-	 * @throws SecurityException if user does not have permission to update this entity
+	 * @throws ForbiddenRequestException if user does not have permission to update this entity
 	 */
 	public function updateSecurityCheck() {
 		$this->checkPermission(self::ACL_PERMISSION_UPDATE);
@@ -120,7 +120,7 @@ class Secure implements vBuilder\Orm\IBehavior {
 	/**
 	 * This function is called before delete command is commited to DB
 	 * 
-	 * @throws SecurityException if user does not have permission to delete this entity
+	 * @throws ForbiddenRequestException if user does not have permission to delete this entity
 	 */
 	public function deleteSecurityCheck() {
 		$this->checkPermission(self::ACL_PERMISSION_DELETE);
@@ -130,13 +130,13 @@ class Secure implements vBuilder\Orm\IBehavior {
 	 * Helper function for checking permission on current entity
 	 * 
 	 * @param string permission name
-	 * @throws SecurityException if user does not have permission to do that
+	 * @throws ForbiddenRequestException if user does not have permission to do that
 	 */
 	protected function checkPermission($permission) {
 		if(!$this->_isEnabled) return ;		
 		
 		if(!$this->context->user->isAllowed($this->entity, $permission))
-			throw new SecurityException("Operation '$permission' is not permitted on '".$this->entity->getResourceId()."'", SecurityException::OPERATION_NOT_PERMITTED);
+			throw new ForbiddenRequestException("Operation '$permission' is not permitted on '".$this->entity->getResourceId()."'");
 	}
 	
 }

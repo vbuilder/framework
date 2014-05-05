@@ -56,5 +56,20 @@ class Arrays {
 			$array = array($value);
 		}
 	}
+	
+	/**
+	 * Returns TRUE if given arrays are the same regardless of the
+	 * order of their items
+	 *
+	 * @param array
+	 * @param array
+	 * @return bool
+	 */
+	static function compareWithoutOrder(array $array1, array $array2) {
+		if(count($array1) != count($array2))
+			return false;
+			
+		return count(array_intersect($array1, $array2)) == count($array2);		
+	}
 
 }

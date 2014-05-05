@@ -1,3 +1,4 @@
 /tests/*/output/
 .AppleDouble/
 ._*
+.DS_Store
