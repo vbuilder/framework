@@ -76,7 +76,16 @@ class Configurator extends Nette\Configurator {
 			}
 		}
 
-		return parent::createContainer();
+		$container = parent::createContainer();
+
+		// We setup email for bug reporting from config file
+		// (if not set up in bootstrap)
+		if(isset($container->parameters['errorRecipients'])) {
+			if(Nette\Diagnostics\Debugger::$email === NULL)
+				Nette\Diagnostics\Debugger::$email = $container->parameters['errorRecipients'];
+		}
+
+		return $container;
 	}
 
 	/**
@@ -104,7 +113,7 @@ class Configurator extends Nette\Configurator {
 		// Add default parameters
 		return parent::enableDebugger(
 			$logDirectory === NULL ? $this->parameters['logDir'] : $logDirectory,
-			$email === NULL ? (isset($this->parameters['errorRecipients']) ? $this->parameters['errorRecipients'] : NULL) : $email
+			$email
 		);
 	}
 
