@@ -117,10 +117,7 @@ function d() {
 				dt($data);
 			}
 		} else {
-
-			$d = '<pre class="nette-dump">' . Helpers::htmlDump($m) . '</pre>';
-			if(Debug::$consoleMode) $d = htmlspecialchars_decode(strip_tags($d), ENT_NOQUOTES);
-			echo $d;
+			Nette\Diagnostics\Debugger::dump($m);
 		}
 	}
 }
