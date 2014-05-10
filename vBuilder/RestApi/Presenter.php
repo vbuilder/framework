@@ -129,7 +129,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 			if($this->outputContentType == 'text/html' && !$this->isInProductionMode())
 				throw $e;
 
-			Nette\Diagnostics\Debugger::log($e);
+			Nette\Diagnostics\Debugger::log($e, 'error');
 
 			$payload = new \StdClass;
 			$payload->error = self::ERROR_INTERNAL;
