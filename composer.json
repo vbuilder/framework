@@ -16,5 +16,10 @@
 	"autoload": {
 		"classmap": ["vBuilder/", "vBuilderModule/"],
 		"files": ["vBuilder/common/shortcuts.php"]
-	}
+	},
+	"bin": [
+		"bin/dbdump",
+		"bin/dbsetup",
+		"bin/entitymanager"
+	]
 }
