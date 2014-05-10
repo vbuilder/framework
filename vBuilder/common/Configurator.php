@@ -36,6 +36,20 @@ class Configurator extends Nette\Configurator {
 
 	private $extensions;
 
+	public function __construct() {
+		$this->parameters = $this->getDefaultParameters();
+
+		if($this->parameters['appDir']) {
+			$this->parameters['wwwDir'] = Utils\FileSystem::normalizePath($this->parameters['appDir'] . '/../www');
+			$this->parameters['confDir'] = $this->parameters['appDir'] . '/config';
+			$this->parameters['vendorDir'] = Utils\FileSystem::normalizePath($this->parameters['appDir'] . '/../vendor');
+			$this->parameters['libsDir'] = $this->parameters['vendorDir'];
+			$this->parameters['filesDir'] = Utils\FileSystem::normalizePath($this->parameters['appDir'] . '/../files');
+			$this->parameters['logDir'] = Utils\FileSystem::normalizePath($this->parameters['appDir'] . '/../log');
+			$this->parameters['tempDir'] = Utils\FileSystem::normalizePath($this->parameters['appDir'] . '/../temp');
+		}
+	}
+
 	/**
 	 * Returns system DI container.
 	 * @return \SystemContainer
@@ -81,20 +95,6 @@ class Configurator extends Nette\Configurator {
 		return $loader;
 	}
 
-	protected function getDefaultParameters() {
-		$default = parent::getDefaultParameters();
-
-		$default['appDir'] = Utils\FileSystem::normalizePath($default['wwwDir'] . '/../app');
-		$default['confDir'] = $default['appDir'] . '/config';
-		$default['vendorDir'] = Utils\FileSystem::normalizePath($default['wwwDir'] . '/../vendor');
-		$default['libsDir'] = $default['vendorDir'];
-		$default['filesDir'] = Utils\FileSystem::normalizePath($default['wwwDir'] . '/../files');
-		$default['logDir'] = Utils\FileSystem::normalizePath($default['wwwDir'] . '/../log');
-		$default['tempDir'] = Utils\FileSystem::normalizePath($default['wwwDir'] . '/../temp');
-
-		return $default;
-	}
-
 	/**
 	 * @param  string        error log directory
 	 * @param  string        administrator email
@@ -114,6 +114,10 @@ class Configurator extends Nette\Configurator {
 	 * @return bool
 	 */
 	public static function detectDebugMode($list = NULL) {
+		// Debug mode in console
+		if(PHP_SAPI === 'cli')
+			return TRUE;
+
 		// Allows SetEnv and SetEnvIf from virtual host configuration
 		if(isset($_SERVER["DEVELOPMENT_MODE"]))
 			return (bool) $_SERVER["DEVELOPMENT_MODE"];
