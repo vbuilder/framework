@@ -18,6 +18,7 @@
 		"files": ["vBuilder/common/shortcuts.php"]
 	},
 	"bin": [
+		"bin/create-user",
 		"bin/db-dump",
 		"bin/db-setup",
 		"bin/entity-manager",
