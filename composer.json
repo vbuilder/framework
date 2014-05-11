@@ -18,8 +18,8 @@
 		"files": ["vBuilder/common/shortcuts.php"]
 	},
 	"bin": [
-		"bin/dbdump",
-		"bin/dbsetup",
-		"bin/entitymanager"
+		"bin/db-dump",
+		"bin/db-setup",
+		"bin/entity-manager"
 	]
 }
