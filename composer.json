@@ -20,6 +20,7 @@
 	"bin": [
 		"bin/db-dump",
 		"bin/db-setup",
-		"bin/entity-manager"
+		"bin/entity-manager",
+		"bin/tr-compile"
 	]
 }
