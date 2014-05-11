@@ -19,8 +19,10 @@ $bootstrapSearchPath[] =
 	. DIRECTORY_SEPARATOR . 'bootstrap.php';
 
 foreach($bootstrapSearchPath as $path) {
-	if(file_exists($path))
+	if(file_exists($path)) {
+		unset($bootstrapSearchPath);
 		return require $path;
+	}
 }
 
 echo "\nBootstrap not found\n";
