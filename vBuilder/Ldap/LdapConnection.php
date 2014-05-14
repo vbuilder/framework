@@ -31,9 +31,9 @@ use vBuilder,
  *
  * @note If you are using SSL, valid certificate is required for LDAP server.
  *   otherwise you will keep getting errors like "Can't contact LDAP server (-1)".
- *	 You can't bypass check by adding following line into /etc/ldap.conf:
+ *	 You can't bypass check by adding following line into /etc/ldap/ldap.conf:
  *		TLS_REQCERT never
- *   (apache restart might be required)
+ *   (apache restart is required)
  *
  * @author Adam Staněk (velbloud)
  * @since Sep 10, 2013
