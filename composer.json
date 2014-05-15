@@ -10,12 +10,6 @@
 			"homepage": "http://www.v3net.cz"
 		}
 	],
-	"repositories": [
-		{
-			"type": "vcs",
-			"url": "https://github.com/vbuilder/utils.git"
-		}
-	],
 	"require": {
 		"php": ">=5.3.1",
 		"vbuilder/utils": "dev-master"
