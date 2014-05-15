@@ -33,6 +33,13 @@ use vBuilder, Nette;
  */
 class ResourceProvider extends Nette\Object {
 
+	/**
+	 * Error responses
+	 */
+	const ERROR_NOT_FOUND = 'not_found';
+	const ERROR_INVALID_REQUEST = 'invalid_request';
+	/**/
+
 	/** @var Nette\Http\IRequest @inject */
 	public $httpRequest;
 
