@@ -132,8 +132,10 @@ class ConstructionMode extends Nette\Object {
 		if($request->method != Request::FORWARD) {
 
 			// Pokud nejsem v testovacim modu vyhodim vyjimku, ze je web v rekonstrukci
-			if($this->enabled && !$this->isTestUrl($this->httpRequest->url))
-				throw new vBuilder\Application\UnderConstructionException();
+			if(!$this->isTestUrl($this->httpRequest->url)) {
+				if($this->enabled)
+					throw new vBuilder\Application\UnderConstructionException();
+			}
 
 			// Pokud web uz neni ve vystavbe, musim se postarat o zpetny redirect
 			// moznych URL sdilenych administratorem v dobe vystavby
