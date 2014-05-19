@@ -50,6 +50,12 @@ database:
 			data: false
 
 services:
+	# Support for construction mode
+	app.constructionMode:
+		class: vBuilder\Application\ConstructionMode
+		arguments: [ %underConstruction% ]
+		inject: true
+
 	# Event dispatcher
 	events.dispatcher:
 		class: vBuilder\Events\Dispatcher

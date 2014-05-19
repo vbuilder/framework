@@ -61,6 +61,9 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 
 		if(!isset($container->parameters['translationBar']['enabled']))
 			$container->parameters['translationBar']['enabled'] = TRUE;
+
+		if(!isset($container->parameters['underConstruction']))
+			$container->parameters['underConstruction'] = FALSE;
 	}
 
 	public function beforeCompile() {
@@ -89,12 +92,8 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 		// Support for construction mode
 		if($container->parameters['productionMode']) {
 			$container->getDefinition('application')
-				->addSetup(
-					'$container = $this; $service->onRequest[] = function () use ($container) {' .
-					' call_user_func_array(?, array_merge(func_get_args(), array($container)) );' .
-					' }'
-					, array('vBuilder\Application\ConstructionMode::onApplicationRequest')
-				);
+				->addSetup('$service->onRequest[] = array(?, ?)', array('@app.constructionMode', 'onApplicationRequest'))
+				->addSetup('$service->onResponse[] = array(?, ?)', array('@app.constructionMode', 'onApplicationResponse'));
 		}
 
 		// Detect language on HTTP request
