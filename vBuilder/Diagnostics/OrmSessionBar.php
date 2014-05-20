@@ -33,23 +33,22 @@ use vBuilder,
  * @since Jun 2, 2012
  */
 class OrmSessionBar implements Nette\Diagnostics\IBarPanel {
-	
+
 	public function getContext() {
-		global $context;
-		return $context;
+		return Nette\Environment::getContext();
 	}
-	
+
 	/**
 	 * Renders HTML code for custom tab.
 	 * @return string
 	 */
 	public function getTab() {
 		if(!$this->getContext()->session->isStarted()) return ;
-	
+
 		ob_start();
-				
+
 		require __DIR__ . '/Templates/bar.orm.session.tab.phtml';
-		
+
 		return ob_get_clean();
 	}
 
@@ -59,12 +58,12 @@ class OrmSessionBar implements Nette\Diagnostics\IBarPanel {
 	 */
 	public function getPanel() {
 		if(!$this->getContext()->session->isStarted()) return;
-	
+
 		ob_start();
-		
+
 		require __DIR__ . '/Templates/bar.orm.session.panel.phtml';
-		
+
 		return ob_get_clean();
 	}
-	
+
 }
