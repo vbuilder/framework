@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -175,7 +175,13 @@ class Translator extends Nette\FreezableObject implements ITranslator
 			$this->init();
 		}
 
-		$messages = (array) $message;
+		if(is_scalar($message))
+			$messages = (array) $message;
+		elseif(is_array($message))
+			$messages = $message;
+		else
+			throw new Nette\InvalidArgumentException("Cannot translate object");
+
 		$args = (array) $count;
 
 		$form = $args ? reset($args) : NULL;
