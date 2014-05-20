@@ -156,11 +156,13 @@ class ConstructionMode extends Nette\Object {
 		if(!$this->isTestUrl($this->httpRequest->url))
 			return ;
 
-		if(preg_match('#^text/html#i', $this->httpResponse->getHeader('Content-Type'))) {
-			$that = $this;
-			register_shutdown_function(function () use ($that) {
+		$that = $this;
+		$httpResponse = $this->httpResponse;
+
+		register_shutdown_function(function () use ($that, $httpResponse) {
+			if(preg_match('#^text/html#i', $httpResponse->getHeader('Content-Type'))) {
 				echo $that->createTestBar()->render();
-			});
-		}
+			}
+		});
 	}
 }
