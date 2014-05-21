@@ -1,0 +1,28 @@
+{
+	"name": "vbuilder/framework",
+	"type": "library",
+	"description": "vBuilder Framework Library",
+	"keywords": ["framework", "nette"],
+	"homepage": "http://www.vbuilder.cz",
+	"authors": [
+		{
+			"name": "V3Net.cz, s.r.o.",
+			"homepage": "http://www.v3net.cz"
+		}
+	],
+	"require": {
+		"php": ">=5.3.1",
+		"vbuilder/utils": ">=0.9.0"
+	},
+	"autoload": {
+		"classmap": ["vBuilder/", "vBuilderModule/"],
+		"files": ["vBuilder/common/shortcuts.php"]
+	},
+	"bin": [
+		"bin/create-user",
+		"bin/db-dump",
+		"bin/db-setup",
+		"bin/entity-manager",
+		"bin/tr-compile"
+	]
+}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<meta name=robots content=noindex>
+<meta name=generator content='vBuilder @ Nette Framework'>
+<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+
+
+<style type="text/css">
+	body { color:#333;background:white;width:500px;margin:100px auto }
+	h1 { font:bold 47px/1.5 sans-serif;margin:.6em 0 .1em 0 }
+	h2 { font:bold 27px/1.0 sans-serif;margin: 0 0 .6em 0 }
+	p { font:21px/1.5 Georgia,serif;margin:1.5em 0 0 0 }
+	p.tr { font:21px/1.5 Georgia,serif;margin:1.5em 0; padding: 1.5em 0 0 0; border-top: 1px solid #ccc; color: grey }
+	p.date { margin: 0 !important; font-size: 1em; }
+	small { font-size:70%;color:gray }
+	.hash { font-family: Courier; }
+
+	A { color:#a33; }
+	A:hover { text-decoration: none; }
+</style>
+
+<title>Server Error</title>
+<body>
+	<h1>Chyba serveru</h1>
+	<h2>Server Error</h2>
+
+	<p>Na serveru se vyskytla chyba a systém nebyl schopen dokončit Váš požadavek.</p>
+	<p style="margin-top: 0.5em;">Zkuste prosím navštívit <a href="{$baseUrl}" style="color: #3030f3;">úvodní stránku</a>.<br /> Pokud problém setrvává zkuste to prosím později.</p>
+
+	<p class="tr">The server encountered an internal error and was unable to complete your request. Please try again later.</p>
+
+	<p><small>error 500, <span class="hash">{$hash}</span></small></p>
+	<p class="date"><small>{= date('Y-m-d H-i-s')}</small></p>
+</body>

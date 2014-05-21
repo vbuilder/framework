@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<meta name=robots content=noindex>
+<meta name=generator content='vBuilder @ Nette Framework'>
+<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+
+
+<style type="text/css">
+	body { color:#333;background:white;width:500px;margin:100px auto }
+	h1 { font:bold 47px/1.5 sans-serif;margin:.6em 0 .1em 0 }
+	h2 { font:bold 27px/1.0 sans-serif;margin: 0 0 .6em 0 }
+	p { font:21px/1.5 Georgia,serif;margin:1.5em 0 }
+	p.tr { font:21px/1.5 Georgia,serif;margin:1.5em 0; padding: 1.5em 0 0 0; border-top: 1px solid #ccc; color: grey }
+	p.continue { font:16px/1.5 Georgia,serif; color: grey }
+	small { font-size:70%;color:gray }
+	A { color: #d00000; }
+	A:hover { text-decoration: none; }
+</style>
+
+<title>Stránka nenalezena</title>
+
+<h1>Stránka nenalezena</h1>
+<h2>Page not found</h2>
+
+<p>Zadaná adresa nebyla nalezena.</p>
+
+<p class="continue">Pokračujte prosím na <a href="{$baseUrl}">úvodní stránku</a>.</p>
+
+<p class="tr">The requested URL was not found on this server.</p>
+
+<p><small>error 404</small></p>
+
+<script type="text/javascript">
+	$(function () {
+		var url = {$baseUrl},
+			continueEl = $('p.continue'),
+			msg = "Za %d sekund%p budete přesměrováni na úvodní stránku.",
+			iterator = 3,
+			callback = function () {
+				var plural;
+				if (iterator > 4 || iterator === 0) {
+					// aby se to dalo rozšířit i na delší dobu.
+					plural = '';
+				} else if (iterator > 1) {
+					plural = 'y';
+				} else {
+					plural = 'u';
+				}
+				continueEl.html(
+					msg.replace('%d', iterator--).replace('%p', plural)
+				);
+				if (iterator <= -1) {
+					window.location.replace(url);
+					clearInterval(interval);
+				}
+			};
+			
+		if(window.location != url + '/') {
+			callback();
+			var interval = window.setInterval(callback, 1000);
+		}
+	});
+</script>

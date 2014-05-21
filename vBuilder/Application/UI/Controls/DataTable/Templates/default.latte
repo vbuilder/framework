@@ -1,0 +1,101 @@
+{addJs '../Js/datatable.js'}
+
+{default $jQueryUiMarkup = false}
+{default $noPaginateText = false}
+
+<div id="dt-{$control->getUniqueId()}">
+	{block #beforeTable}{/block}
+	<table class="display">
+		<tbody>
+		</tbody>
+		<thead>
+			<tr>
+				<th n:foreach="$columns as $col" class="{$col->getName()}">{$col->getLabel()}</th>
+			</tr>
+		</thead>
+		<tfoot>
+		</tfoot>
+	</table>
+	{block #afterTable}{/block}
+</div>
+<script type="text/javascript">
+	$(function () {
+		var controlBlock = $("#dt-" + {$control->getUniqueId()}),
+			table = controlBlock.children("TABLE"),
+			url = {link //getData, authToken => $control->getAuthToken()};
+
+		// @see http://datatables.net/usage/options
+		var oTable = table.dataTable({
+			"bServerSide": true,
+			"sAjaxSource": url,
+
+			// jQuery UI compatible markup
+			"bJQueryUI": {$jQueryUiMarkup},
+			"sPaginationType": "full_numbers",
+
+			"aoColumns": [
+				{foreach $columns as $col}
+					{ "sClass": {$col->getName()}{* Class for each cell in this column *}, "bSortable": {$col->isSortable()}, "bSearchable": {$col->isSearchable()}, "bVisible": {$col->isVisible()} }{if !$iterator->last},{/if}{* IE nesnasi carku na konci *}
+				{/foreach}
+			],
+
+			// Sorting
+			"bSort": {$isSortable},
+			"aaSorting": {$sortingColumns},
+
+			// Deffered loading
+			"aaData": {$rows},
+			"iDeferLoading": [ {$total}, {$unfilteredTotal} ],
+
+			"bFilter": true,
+			{* Global filter *}{if isset($filter[0]['keywords']) && $filter[0]['keywords'] != ""}"oSearch": { "sSearch": {$filter[0]['keywords']}, "bRegex": {$filter[0]['regexp']} },{/if}
+
+			// TODO: change page size
+			"bLengthChange": false,
+
+			"iDisplayLength": {$control->getRecordsPerPage()},
+
+			"bPaginate": true,
+
+			// Allow display of the "Processing alert" while loading the data between pages
+			"bProcessing": true,
+
+			// How the elements should be laid out
+			"sDom": '<"">tr<"F"p>',
+
+			"oLanguage": {
+				"sEmptyTable": "Nebyly nalezeny žádné záznamy",
+				"sZeroRecords": "Pro zadaná kritéria nebyly nalezeny žádné záznamy",
+				"sProcessing": "Načítám. Prosím čekejte...",
+				"sInfoThousands": " ",
+				"sInfoEmpty": "Žádné záznamy k zobrazení",
+				"sInfo": "Zobrazeny záznamy _START_ až _END_ (celkem: _TOTAL_)",
+				"sInfoFiltered": " - celkový počet nefiltrovaných záznamů: _MAX_",
+				"oPaginate": {
+					"sNext": {if $noPaginateText}""{else}"Další"{/if},
+					"sPrevious": {if $noPaginateText}""{else}"Předchozí"{/if},
+					"sFirst": {if $noPaginateText}""{else}"První stránka"{/if},
+					"sLast": {if $noPaginateText}""{else}"Poslední stránka"{/if}
+				}
+			},
+
+			"fnDrawCallback": function (o) {
+
+				// Scrolls to the top of the table on every data load (page change, etc ...)
+				var tableEl = $("TABLE#" + o.sTableId),
+					yPos = tableEl.offset().top;
+
+				if(yPos < $(window).scrollTop())
+					$('html, body').animate({ scrollTop: yPos }, 'slow');
+
+				// Hides pagination if there is only one page or less
+				// Explaination: SPAN contains A.paginate_button for inactive pages and A.paginate_active for active page
+				var paginationEl = tableEl.closest('.dataTables_wrapper').find('.dataTables_paginate');
+				if(paginationEl.find('SPAN .paginate_button').size() > 0)
+					paginationEl.show();
+				else
+					paginationEl.hide();
+			}
+		});
+	});
+</script>

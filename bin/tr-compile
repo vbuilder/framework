@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+SCRIPT_PATH="$0"
+if echo $SCRIPT_PATH | grep -v ^/ > /dev/null; then
+	SCRIPT_PATH="$(pwd)/$SCRIPT_PATH"
+fi
+
+export APP_DIR="`dirname $SCRIPT_PATH`/../app"
+
+if [ -L "$SCRIPT_PATH" ]; then
+	SCRIPT_PATH=`readlink -f "$SCRIPT_PATH"`
+fi
+
+SCRIPT_PATH="`dirname "$SCRIPT_PATH"`/tr-compile.sh"
+exec /usr/bin/env bash "$SCRIPT_PATH" $@

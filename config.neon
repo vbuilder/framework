@@ -1,0 +1,193 @@
+extensions:
+	database: DibiNette21Extension
+	vBuilder: vBuilder\DI\Extensions\vBuilderExtension
+
+nette:
+	application:
+		errorPresenter: vBuilder:Error
+		mapping:
+			vBuilder: vBuilderModule\*Presenter
+
+	routing:
+		routes:
+			'<type js>/<file [a-f0-9]{32}\.js>': 'vBuilder:WebFile:default'
+			'<type css>/<file [a-f0-9]{32}\.css>': 'vBuilder:WebFile:default'
+
+database:
+	tables:
+		'config': '%vBuilderFwDir%/db/config.sql'
+
+		'security_lastLoginInfo':
+			structure: '%vBuilderFwDir%/db/security_lastLoginInfo.sql'
+			data: false
+
+		'security_users':
+			structure: '%vBuilderFwDir%/db/security_users.sql'
+			data: false
+
+		'security_userRoles':
+			structure: '%vBuilderFwDir%/db/security_userRoles.sql'
+			data: false
+
+		'security_psk':
+			structure: '%vBuilderFwDir%/db/security_psk.sql'
+			data: false
+
+		'security_acl':
+			structure: '%vBuilderFwDir%/db/security_acl.sql'
+			data: false
+
+		'security_log':
+			structure: '%vBuilderFwDir%/db/security_log.sql'
+			data: false
+
+		'oauth2_clients':
+			structure: '%vBuilderFwDir%/db/oauth2_clients.sql'
+			data: false
+
+		'oauth2_tokens':
+			structure: '%vBuilderFwDir%/db/oauth2_tokens.sql'
+			data: false
+
+services:
+	# Support for construction mode
+	app.constructionMode:
+		class: vBuilder\Application\ConstructionMode
+		arguments: [ %underConstruction% ]
+		inject: true
+
+	# Event dispatcher
+	events.dispatcher:
+		class: vBuilder\Events\Dispatcher
+
+	# Authentication / authorization layer
+	user:
+		class: vBuilder\Security\User
+		inject: true
+		setup:
+			# Intentionally without @ (we are passing service name, not service itself)
+			- setAuthorizator(user.authorizator.acl)
+			- addObserver('onLoggedIn', @user.dbLogger)
+			- addObserver('onLoggedIn', @user.loginAttemptLogger)
+			- addObserver('onLoginAttempt', @user.loginAttemptLogger)
+			- addObserver('onFailedLoginAttempt', @user.loginAttemptLogger)
+
+	userLegacy:
+		class: vBuilder\Security\NetteUserCompatibilityLayer
+
+	# Logger: Last login info
+	user.dbLogger:
+		class: vBuilder\Security\DatabaseLogger
+
+	# Logger: Authorization attempts
+	user.dbAttemptLogger:
+		class: vBuilder\Security\DatabaseAttemptLogger
+
+	# Logger: User login attempts
+	user.loginAttemptLogger:
+		class: vBuilder\Security\LoginAttemptLogger
+		arguments: [@user.dbAttemptLogger, @httpRequest]
+
+	# Identity factory
+	user.identityFactory:
+		class: vBuilder\Security\IdentityFactory
+
+	# Password hash provider
+	user.passwordHasher.sha1Salted:
+		class: vBuilder\Security\PasswordHashers\Sha1SaltedPasswordHasher
+
+	# Authenticator against records in local DB
+	user.authenticator.dbPassword:
+		class: vBuilder\Security\Authenticators\DatabasePasswordAuthenticator(@database.connection, @user.passwordHasher.sha1Salted, @user.identityFactory)
+
+	# Authenticator with PSK in local DB
+	user.authenticator.dbPsk:
+		class: vBuilder\Security\Authenticators\DatabasePskAuthenticator
+
+	# ACL authorizator
+	user.authorizator.acl:
+		class: vBuilder\Security\Authorizators\AclAuthorizator
+
+	# ACL authorizator with DB storage
+	user.authorizator.dbAcl:
+		class: vBuilder\Security\Authorizators\DatabaseAclAuthorizator
+
+	# User config
+	userConfig:
+		factory: vBuilder\Config\DbUserConfig::createService(['%appDir%/config/userdefaults.neon'])
+
+	# vBuilder ORM repositories
+	repository:
+		factory: vBuilder\Orm\DibiRepository::createPersistentRepositoryServiceAlias
+
+	persistentRepository:
+		class: vBuilder\Orm\DibiRepository
+
+	sessionRepository:
+		class: vBuilder\Orm\SessionRepository
+
+	# Translator
+	translator:
+		class: vBuilder\Localization\Translator
+		setup:
+			- setStorage(@translatorStorage)
+			- addDictionary('translationBar', '%filesDir%', '%%dir%%/Translations/%%lang%%.mo', @translatorStorage)
+			- addDictionary('vBuilderFw', '%libsDir%/vbuilder/framework/vBuilder', '%%dir%%/Translations/%%lang%%.mo', @translatorStorage)
+			- addDictionary('app', '%appDir%')
+
+	# Translator storage
+	translatorStorage:
+		class: vBuilder\Localization\Storages\Gettext
+
+	# Translation logger
+	translationLogger:
+		class: vBuilder\Localization\TranslationLogger
+
+	# Page metadata
+	metadata:
+		class: vBuilder\Application\MetaDataProvider
+
+	# Web files generator (Css, Js, ...)
+	webFilesGenerator:
+		class: vBuilder\Application\WebFilesGenerator
+
+	# Class info provider
+	classInfo:
+		class: vBuilder\Application\ClassInfoProvider
+
+	# UI Region provider
+	regionProvider:
+		class: vBuilder\Application\UI\RegionProvider
+
+	# REST API
+	rest.router:
+		class: vBuilder\RestApi\RequestRouter
+		inject: true
+
+	# REST API: Token manager
+	rest.oauth2.databaseTokenManager:
+		class: vBuilder\RestApi\OAuth2\DatabaseTokenManager
+		inject: true
+		setup:
+			- setSecretKey(%secretKey%)
+
+	# REST API: Client authenticator
+	rest.oauth2.databaseClientAuthenticator:
+		class: vBuilder\RestApi\OAuth2\DatabaseClientAuthenticator
+		inject: true
+
+	# Cryptography
+	crypto.secretKeeper:
+		class: vBuilder\Cryptography\AesCipherProvider
+
+parameters:
+	# Secret key for symmetric encryption (REST API)
+	secretKey: NULL
+
+	# Languages
+	languages: ['cs']
+
+	# Security policies
+	security:
+		password:
+			minLength: 6
