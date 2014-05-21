@@ -80,8 +80,8 @@ class ArrayFluent implements \IteratorAggregate {
 
 			if(count($this->whereConditions)) {
 				$conditions = $this->whereConditions;
-				$this->iterator = new Nette\Iterators\Filter($this->iterator, function ($it) use ($conditions) {
-					$entity = $it->getInnerIterator()->current();
+				$this->iterator = new Nette\Iterators\Filter($this->iterator, function ($current, $key, $it) use ($conditions) {
+					$entity = $current;
 
 					foreach($conditions as $cond) {
 						if($entity instanceof Entity) {

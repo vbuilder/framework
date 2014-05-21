@@ -81,7 +81,7 @@ class Versionable implements vBuilder\Orm\IBehavior {
 	public function __construct(Nette\DI\Container $context, Entity $entity, array $args = array()) {
 		$this->entity = $entity;
 		$this->context = $context;
-		$this->db = $this->context->connection;
+		$this->db = $this->context->getByType('DibiConnection');
 
 		// Zjisitm ID, Revision column a field name, pripadne hodim default
 		foreach(array('id', 'revision') as $curr) {

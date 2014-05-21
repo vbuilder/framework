@@ -7,13 +7,14 @@ use vBuilder\Utils\Classinfo as ClassInfo,
 
 const ENTITY_CLASS = 'vBuilder\\Orm\\Entity';
 
-include __DIR__ . '/bootstrap.php';
+$container = require __DIR__ . '/bootstrap.php';
+$db = $container->getByType('DibiConnection');
 
 $args = new CliArgsParser;
 $args->setNumRequiredArgs(1, 1);
 $args->setArgumentHelp('entity name');
 
-$entities = $context->classInfo->getAllChildrenOf(ENTITY_CLASS);
+$entities = $container->classInfo->getAllChildrenOf(ENTITY_CLASS);
 
 // -----------------------------------------------------------------------------
 
@@ -39,7 +40,7 @@ if($args->parse()) {
 			echo "\n\033[1;31m!!! ERROR !!!\033[0m Given entity name \033[1;33m$entityName\033[0m is ambiguous.\n";
 			$entities = $matches;
 			$entityName = NULL;
-		} 
+		}
 	}
 
 	if(isset($entityName)) {
@@ -50,7 +51,7 @@ if($args->parse()) {
 		echo "\n\033[1;32mCreate syntax:\033[0m\n";
 		echo DdlHelper::createQuery($entityName::getMetadata());
 
-		$alter = DdlHelper::alterQuery($entityName::getMetadata(), $context->database->connection);
+		$alter = DdlHelper::alterQuery($entityName::getMetadata(), $db);
 		if($alter) {
 			echo "\n\n\033[1;32mAlter syntax:\033[0m\n";
 			echo $alter;

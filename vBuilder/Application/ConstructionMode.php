@@ -28,73 +28,141 @@ use vBuilder,
 	Nette,
 	Nette\Application\Request,
 	Nette\Application\Application,
+	Nette\Application\IResponse,
 	SystemContainer;
 
 /**
- * Checks if application isn't under construction
+ * Checks if application isn't under construction.
+ *
+ * @note it's run only in production mode
  *
  * @author Adam Staněk (velbloud)
  * @since Apr 14, 2013
  */
-class ConstructionMode {
+class ConstructionMode extends Nette\Object {
 
-	static function onApplicationRequest(Application $app, Request $request, SystemContainer $container) {
+	private $enabled;
 
-		$runningTestMode = false;
+	/** @var Nette\Http\IRequest */
+	private $httpRequest;
+
+	/** @var Nette\Http\IRequest */
+	private $httpResponse;
+
+	/** @var array of callbacks (ConstructionMode $sender, Nette\Http\Url $url) **/
+	private $urlTesters = array();
+
+	/**
+	 * @param bool web under construction?
+	 */
+	public function __construct($enabled) {
+		$this->enabled = $enabled;
+	}
+
+	public function injectHttpRequest(Nette\Http\IRequest $r) {
+		$this->httpRequest = $r;
+	}
+
+	public function injectHttpResponse(Nette\Http\IResponse $r) {
+		$this->httpResponse = $r;
+	}
+
+	public function addTestUrl($cb) {
+		if(!is_callable($cb))
+			throw new Nette\InvalidArgumentException("Expected callable");
+
+		$this->urlTesters[] = $cb;
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Checks if given URL trigger TEST mode
+	 *
+	 * @param Nette\Http\Url
+	 * @return bool
+	 */
+	protected function isTestUrl(Nette\Http\Url $url) {
+
+		foreach($this->urlTesters as $cb) {
+			if($cb($this, $url))
+				return TRUE;
+		}
+
+		return Strings::match($url->host, '#^(.+?\.)?test\.[^\.]+\.[^\.]+$#')
+			|| Strings::match($url->host, '#\.bilahora\.v3net\.cz$#');
+	}
+
+	/**
+	 * Translates URL to production
+	 * Example: test.mujweb.cz/12 -> www.mujweb.cz/12
+	 *
+	 * @param Nette\Http\Url test url
+	 * @return Nette\Http\Url|NULL production url or NULL if translation can't be derived
+	 */
+	protected function translateUrl(Nette\Http\Url $url) {
+
+		if($matches = Strings::match($url->host, '#^(.+?\.)?test\.([^\.]+\.[^\.]+)$#')) {
+			$newHost = $matches[1] . $matches[2];
+			$url = clone $url;
+			$url->host = $newHost;
+			return $url;
+		}
+
+		return NULL;
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Test bar factory
+	 */
+	public function createTestBar() {
+		$bar = new Nette\Diagnostics\Bar;
+		$bar->addPanel(new vBuilder\Diagnostics\TestBar);
+		return $bar;
+	}
+
+	/**
+	 * Checks each request for test mode
+	 */
+	public function onApplicationRequest(Application $app, Request $request) {
 
 		// Forwardy (jako je napr. presmerovani na error presenter neresim)
 		if($request->method != Request::FORWARD) {
 
-			$host = $container->httpRequest->url->host;
-
-			// Pokud jsem v produkcnim rezimu, musim zkontrolovat, jestli stranka neni ve vystavbe
-			if(isset($container->parameters['underConstruction']) && $container->parameters['underConstruction'] == true) {
-
-				// Pokud je stranka ve vystavbe a nejsem na testovaci domene, vyhodim vyjimku
-				// Akceptovany jsou domeny koncici na test.*.* nebo .bilahora.v3net.cz
-				if(!Strings::match($host, '#^(.+?\.)?test\.[^\.]+\.[^\.]+$#') && !Strings::match($host, '#\.bilahora\.v3net\.cz$#')) {
-					/// @todo co kdyz je to pozadavek z admina?
-						throw new vBuilder\Application\UnderConstructionException();
-
-					return ;
-				} else {
-					$runningTestMode = true;
-				}
+			// Pokud nejsem v testovacim modu vyhodim vyjimku, ze je web v rekonstrukci
+			if(!$this->isTestUrl($this->httpRequest->url)) {
+				if($this->enabled)
+					throw new vBuilder\Application\UnderConstructionException();
 			}
 
-			// Pokud nejsem v produkcnim rezimu, musim se postarat o zpetny redirect (nemsi existovat 2 URL se stejnym obsahem)
-			else {
-
-				if($matches = Strings::match($host, '#^(.+?\.)?test\.([^\.]+\.[^\.]+)$#')) {
-					$newHost = $matches[1] . $matches[2];
-
-					$url = clone $container->httpRequest->url;
-					$url->host = $newHost;
-
-					$container->httpResponse->redirect($url);
+			// Pokud web uz neni ve vystavbe, musim se postarat o zpetny redirect
+			// moznych URL sdilenych administratorem v dobe vystavby
+			// (nesmi existovat 2 URL se stejnym obsahem, tj: test.mujweb.cz/12 -> www.mujweb.cz/12)
+			elseif(!$this->enabled) {
+				if($newUrl = $this->translateUrl($this->httpRequest->url)) {
+					$this->httpResponse->redirect((string) $newUrl);
 					exit;
 				}
-
-			}
-		}
-
-		// Test panel (in production mode) - inicializuju ho pri zpracovani requestu aplikace,
-		// takze mam jistotu ze nejsem poustenej z konzole.
-
-		if($runningTestMode) {
-			$ajaxDetected = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
-
-			if(!$ajaxDetected) {
-				register_shutdown_function(function () {
-
-					// Render test bar
-					$bar = new Nette\Diagnostics\Bar;
-					$bar->addPanel(new vBuilder\Diagnostics\TestBar);
-					echo $bar->render();
-
-				});
 			}
 		}
 	}
 
+	/**
+	 * Renders test mode bar if necessary
+	 */
+	public function onApplicationResponse(Application $app, IResponse $response) {
+		if(!$this->isTestUrl($this->httpRequest->url))
+			return ;
+
+		$that = $this;
+		$httpResponse = $this->httpResponse;
+
+		register_shutdown_function(function () use ($that, $httpResponse) {
+			if(preg_match('#^text/html#i', $httpResponse->getHeader('Content-Type'))) {
+				echo $that->createTestBar()->render();
+			}
+		});
+	}
 }

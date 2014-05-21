@@ -115,13 +115,4 @@ class DbUserConfig extends DbConfigScope implements IConfig {
 		}
 	}
 
-	/**
-	 * Returns absolute path to config file with default values
-	 *
-	 * @return string absolute path
-	 */
-	public static function getDefaultsFilepath() {
-		return APP_DIR . '/defaults.neon';
-	}
-
 }

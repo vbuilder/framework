@@ -11,10 +11,18 @@
 		}
 	],
 	"require": {
-		"php": ">=5.3.1"
+		"php": ">=5.3.1",
+		"vbuilder/utils": "1.0.x-dev"
 	},
 	"autoload": {
 		"classmap": ["vBuilder/", "vBuilderModule/"],
 		"files": ["vBuilder/common/shortcuts.php"]
-	}
+	},
+	"bin": [
+		"bin/create-user",
+		"bin/db-dump",
+		"bin/db-setup",
+		"bin/entity-manager",
+		"bin/tr-compile"
+	]
 }

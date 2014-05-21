@@ -38,6 +38,7 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 
 	private $httpRequest;
 	private $translator;
+	private $basePath;
 
 	private $authToken;
 	private $queriedTranslations;
@@ -104,9 +105,10 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 	 * Constructor.
 	 * Takes translator service and prepares URL for save requests
 	 */
-	function __construct(vBuilder\Localization\Translator $translator, Nette\Http\Request $httpRequest, Nette\Http\Session $session) {
+	function __construct(vBuilder\Localization\Translator $translator, Nette\Http\Request $httpRequest, Nette\Http\Session $session, Nette\DI\Container $container) {
 		$this->translator = $translator;
 		$this->httpRequest = $httpRequest;
+		$this->basePath = $container->parameters['wwwDir'] . '/..';
 
 		if(!isset(self::$registeredRoute))
 			throw new Nette\InvalidStateException(__CLASS__ . "::register not called?");
@@ -174,6 +176,7 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 
 		$translations = $this->queriedTranslations;
 		$lang = $this->translator->getLang();
+		$basePath = $this->basePath;
 
 		$applicationRequest = new Nette\Application\Request('Nette:Micro', 'GET', array(
 			'language' => $lang,

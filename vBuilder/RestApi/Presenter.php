@@ -129,7 +129,7 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 			if($this->outputContentType == 'text/html' && !$this->isInProductionMode())
 				throw $e;
 
-			Nette\Diagnostics\Debugger::log($e);
+			Nette\Diagnostics\Debugger::log($e, 'error');
 
 			$payload = new \StdClass;
 			$payload->error = self::ERROR_INTERNAL;
@@ -250,7 +250,12 @@ class Presenter extends Nette\Object implements Nette\Application\IPresenter {
 		if($this->httpRequest->isPost()) {
 			$cType = $this->httpRequest->getHeader('Content-Type');
 			if(strcasecmp($cType,  'application/json') === 0) {
-				$this->postData = Nette\Utils\Json::decode(file_get_contents('php://input'), Nette\Utils\Json::FORCE_ARRAY);
+				try {
+					$this->postData = Nette\Utils\Json::decode(file_get_contents('php://input'), Nette\Utils\Json::FORCE_ARRAY);
+
+				} catch(Nette\Utils\JsonException $e) {
+					$this->terminateWithError(self::ERROR_INVALID_REQUEST, "Malformed POST data (JSON expected).", 400 /* Bad request */);
+				}
 			}
 
 			elseif(strcasecmp($cType,  'application/x-www-form-urlencoded') === 0) {

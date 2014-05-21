@@ -74,7 +74,7 @@ class ControlRenderer extends vBuilder\Object {
 	 * @return Nette\DI\Container
 	 */
 	final public function getContext() {
-			return $this->control->context;
+		return $this->control->context;
 	}
 
 	/**
@@ -247,6 +247,7 @@ class ControlRenderer extends vBuilder\Object {
 		$template->control = $template->_control = $this->control;
 		$template->presenter = $template->_presenter = $presenter;
 		$template->context = $this->context;
+		$template->container = $this->context;
 		$template->baseUri = $template->baseUrl = rtrim($this->context->httpRequest->getUrl()->getBaseUrl(), '/');
 		$template->basePath = preg_replace('#https?://[^/]+#A', '', $template->baseUrl);
 

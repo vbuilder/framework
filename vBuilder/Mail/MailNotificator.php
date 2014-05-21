@@ -52,6 +52,10 @@ class MailNotificator extends vBuilder\EventListener {
 		$this->context = $context;
 	}
 
+	public function getMailer() {
+		return $this->context->getByType('Nette\Mail\IMailer');
+	}
+
 	// ***************************************************************************
 
 	/**

@@ -92,6 +92,9 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 				if(!isset($this->postData['password']))
 					$this->presenter->terminateWithError(self::ERROR_INVALID_REQUEST, 'Parameter password is required.', 400 /* Bad request */);
 
+				if(!$this->attemptLogger->getRemainingAttempts(RestPresenter::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress()))
+					$this->presenter->terminateWithError(self::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
+
 				$this->processClientAuth($clientId, $clientSecret);
 				$this->processPasswordAuth($this->postData['username'], $this->postData['password']);
 				$token = $this->tokenManager->createToken($this->tokenParameters);
@@ -104,6 +107,10 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 			// Example: B2B services
 			case 'client_credentials':
 				list($clientId, $clientSecret) = $this->parseClientAuthInfo();
+
+				if(!$this->attemptLogger->getRemainingAttempts(RestPresenter::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress()))
+					$this->presenter->terminateWithError(self::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
+
 				$this->processClientAuth($clientId, $clientSecret);
 				$token = $this->tokenManager->createToken($this->tokenParameters);
 				break;
@@ -165,8 +172,10 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 	protected function processClientAuth($clientId, $clientSecret) {
 
 		$client = $this->clientAuthenticator->authenticate($clientId, $clientSecret);
-		if(!$client)
+		if(!$client) {
+			$this->attemptLogger->logFail(RestPresenter::ATTEMPT_IP_TOKEN, $this->httpRequest->getRemoteAddress());
 			$this->presenter->terminateWithError(self::ERROR_INVALID_CLIENT, 'The provided client credentials are invalid.', 401 /* Unauthorized */);
+		}
 
 		// Set up token parameters
 		if(!isset($this->tokenParameters)) $this->tokenParameters = new \StdClass;
@@ -188,6 +197,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 		$this->user->setStorage();
 
 		try {
+			// Automatically logs attempts
 			$this->user->login(User::AUTHN_METHOD_PASSWORD, User::AUTHN_SOURCE_ALL, $username, $password);
 
 			// Set up token parameters
@@ -198,7 +208,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 			if($e->getCode() == BaseAuthenticator::MAXIMUM_ATTEMPTS_EXCEEDED)
 				$this->presenter->terminateWithError(self::ERROR_MAXIMUM_ATTEMPTS_EXCEEDED, 'Maximum number of authorization attempts exceeded.', 403 /* Forbidden */);
 			else
-				$this->presenter->terminateWithError(self::ERROR_INVALID_GRANT, 'The provided client credentials are invalid.', 401 /* Unauthorized */);
+				$this->presenter->terminateWithError(self::ERROR_INVALID_GRANT, 'The provided credentials are invalid.', 401 /* Unauthorized */);
 		}
 	}
 

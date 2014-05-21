@@ -157,8 +157,11 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 		} catch(LdapException $e) {
 			if($e->getCode() == 49)
 				throw new AuthenticationException("Invalid credentials", self::INVALID_CREDENTIAL);
-			else
+			else {
+				$errMsg = $e->getMessage();
+				$errNo = $e->getCode();
 				throw new AuthenticationException("LDAP returned error: $errMsg ($errNo)", self::FAILURE);
+			}
 		}
 
 		return NULL;

@@ -149,6 +149,7 @@ class Presenter extends Nette\Application\UI\Presenter {
 	public function createTemplate($file = null, $class = null) {
 		$tpl = parent::createTemplate();
 		$tpl->context = $this->context;
+		$tpl->container = $this->context;
 
 		$tpl->registerHelper('stripBetweenTags', 'vBuilder\\Latte\\Helpers\\FormatHelpers::stripBetweenTags');
 		$tpl->registerHelper('printf', 'sprintf');
