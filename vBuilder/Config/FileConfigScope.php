@@ -70,7 +70,7 @@ class FileConfigScope extends ConfigScope {
 				$ini = \parse_ini_file('safe://'.$file, true, \INI_SCANNER_RAW);
 				foreach ($ini as $key => $scope) {
 					foreach ($scope as $key2 => $val) {
-						$m = vBuilder\Utils\Strings::parseToBool($val, $val);
+						$m = vBuilder\Parsers\ScalarParser::parseBool($val, $val);
 						if (\is_numeric($m)) {
 							$m = \intval($m);
 						}
