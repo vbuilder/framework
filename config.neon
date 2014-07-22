@@ -1,7 +1,3 @@
-extensions:
-	database: DibiNette21Extension
-	vBuilder: vBuilder\DI\Extensions\vBuilderExtension
-
 nette:
 	application:
 		errorPresenter: vBuilder:Error
@@ -15,38 +11,38 @@ nette:
 
 database:
 	tables:
-		'config': '%vBuilderFwDir%/db/config.sql'
+		'config': '%pkg.vbuilder.framework.dir%/db/config.sql'
 
 		'security_lastLoginInfo':
-			structure: '%vBuilderFwDir%/db/security_lastLoginInfo.sql'
+			structure: '%pkg.vbuilder.framework.dir%/db/security_lastLoginInfo.sql'
 			data: false
 
 		'security_users':
-			structure: '%vBuilderFwDir%/db/security_users.sql'
+			structure: '%pkg.vbuilder.framework.dir%/db/security_users.sql'
 			data: false
 
 		'security_userRoles':
-			structure: '%vBuilderFwDir%/db/security_userRoles.sql'
+			structure: '%pkg.vbuilder.framework.dir%/db/security_userRoles.sql'
 			data: false
 
 		'security_psk':
-			structure: '%vBuilderFwDir%/db/security_psk.sql'
+			structure: '%pkg.vbuilder.framework.dir%/db/security_psk.sql'
 			data: false
 
 		'security_acl':
-			structure: '%vBuilderFwDir%/db/security_acl.sql'
+			structure: '%pkg.vbuilder.framework.dir%/db/security_acl.sql'
 			data: false
 
 		'security_log':
-			structure: '%vBuilderFwDir%/db/security_log.sql'
+			structure: '%pkg.vbuilder.framework.dir%/db/security_log.sql'
 			data: false
 
 		'oauth2_clients':
-			structure: '%vBuilderFwDir%/db/oauth2_clients.sql'
+			structure: '%pkg.vbuilder.framework.dir%/db/oauth2_clients.sql'
 			data: false
 
 		'oauth2_tokens':
-			structure: '%vBuilderFwDir%/db/oauth2_tokens.sql'
+			structure: '%pkg.vbuilder.framework.dir%/db/oauth2_tokens.sql'
 			data: false
 
 services:

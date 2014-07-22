@@ -56,26 +56,6 @@ class Configurator extends Nette\Configurator {
 	 */
 	public function createContainer() {
 
-		// Gather all extension info
-		$extensions = $this->getExtensionInfo();
-
-		// Add all configuration files from libraries first
-		$autoConfigFiles = $extensions['configFiles'];
-		if(count($autoConfigFiles)) {
-			foreach(array_reverse($autoConfigFiles) as $file) {
-				$found = false;
-				foreach($this->files as $config) {
-					if(realpath($config[0]) == $file) {
-						$found = true;
-						break;
-					}
-				}
-
-				if(!$found)
-					array_unshift($this->files, array($file, NULL));
-			}
-		}
-
 		$container = parent::createContainer();
 
 		// We setup email for bug reporting from config file
@@ -86,22 +66,6 @@ class Configurator extends Nette\Configurator {
 		}
 
 		return $container;
-	}
-
-	/**
-	 * @return Nette\Loaders\RobotLoader
-	 */
-	public function createRobotLoader() {
-		$loader = parent::createRobotLoader();
-
-		// Gather all extension info
-		$extensions = $this->getExtensionInfo();
-
-		// Add directories to RobotLoader
-		foreach($extensions['robotLoaderDirectories'] as $dirPath)
-			$loader->addDirectory($dirPath);
-
-		return $loader;
 	}
 
 	/**
@@ -132,50 +96,6 @@ class Configurator extends Nette\Configurator {
 			return (bool) $_SERVER["DEVELOPMENT_MODE"];
 
 		return parent::detectDebugMode($list);
-	}
-
-	/**
-	 * Gathers info about installed extensions
-	 */
-	protected function getExtensionInfo() {
-		if(!$this->extensions) {
-			$cache = new Cache(new Nette\Caching\Storages\FileStorage($this->getCacheDirectory()), 'vBuilder.Configurator');
-			$parameters = &$this->parameters;
-
-			$this->extensions = $cache->load('extensions', function (&$dependencies) use (&$parameters) {
-				$composerLockFile = $parameters['appDir'] . '/../composer.lock';
-				$dependencies[Cache::FILES] = array($composerLockFile);
-
-				$composerLock = json_decode(file_get_contents($composerLockFile));
-
-				// Pozor, balicky nejsou v poradi v jakem byly definovany v require!
-				$packages = array_merge(
-					isset($composerLock->{"packages"}) ? $composerLock->{"packages"} : array(),
-					isset($composerLock->{"packages-dev"}) ? $composerLock->{"packages-dev"} : array()
-				);
-
-				/// @todo nabidnout v ramci parametru verze balicku a jejich umisteni
-				$extensions = array(
-					'configFiles' => array(),
-					'robotLoaderDirectories' => array()
-				);
-
-				foreach($packages as $pkg) {
-					$basePath = realpath($parameters['appDir'] . '/../vendor/' . $pkg->name);
-					if(!$basePath) continue;
-
-					$configFile = $basePath . '/config.neon';
-					if(file_exists($configFile)) $extensions['configFiles'][] = $configFile;
-
-					$robotsFile = $basePath . '/netterobots.txt';
-					if(file_exists($robotsFile)) $extensions['robotLoaderDirectories'][] = $basePath;
-				}
-
-				return $extensions;
-			});
-		}
-
-		return $this->extensions;
 	}
 
 }
