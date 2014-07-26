@@ -143,3 +143,74 @@ msgid "Saturday"
 msgstr "Sobota"
 msgid "Sunday"
 msgstr "Neděle"
+
+# ------------------------
+# Nette\Forms\Rules
+
+# Form::PROTECTION
+msgid "Please submit this form again (security token has expired)."
+msgstr "Vypršel časový limit na vyplnění formuláře. Prosím odešlete jej znovu."
+
+# Form::FILLED
+msgid "This field is required."
+msgstr "Prosím vyplňte toto políčko."
+
+# Form::EQUAL
+msgid "Please enter %s."
+msgstr "Prosím vyplňte %s."
+
+# Form::BLANK
+msgid "This field should be blank."
+msgstr "Toto políčko musí být prázdné."
+
+# Form::MIN_LENGTH
+msgid "Please enter at least %d characters."
+msgstr "Prosím zadejte alespoň %d znaků."
+
+# Form::MAX_LENGTH
+msgid "Please enter no more than %d characters."
+msgstr "Text nesmí být delší jak %d znaků."
+
+# Form::LENGTH
+msgid "Please enter a value between %d and %d characters long."
+msgstr "Text musí být dlouhý %d až %d znaků."
+
+# Form::EMAIL
+msgid "Please enter a valid email address."
+msgstr "Prosím zadejte platnou e-mailovou adresu."
+
+# Form::URL
+msgid "Please enter a valid URL."
+msgstr "Prosím zadejte platné URL."
+
+# Form::INTEGER
+msgid "Please enter a valid integer."
+msgstr "Prosím zadejte celé číslo."
+
+# Form::FLOAT
+msgid "Please enter a valid number."
+msgstr "Prosím zadejte platné číslo."
+
+# Form::RANGE
+msgid "Please enter a value between %d and %d."
+msgstr "Prosím zadejte číslo mezi %d a %d."
+
+# Form::MAX_FILE_SIZE
+msgid "The size of the uploaded file can be up to %d bytes."
+msgstr "Maximální velikost souboru je %d bajtů."
+
+# Form::MAX_POST_SIZE
+msgid "The uploaded data exceeds the limit of %d bytes."
+msgstr "Maximální velikost odeslaných dat je %d bajtů."
+
+# Form::IMAGE
+msgid "The uploaded file must be image in format JPEG, GIF or PNG."
+msgstr "Nahraný soubor musí být obrázek formátu JPEG, GIF nebo PNG."
+
+# Form::MIME_TYPE
+msgid "The uploaded file is not in the expected format."
+msgstr "Nahraný soubor nemá očekávaný formát."
+
+# Nette\Forms\Controls\SelectBox::VALID
+msgid "Please select a valid option."
+msgstr "Prosím vyberte hodnotu."
