@@ -488,8 +488,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 		// Row class
 		if(isset($this->_rowClass)) {
 			if(is_callable($this->_rowClass)) {
-				$cb = $this->_rowClass;
-				$class = $cb($rowData);
+				$class = call_user_func($this->_rowClass, $rowData);
 			} else
 				$class = $this->_rowClass;
 
@@ -582,8 +581,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 				throw new Nette\InvalidArgumentException("Missing ID column " . var_export($key, true) . " for action " . var_export($this->getParam('action'), true));
 		}
 
-		$cb = $this->_actions[$this->getParam('action')];
-		$cb($pk, $this);
+		call_user_func($this->_actions[$this->getParam('action')], $pk, $this);
 	}
 
 	/**
