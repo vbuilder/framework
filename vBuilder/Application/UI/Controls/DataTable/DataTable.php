@@ -431,9 +431,24 @@ class DataTable extends vBuilder\Application\UI\Control {
 	public function getResultSet() {
 		if(!$this->_initialized) $this->init();
 
+		// Saved sort columns might not be available anymore (columns have changed)
+		if(isset($this->session->sortColumns)) {
+
+			$sortColumns = array();
+			foreach($this->session->sortColumns as $name => $m) {
+				if($this->getColumn($name, FALSE))
+					$sortColumns[$name] = $m;
+			}
+
+			if(count($sortColumns) == 0)
+				$sortColumns = $this->_defaultSortColumns;
+
+		} else
+			$sortColumns = $this->_defaultSortColumns;
+
 		return $this->model->getResultSet(
 			$this->_filter,
-			isset($this->session->sortColumns) ? $this->session->sortColumns : $this->_defaultSortColumns
+			$sortColumns
 		);
 	}
 
