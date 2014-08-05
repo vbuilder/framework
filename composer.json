@@ -16,7 +16,7 @@
 		"vbuilder/composer-plugin": "0.2.*@dev",
 
 		"vbuilder/utils": "dev-develop",
-		"vbuilder/database": "1.0.*@dev"
+		"vbuilder/database": "dev-develop"
 	},
 	"autoload": {
 		"classmap": ["vBuilder/", "vBuilderModule/"],
