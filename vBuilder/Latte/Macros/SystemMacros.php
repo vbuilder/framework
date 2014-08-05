@@ -87,7 +87,8 @@ class SystemMacros extends MacroSet {
 
 		$lang = lcfirst(mb_substr($node->name, 3));
 		$cmd = '$_control->getPresenter()->getContext()->webFilesGenerator->addFile('
-			. $node->args . ', '
+			. '$_control->getPresenter()->getContext()->expand('
+			. $node->args . '), '
 			. "'$lang', "
 			. 'array(dirname($template->getName()), $_control->getPresenter()->getContext()->parameters[\'wwwDir\'])'
 			. ');';
