@@ -14,7 +14,8 @@
 		"php": ">=5.3.1",
 		"nette/nette": "~2.2.2",
 		"vbuilder/composer-plugin": "0.2.*@dev",
-		"vbuilder/utils": "1.0.*@dev",
+
+		"vbuilder/utils": "dev-develop",
 		"vbuilder/database": "1.0.*@dev"
 	},
 	"autoload": {
