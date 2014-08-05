@@ -2,11 +2,11 @@
 
 /**
  * This file is part of vBuilder Framework (vBuilder FW).
- * 
+ *
  * Copyright (c) 2011 Adam Staněk <adam.stanek@v3net.cz>
- * 
+ *
  * For more information visit http://www.vbuilder.cz
- * 
+ *
  * vBuilder FW is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,8 +24,10 @@
 namespace vBuilder\Latte\Macros;
 
 use vBuilder,
-	Nette,
-	Nette\Latte\MacroNode;
+	Latte\Macros\MacroSet,
+	Latte\Compiler,
+	Latte\MacroNode,
+	Latte\CompileException;
 
 /**
  * System macros
@@ -33,27 +35,27 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since May 20, 2013
  */
-class RegionMacros extends Nette\Latte\Macros\MacroSet {
+class RegionMacros extends MacroSet {
 
 	/**
 	 * Installs redactions macros to parser
-	 * 
-	 * @param Nette\Latte\Parser $parser
-	 * @return RedactionMacros
+	 *
+	 * @param Compiler $compiler
+	 * @return RegionMacros
 	 */
-	static function install(Nette\Latte\Compiler $compiler) {
+	static function install(Compiler $compiler) {
 		$me = new static($compiler);
 
 		// For n:region-width attribute
 		$me->addMacro('region-width', array($me, 'macroRegion'), array($me, 'macroEndRegion'));
-		
+
 		return $me;
 	}
 
 	function finalize() {
 		$prolog = array();
 		$prolog[] = '// Region initialization';
-		$prolog[] = 'if(!isset($_region)) $_region = $context->regionProvider->activeRegion;';
+		$prolog[] = 'if(!isset($_region)) $_region = $_control->getPresenter()->getContext()->regionProvider->activeRegion;';
 
 		// ($prolog, $epilog)
 		return array(implode($prolog, "\n"), '');
@@ -61,13 +63,13 @@ class RegionMacros extends Nette\Latte\Macros\MacroSet {
 
 	function macroRegion(MacroNode $node, $writer) {
 		if(!preg_match('/^region\\-(.+)$/', $node->name, $matches))
-			throw new Nette\InvalidArgumentException("Invalid RegionMacro: " . $node->name);
+			throw new CompileException("Invalid RegionMacro: " . $node->name);
 
-		return $writer->write('$_region = $context->regionProvider->switchToNewRegion(array(\'' . $matches[1]. '\' => ' . $node->args . '));');
+		return $writer->write('$_region = $_control->getPresenter()->getContext()->regionProvider->switchToNewRegion(array(\'' . $matches[1]. '\' => ' . $node->args . '));');
 	}
 
 	function macroEndRegion(MacroNode $node, $writer) {
-		return $writer->write('$_region = $context->regionProvider->switchToParent();');
+		return $writer->write('$_region = $_control->getPresenter()->getContext()->regionProvider->switchToParent();');
 	}
 
 }

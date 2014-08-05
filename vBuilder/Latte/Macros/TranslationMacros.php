@@ -24,27 +24,28 @@
 namespace vBuilder\Latte\Macros;
 
 use vBuilder,
-	Nette,
-	Nette\Latte\MacroNode,
-	Nette\Latte\PhpWriter,
-	Nette\Latte\CompileException,
-	Nette\Latte\MacroTokens;
+	Latte\Macros\MacroSet,
+	Latte\Compiler,
+	Latte\MacroNode,
+	Latte\PhpWriter,
+	Latte\CompileException,
+	Latte\MacroTokens;
 
 /**
- * Translation macros (overrides Nette\Latte\Macros\CoreMacros)
+ * Translation macros (overrides Latte\Macros\CoreMacros)
  *
  * @author Adam Staněk (velbloud)
  * @since Mar 17, 2014
  */
-class TranslationMacros extends Nette\Latte\Macros\MacroSet {
+class TranslationMacros extends MacroSet {
 
 	/**
 	 * Installs macros
 	 *
-	 * @param Nette\Latte\Parser $parser
-	 * @return RedactionMacros
+	 * @param Compiler $compiler
+	 * @return TranslationMacros
 	 */
-	static function install(Nette\Latte\Compiler $compiler) {
+	static function install(Compiler $compiler) {
 		$me = new static($compiler);
 
 		$me->addMacro('_', array($me, 'macroTranslate'), array($me, 'macroTranslate'));
@@ -94,7 +95,7 @@ class TranslationMacros extends Nette\Latte\Macros\MacroSet {
 
 		$msg = $msgTokens !== NULL ? trim($writer->quoteFilter($msgTokens)->joinAll()) : NULL;
 		if($msg == "") $msg = NULL;
-		$args = 'array(' . ($argTokens !== NULL ? trim($writer->quoteFilter($argTokens)->joinAll()) . ', ' : '') . '\'__hint__\' => $template->getFile() . ":' . $this->compiler->getLine() . '")';
+		$args = 'array(' . ($argTokens !== NULL ? trim($writer->quoteFilter($argTokens)->joinAll()) . ', ' : '') . '\'__hint__\' => $template->getName() . ":' . $this->getCompiler()->getLine() . '")';
 
 		if ($node->closing) {
 			if(isset($node->data->plural))

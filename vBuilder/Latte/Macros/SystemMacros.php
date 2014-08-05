@@ -24,11 +24,13 @@
 namespace vBuilder\Latte\Macros;
 
 use vBuilder,
-	Nette,
-	Nette\Latte\MacroNode,
-	Nette\Latte\ParseException,
-	Nette\Latte\MacroTokens,
-	Nette\Utils\Tokenizer;
+	Latte\CompileException,
+	Latte\Macros\MacroSet,
+	Latte\Compiler,
+	Latte\MacroNode,
+	Latte\ParseException,
+	Latte\MacroTokens,
+	Latte\Tokenizer;
 
 /**
  * System macros
@@ -36,25 +38,23 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since Aug 2, 2011
  */
-class SystemMacros extends Nette\Latte\Macros\MacroSet {
+class SystemMacros extends MacroSet {
 
 	protected $_prolog = array();
 
 	/**
 	 * Installs redactions macros to parser
 	 *
-	 * @param Nette\Latte\Parser $parser
-	 * @return RedactionMacros
+	 * @param Compiler $compiler
+	 * @return SystemMacros
 	 */
-	static function install(Nette\Latte\Compiler $compiler) {
+	static function install(Compiler $compiler) {
 		$me = new static($compiler);
 
 		$me->addMacro('addCss', array($me, 'macroWebFile'));
 		$me->addMacro('addJs', array($me, 'macroWebFile'));
 
 		$me->addMacro('meta', array($me, 'macroMeta'));
-		$me->addMacro('iftest', array($me, 'macroTest'), array($me, 'macroEndTest'));
-		$me->addMacro('ifTest', array($me, 'macroTest'), array($me, 'macroEndTest'));
 
 		return $me;
 	}
@@ -64,7 +64,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	 * @return void
 	 */
 	public function initialize() {
-		$this->_prolog[$this->compiler->templateId] = array();
+		$this->_prolog[$this->getCompiler()->getTemplateId()] = array();
 	}
 
 	/**
@@ -72,7 +72,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	 * @return array(prolog, epilog)
 	 */
 	function finalize() {
-		return array(implode($this->_prolog[$this->compiler->templateId], "\n"), '');
+		return array(implode($this->_prolog[$this->getCompiler()->getTemplateId()], "\n"), '');
 	}
 
 	/**
@@ -86,10 +86,10 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	function macroWebFile(MacroNode $node, $writer) {
 
 		$lang = lcfirst(mb_substr($node->name, 3));
-		$cmd = '$context->webFilesGenerator->addFile('
+		$cmd = '$_control->getPresenter()->getContext()->webFilesGenerator->addFile('
 			. $node->args . ', '
 			. "'$lang', "
-			. 'array(dirname($template->getFile()), $context->parameters[\'wwwDir\'])'
+			. 'array(dirname($template->getName()), $_control->getPresenter()->getContext()->parameters[\'wwwDir\'])'
 			. ');';
 
 
@@ -101,7 +101,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		// a ostatnich bloku, ktere nebyly vykresleny.
 		if($node->parentNode == NULL) {
 			$cmd = 'if(!$_control->snippetMode) ' . $cmd;
-			$this->_prolog[$this->compiler->templateId][] = $cmd;
+			$this->_prolog[$this->getCompiler()->getTemplateId()][] = $cmd;
 		} else
 			return $writer->write($cmd);
 	}
@@ -120,6 +120,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 	 * @return string
 	 */
 	function macroMeta(MacroNode $node, $writer) {
+		return $writer->write('');
 
 		$key = '';
 		$value = '';
@@ -164,7 +165,7 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 					$force = true;
 
 				} else
-					throw new Nette\InvalidStateException("Invalid meta declaration: " . $node->name . " " . $node->args . $node->modifiers);
+					throw new CompileException("Invalid meta declaration: " . $node->name . " " . $node->args . $node->modifiers);
 
 			}
 
@@ -195,8 +196,8 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 			$getMethod = $keyTokens[$i] . '->' . $getMethod;
 		}
 
-		$setMethod = '$context->metadata->' . $setMethod;
-		$getMethod = '$context->metadata->' . $getMethod;
+		$setMethod = '$_control->getPresenter()->getContext()->metadata->' . $setMethod;
+		$getMethod = '$_control->getPresenter()->getContext()->metadata->' . $getMethod;
 
 		$cmd = $setMethod . '(' . $value . ');';
 
@@ -208,19 +209,9 @@ class SystemMacros extends Nette\Latte\Macros\MacroSet {
 		// Pokud se macro vyskytuje bez nejakeho parent bloku musime ho zapsat v prologu,
 		// protoze jinak by se nemuselo vubec zavolat kvuli dedicnosti sablon
 		if($node->parentNode == NULL) {
-			$this->_prolog[$this->compiler->templateId][] = $cmd;
+			$this->_prolog[$this->getCompiler()->getTemplateId()][] = $cmd;
 		} else
 			return $writer->write($cmd);
-	}
-
-	function macroTest(MacroNode $node, $writer) {
-		// isset($context->parameters['productionMode']) && $context->parameters['productionMode'] === false
-
-		return $writer->write('{ if(Nette\Diagnostics\Debugger::$productionMode === false):');
-	}
-
-	function macroEndTest(MacroNode $node, $writer) {
-		return $writer->write('endif; }');
 	}
 
 }
