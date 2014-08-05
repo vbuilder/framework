@@ -26,8 +26,10 @@ namespace vBuilder\RestApi;
 use vBuilder,
 	vBuilder\Security\User,
 	vBuilder\RestApi\OAuth2\OAuth2ResourceProvider,
-	Nette,
-	Nette\Application\AbortException;
+	Nette\Object,
+	Nette\Application\IPresenter,
+	Nette\Application\AbortException,
+	Nette;
 
 /**
  * Base implementation of REST API Presenter
@@ -37,7 +39,7 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since Feb 12, 2014
  */
-class Presenter extends Nette\Object implements Nette\Application\IPresenter {
+class Presenter extends Object implements IPresenter {
 
 	/**
 	 * Error responses

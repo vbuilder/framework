@@ -27,8 +27,9 @@ use vBuilder,
 	vBuilder\RestApi\Presenter as RestPresenter,
 	vBuilder\Security\User,
 	vBuilder\Security\Authenticators\BaseAuthenticator,
-	Nette,
-	Nette\Security\AuthenticationException;
+	Nette\Security\AuthenticationException,
+	Nette\InvalidStateException,
+	Nette\Application\AbortException;
 
 
 /**
@@ -147,7 +148,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 		// ----------------------------
 
 		// Sanity check
-		if(!$token) throw new Nette\InvalidStateException("Expected token");
+		if(!$token) throw new InvalidStateException("Expected token");
 
 		$this->httpResponse->setHeader('Cache-Control', 'no-store');
 
@@ -167,7 +168,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 	 *
 	 * @param string client id
 	 * @param string client secret
-	 * @throws Nette\Application\AbortException on failed authorization
+	 * @throws AbortException on failed authorization
 	 */
 	protected function processClientAuth($clientId, $clientSecret) {
 
@@ -189,7 +190,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 	 *
 	 * @param string username
 	 * @param string password
-	 * @throws Nette\Application\AbortException on failed authorization
+	 * @throws AbortException on failed authorization
 	 */
 	protected function processPasswordAuth($username, $password) {
 
@@ -218,7 +219,7 @@ class OAuth2ResourceProvider extends vBuilder\RestApi\ResourceProvider {
 	 * can be optionally used to pass those parameters
 	 *
 	 * @return array (string clientId, string|NULL clientSecret)
-	 * @throws Nette\Application\AbortException if invalid request
+	 * @throws AbortException if invalid request
 	 */
 	protected function parseClientAuthInfo() {
 		$authHeader = $this->httpRequest->getHeader('Authorization');

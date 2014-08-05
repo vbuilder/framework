@@ -23,9 +23,6 @@
 
 namespace vBuilder\RestApi\OAuth2;
 
-use vBuilder,
-	Nette;
-
 /**
  * Interface for all authenticators of client application secrets
  *

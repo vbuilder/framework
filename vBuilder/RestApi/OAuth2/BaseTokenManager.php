@@ -24,8 +24,10 @@
 namespace vBuilder\RestApi\OAuth2;
 
 use vBuilder,
-	Nette,
-	Nette\Utils\Strings;
+	Nette\Object,
+	Nette\Utils\Strings,
+	Nette\InvalidArgumentException,
+	Nette\InvalidStateException;
 
 /**
  * Manager of OAuth2 tokens - base implementation
@@ -38,7 +40,7 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since Feb 22, 2014
  */
-abstract class BaseTokenManager extends Nette\Object implements ITokenManager {
+abstract class BaseTokenManager extends Object implements ITokenManager {
 
 	/** @var vBuilder\Cryptography\ISymmetricCipherProvider @inject */
 	public $cipherProvider;
@@ -54,12 +56,12 @@ abstract class BaseTokenManager extends Nette\Object implements ITokenManager {
 	 *
 	 * @param string secret key
 	 * @return self
-	 * @throws Nette\InvalidArgumentException if invalid key is given
+	 * @throws InvalidArgumentException if invalid key is given
 	 */
 	public function setSecretKey($secretKey) {
 
 		if(!is_scalar($secretKey) || $secretKey == "")
-			throw new Nette\InvalidArgumentException("Secret key has to be non-empty string");
+			throw new InvalidArgumentException("Secret key has to be non-empty string");
 
 		$this->secretKey = $secretKey;
 	}
@@ -69,13 +71,13 @@ abstract class BaseTokenManager extends Nette\Object implements ITokenManager {
 	 *
 	 * @param integer number of seconds
 	 * @return self
-	 * @throws Nette\InvalidArgumentException if invalid value is given
+	 * @throws InvalidArgumentException if invalid value is given
 	 */
 	public function setTokenTtl($seconds) {
 		$seconds = (int) $seconds;
 
 		if($seconds < 1)
-			throw new Nette\InvalidArgumentException("Token TTL has to be positive number of seconds");
+			throw new InvalidArgumentException("Token TTL has to be positive number of seconds");
 
 		$this->tokenTtl = $seconds;
 	}
@@ -85,11 +87,11 @@ abstract class BaseTokenManager extends Nette\Object implements ITokenManager {
 	 *
 	 * @param string refresh token
 	 * @return string token
-	 * @throws Nette\InvalidStateException if no secret key specified
+	 * @throws InvalidStateException if no secret key specified
 	 */
 	protected function refreshTokenToToken($refreshToken) {
 		if(!isset($this->secretKey))
-			throw new Nette\InvalidStateException("Missing secret key");
+			throw new InvalidStateException("Missing secret key");
 
 		return $this->cipherProvider->decrypt($refreshToken, $this->secretKey);
 	}
@@ -99,11 +101,11 @@ abstract class BaseTokenManager extends Nette\Object implements ITokenManager {
 	 *
 	 * @param string token
 	 * @return string refresh token
-	 * @throws Nette\InvalidStateException if no secret key specified
+	 * @throws InvalidStateException if no secret key specified
 	 */
 	protected function generateRefreshToken($token) {
 		if(!isset($this->secretKey))
-			throw new Nette\InvalidStateException("Missing secret key");
+			throw new InvalidStateException("Missing secret key");
 
 		return $this->cipherProvider->encrypt($token, $this->secretKey);
 	}

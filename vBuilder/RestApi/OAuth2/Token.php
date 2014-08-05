@@ -23,8 +23,7 @@
 
 namespace vBuilder\RestApi\OAuth2;
 
-use vBuilder,
-	Nette;
+use Nette\Object;
 
 /**
  * Authorization token container
@@ -34,7 +33,7 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since Feb 23, 2014
  */
-class Token extends Nette\Object {
+class Token extends Object {
 
 	private $token;
 	private $refreshToken;

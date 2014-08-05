@@ -23,9 +23,6 @@
 
 namespace vBuilder\RestApi\OAuth2;
 
-use vBuilder,
-	Nette;
-
 /**
  * Manager of OAuth2 tokens
  *

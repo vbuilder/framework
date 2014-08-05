@@ -24,7 +24,7 @@
 namespace vBuilder\RestApi\OAuth2;
 
 use vBuilder,
-	Nette;
+	Nette\Object;
 
 /**
  * Client container
@@ -34,7 +34,7 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since Feb 27, 2014
  */
-class Client extends Nette\Object {
+class Client extends Object {
 
 	private $id;
 

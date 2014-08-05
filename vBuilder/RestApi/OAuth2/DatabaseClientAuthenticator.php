@@ -24,7 +24,8 @@
 namespace vBuilder\RestApi\OAuth2;
 
 use vBuilder,
-	Nette;
+	Nette\Object,
+	DibiConnection;
 
 /**
  * Client authenticator against data in DB
@@ -32,7 +33,7 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since Feb 27, 2014
  */
-class DatabaseClientAuthenticator extends Nette\Object implements IClientAuthenticator {
+class DatabaseClientAuthenticator extends Object implements IClientAuthenticator {
 
 	/** @var DibiConnection @inject */
 	public $dbConnection;

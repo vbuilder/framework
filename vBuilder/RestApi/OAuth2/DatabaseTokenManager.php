@@ -24,7 +24,8 @@
 namespace vBuilder\RestApi\OAuth2;
 
 use vBuilder,
-	Nette;
+	Nette\InvalidStateException,
+	DibiConnection;
 
 /**
  * Manager of OAuth2 tokens - database storing
@@ -178,7 +179,7 @@ class DatabaseTokenManager extends BaseTokenManager {
 		for($i = 0; ; $i++) {
 			if($i > 10) {
 				$this->dbConnection->rollback();
-				throw new Nette\InvalidStateException("Couldn't generate unused token");
+				throw new InvalidStateException("Couldn't generate unused token");
 			}
 
 			$newToken = $this->generateToken();
