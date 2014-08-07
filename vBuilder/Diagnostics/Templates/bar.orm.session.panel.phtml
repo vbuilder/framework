@@ -2,16 +2,11 @@
 
 namespace vBuilder\Diagnostics;
 
-use vBuilder,
-	Nette,
-	Nette\Diagnostics\Debugger;
-
-$context = Nette\Environment::getContext();
-$session = $context->sessionRepository->getSession();
+use Tracy\Debugger;
 ?>
 <style>
 
-	#nette-debug .nette-DumpPanel h2 {
+	#tracy-debug .tracy-DumpPanel h2 {
 		font: 11pt/1.5 sans-serif;
 		margin: 0;
 		padding: 2px 8px;
@@ -19,25 +14,25 @@ $session = $context->sessionRepository->getSession();
 		color: white;
 	}
 
-	#nette-debug .nette-DumpPanel table {
+	#tracy-debug .tracy-DumpPanel table {
 		width: 100%;
 	}
 
-	#nette-debug .nette-DumpPanel a {
+	#tracy-debug .tracy-DumpPanel a {
 		color: #333;
 		background: transparent;
 	}
 
-	#nette-debug .nette-DumpPanel a abbr {
+	#tracy-debug .tracy-DumpPanel a abbr {
 		font-family: sans-serif;
 		color: #999;
 	}
-	
-	#nette-debug .nette-DumpPanel .ormTable THEAD TD {
-		background: #fcfc96;		
+
+	#tracy-debug .tracy-DumpPanel .ormTable THEAD TD {
+		background: #fcfc96;
 	}
 
-	#nette-debug .nette-DumpPanel pre .php-array, #nette-debug .nette-DumpPanel pre .php-object {
+	#tracy-debug .tracy-DumpPanel pre .php-array, #tracy-debug .tracy-DumpPanel pre .php-object {
 		color: #c16549;
 	}
 
@@ -46,15 +41,15 @@ $session = $context->sessionRepository->getSession();
 
 <h1>ORM - current session data</h1>
 
-<div class="nette-inner nette-DumpPanel">
+<div class="tracy-inner tracy-DumpPanel">
 <?php
-	
+
 	$first = true;
 	foreach($session as $entityName => $instances) {
 		if($first) echo '<h2>';
 		else echo '<h2 style="margin-top: 20px;">';
 		echo htmlspecialchars($entityName) . '</h2>';
-	
+
 		$metadata = $entityName::getMetadata();
 		echo '<table class="ormTable"><tbody>';
 
@@ -64,15 +59,15 @@ $session = $context->sessionRepository->getSession();
 			echo '<td style="color: brown;">#' . $i++ . '</td>';
 			foreach($metadata->getFields() as $fieldName) {
 				echo '<td>';
-								
-				
+
+
 				if(isset($instance[$fieldName])) {
 					Debugger::dump($instance[$fieldName]);
 				} else {
 					Debugger::dump(null);
 				}
-				
-				
+
+
 				echo '</td>';
 			}
 			echo '</tr>';
@@ -80,15 +75,15 @@ $session = $context->sessionRepository->getSession();
 
 		echo '</tbody><thead><tr>';
 		echo '<td>&nbsp;</td>';
-		
+
 		foreach($metadata->getFields() as $fieldName) {
 			echo '<td>' . htmlspecialchars($fieldName). '</td>';
 		}
-		
+
 		echo "</tr></thead></table>";
-	
+
 		$first = false;
 	}
-		
+
 ?>
 </div>

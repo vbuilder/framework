@@ -11,20 +11,20 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder. If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace vBuilder\Diagnostics;
 
-use vBuilder,
-	Nette;
+use vBuilder\Orm\SessionRepository,
+	Tracy\IBarPanel;
 
 /**
  * Debug bar for displaying current session tables of ORM
@@ -32,10 +32,14 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since Jun 2, 2012
  */
-class OrmSessionBar implements Nette\Diagnostics\IBarPanel {
+class OrmSessionBar implements IBarPanel {
 
-	public function getContext() {
-		return Nette\Environment::getContext();
+	/** @var SessionRepository */
+	private $repository;
+
+
+	public function __construct(SessionRepository $repository) {
+		$this->repository = $repository;
 	}
 
 	/**
@@ -61,6 +65,7 @@ class OrmSessionBar implements Nette\Diagnostics\IBarPanel {
 
 		ob_start();
 
+		$session = $this->repository->getSession();
 		require __DIR__ . '/Templates/bar.orm.session.panel.phtml';
 
 		return ob_get_clean();

@@ -25,7 +25,8 @@ namespace vBuilder\Orm;
 
 use vBuilder,
 	Nette,
-	dibi;
+	dibi,
+	Tracy\Debugger;
 
 /**
  * Entity repository for temporary store in the session
@@ -55,7 +56,7 @@ class SessionRepository extends BaseRepository {
 	public function __construct(Nette\DI\Container $context) {
 		parent::__construct($context);
 
-		Nette\Diagnostics\Debugger::addPanel(new vBuilder\Diagnostics\OrmSessionBar);
+		Debugger::getBar()->addPanel(new vBuilder\Diagnostics\OrmSessionBar);
 	}
 
 	public function findAll($entityName, $processSubclasses = false) {
