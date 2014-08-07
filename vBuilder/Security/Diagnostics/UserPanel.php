@@ -23,9 +23,9 @@
 
 namespace vBuilder\Security\Diagnostics;
 
-use vBuilder,
-	Nette,
-	Nette\Diagnostics\Helpers;
+use vBuilder\Security\User,
+	Nette\Object,
+	Tracy\IBarPanel;
 
 /**
  * This class simply overrides Nette\Security\Diagnostics\UserPanel
@@ -34,17 +34,17 @@ use vBuilder,
  * @author Adam Staněk (V3lbloud)
  * @since Aug 3, 2013
  */
-class UserPanel extends Nette\Object implements Nette\Diagnostics\IBarPanel
+class UserPanel extends Object implements IBarPanel
 {
-	/** @var Nette\Security\User */
+	/** @var User */
 	private $user;
 
 	private $tplDir;
 
-	public function __construct($netteDir, vBuilder\Security\User $user)
+	public function __construct($netteSecurityDir, User $user)
 	{
 		$this->user = $user;
-		$this->tplDir = $netteDir . '/Nette/Security/Diagnostics/templates';
+		$this->tplDir = $netteSecurityDir . '/src/Bridges/SecurityTracy/templates';
 	}
 
 

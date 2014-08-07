@@ -100,15 +100,19 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 			);
 
 
+		// ---------------------------------------------------------------------
+		// UserPanel fix
+		// ---------------------------------------------------------------------
+
 		// Nette automatically adds Nette\Security\Diagnostics\UserPanel to User service setup
 		// we want to use our own
 		$container->getDefinition('user')->setup = array_filter($container->getDefinition('user')->setup, function ($item) {
-			return $item->entity != 'Nette\Diagnostics\Debugger::getBar()->addPanel(?)';
+			return $item->entity != 'Tracy\Debugger::getBar()->addPanel(?)';
 		});
 
 		// Our implementation of Diagnostics\UserPanel
-		$container->getDefinition('user')->addSetup('Nette\Diagnostics\Debugger::getBar()->addPanel(new vBuilder\Security\Diagnostics\UserPanel(?, $service))', array(
-			$container->expand('%vendorDir%/nette/nette')
+		$container->getDefinition('user')->addSetup('Tracy\Debugger::getBar()->addPanel(new vBuilder\Security\Diagnostics\UserPanel(?, $service))', array(
+			$container->expand('%pkg.nette.security.dir%')
 		));
 	}
 
