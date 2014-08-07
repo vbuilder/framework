@@ -88,6 +88,18 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 		$container->getDefinition('httpRequest')
 			->addSetup('if(($lang = $service->detectLanguage(?*)) != NULL) { $this->parameters[\'lang\'] = $lang; if($this->isCreated(\'translator\')) $translator->setLang($lang); }', array(array($container->expand('%languages%'))));
 
+		// ---------------------------------------------------------------------
+		// Web files generator (Css, Js, ...)
+		// ---------------------------------------------------------------------
+
+		$container->addDefinition('webFilesGenerator')
+			->setClass('vBuilder\\Application\\WebFilesGenerator')
+			->addSetup(
+				'Tracy\Debugger::getBar()->addPanel(?)',
+				array(new Nette\DI\Statement('vBuilder\Diagnostics\WebFilesBar'))
+			);
+
+
 		// Nette automatically adds Nette\Security\Diagnostics\UserPanel to User service setup
 		// we want to use our own
 		$container->getDefinition('user')->setup = array_filter($container->getDefinition('user')->setup, function ($item) {
