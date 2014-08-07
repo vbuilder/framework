@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vBuilder FW is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vBuilder FW. If not, see <http://www.gnu.org/licenses/>.
  */
@@ -139,7 +139,7 @@ class Control extends Nette\Application\UI\Control {
 	// <editor-fold defaultstate="collapsed" desc="Template routines">
 
 	/**
-	 * @return Nette\Templating\ITemplate
+	 * @return Nette\Application\UI\ITemplate
 	 */
 	protected function createTemplate($class = NULL) {
 		if(func_num_args() > 0 && $class != NULL) throw new \InvalidArgumentException(get_called_class() . "::createTemplate do not support $class argument. Take look at renderers instead.");
@@ -150,11 +150,11 @@ class Control extends Nette\Application\UI\Control {
 
 	/**
 	 * Non sense because of renderers
-	 * @param  Nette\Templating\Template
+	 * @param  Nette\Application\UI\ITemplate
 	 * @return void
 	 */
 	final public function templatePrepareFilters($template) {
-		throw new \LogicException(get_called_class() . "::templatePrepareFilters should not be called. Use renderers instead.");
+		$this->renderer->templatePrepareFilters($template);
 	}
 
 	// </editor-fold>
