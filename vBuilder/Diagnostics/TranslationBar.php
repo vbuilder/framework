@@ -26,6 +26,7 @@ namespace vBuilder\Diagnostics;
 use vBuilder,
 	vBuilder\Localization\Translator,
 	vBuilder\Utils\Strings,
+	vBuilder\Utils\FileSystem,
 	Nette,
 	Nette\Http\Session,
 	Nette\InvalidStateException,
@@ -55,6 +56,27 @@ class TranslationBar implements IBarPanel {
 	private $queriedTranslations;
 	private $ok = TRUE;
 
+	public static $pluralForms = array(
+		NULL => array(
+			'expression' => NULL,
+			'plurals' => array(
+				0 => 1
+			)
+		),
+
+		'cs' => array(
+			// Gettext plural expression
+			'expression' => 'nplurals=3; plural=(n==1) ? 0 : ((n>=2 && n<=4) ? 1 : 2);',
+
+			// Priklady pluralu (form => example), pro ktere je treba prekladat
+			'plurals' => array(
+				0 => 1,
+				1 => 2,
+				2 => 0
+			)
+		)
+	);
+
 	/**
 	 * Registers translation micro presenter
 	 * which handles translation saves
@@ -71,16 +93,6 @@ class TranslationBar implements IBarPanel {
 		self::$registeredRoute = new Route('/<language [a-z]{2}>/vbuilder-translation-bar/<token [a-z0-9]{8}>', function (Translator $translator, Session $session) use ($app) {
 			list($request) = $app->getRequests();
 
-			$dictionary = NULL;
-			foreach($translator->getDictionaries() as $name => $dict) {
-				if($name == 'translationBar') {
-					$dictionary = $dict;
-					break;
-				}
-			}
-			if($dictionary === NULL) throw new InvalidStateException("Missing translationBar dictionary");
-			if(!$dictionary->isFrozen()) $dictionary->init($request->parameters['language']);
-
 			if(!$request->isPost())
 				throw new BadRequestException('Expected POST', 400);
 
@@ -88,6 +100,15 @@ class TranslationBar implements IBarPanel {
 			$session = $session->getSection(strtr(__CLASS__, '\\', '.'));
 			if(!isset($session->authToken) || $request->parameters['token'] != $session->authToken)
 				throw new BadRequestException('Invalid token', 403);
+
+			$lang = $request->parameters['language'];
+
+			$dictionary = TranslationBar::getDictionary($translator);
+			if(!$dictionary->isFrozen()) $dictionary->init($lang);
+
+			// Set plural form if not set
+			if($dictionary->getPluralForm() === NULL && isset(TranslationBar::$pluralForms[$lang]))
+				$dictionary->setPluralForm(TranslationBar::$pluralForms[$lang]['expression']);
 
 			// Process input
 			$data = Json::decode(file_get_contents('php://input'), Json::FORCE_ARRAY);
@@ -112,6 +133,17 @@ class TranslationBar implements IBarPanel {
 		$routeList[0] = self::$registeredRoute;
 	}
 
+	static function getDictionary(Translator $translator) {
+
+		foreach($translator->getDictionaries() as $name => $dict) {
+			if($name == 'translationBar') {
+				return $dict;
+			}
+		}
+
+		throw new InvalidStateException("Missing translationBar dictionary");
+	}
+
 	/**
 	 * Constructor.
 	 * Takes translator service and prepares URL for save requests
@@ -119,7 +151,7 @@ class TranslationBar implements IBarPanel {
 	function __construct(Translator $translator, Request $httpRequest, Session $session, Nette\DI\Container $container) {
 		$this->translator = $translator;
 		$this->httpRequest = $httpRequest;
-		$this->basePath = $container->parameters['wwwDir'] . '/..';
+		$this->basePath = FileSystem::normalizePath($container->parameters['wwwDir'] . '/..');
 
 		if(!isset(self::$registeredRoute))
 			throw new InvalidStateException(__CLASS__ . "::register not called?");
@@ -139,15 +171,33 @@ class TranslationBar implements IBarPanel {
 		if(isset($this->queriedTranslations)) return ;
 		if($this->translator->getLang() == 'en') return ;
 
+		$pluralForm = isset(TranslationBar::$pluralForms[$this->translator->getLang()])
+			? TranslationBar::$pluralForms[$this->translator->getLang()]
+			: TranslationBar::$pluralForms[NULL];
+
 		$this->queriedTranslations = $this->translator->getLogger()
 			? $this->translator->getLogger()->getQueriedTranslations()
 			: array();
 
 		// Gather translations
 		foreach($this->queriedTranslations as &$translation) {
-			// @todo: support for plurals
-			if(!isset($translation['translations']) && $translation['isTranslated'])
-				$translation['translations'] = array(__($translation['singular']));
+
+			$translation['translations'] = array();
+
+			foreach($pluralForm['plurals'] as $form => $n) {
+				$translated = $this->translator->getTranslation(
+					isset($translation['plural']) ? array($translation['singular'], $translation['plural']) : $translation['singular'],
+					array('n' => $n)
+				);
+
+				if($translated === NULL && $translation['isTranslated'])
+					$translation['isTranslated'] = FALSE;
+
+				$translation['translations'][] = $translated;
+
+				if(!isset($translation['plural']))
+					break;
+			}
 
 			if(!$translation['isTranslated']) $this->ok = FALSE;
 		}
@@ -188,6 +238,10 @@ class TranslationBar implements IBarPanel {
 		$translations = $this->queriedTranslations;
 		$lang = $this->translator->getLang();
 		$basePath = $this->basePath;
+
+		$pluralForm = isset(TranslationBar::$pluralForms[$lang])
+			? TranslationBar::$pluralForms[$lang]
+			: TranslationBar::$pluralForms[NULL];
 
 		$applicationRequest = new Nette\Application\Request('Nette:Micro', 'GET', array(
 			'language' => $lang,

@@ -10,14 +10,15 @@
 			color: #33bb33 !important;
 		}
 	</style>
-	<table style="font-size: 0.9em;">
+	<table style="font-size: 0.9em; min-width: 500px;">
 		<?php foreach($translations as $key => $translation) : $formIndex = 0;?>
 		<tr>
 			<td><div style="padding: 8px 0 5px 0; line-height: 11px;"><?php
 				echo htmlspecialchars($translation['singular']);
-				if(isset($translation['plural'])) echo '<br />' . htmlspecialchars($translation['plural']);
+				if(isset($translation['plural'])) { echo '<br />' . htmlspecialchars($translation['plural']); }
 			?></div></td>
-			<td><input type="text" class="form-control<?php if(!$translation['isTranslated']) echo ' vbuilder-missing-translation'; ?>" style="background: #fffdf3; padding: 5px; margin-top: 3px; font-size: 10px; line-height: 10px; height: auto;" <?php if(!$translation['isTranslated']) echo 'value="Missing" data-missing="true"'; else echo 'value="' . htmlspecialchars($translation['translations'][0])  . '"'; ?> data-key="<?php echo htmlspecialchars($translation['singular']); ?>"  disabled="disabled" /><?php
+			<td><?php for($i = 0; $i < (isset($translation['plural']) ? count($pluralForm['plurals']) : 1); $i++) : ?><input type="text" class="form-control<?php if(!$translation['isTranslated']) echo ' vbuilder-missing-translation'; ?>" style="background: #fffdf3; padding: 5px; margin-top: 3px; font-size: 10px; line-height: 10px; height: auto; width: 93%;" <?php if(!$translation['isTranslated'] || !isset($translation['translations'][$i])) echo 'value="Missing" data-missing="true"'; else echo 'value="' . htmlspecialchars($translation['translations'][$i])  . '"'; ?> data-key="<?php echo htmlspecialchars($translation['singular']); ?>"  disabled="disabled" />
+			<?php endfor;
 
 				if(count($translation['hints'])) {
 					echo "<p style=\"color: #666; font-size: 9px; margin-top: 10px;\">From:<br />";
@@ -63,11 +64,17 @@
 					$input.val('Missing').addClass('vbuilder-missing-translation');
 
 				else {
+
+					var values = [];
+					$panel.find('INPUT[data-key="' + $input.data('key') + '"]').each(function () {
+						values.push($(this).val());
+					});
+
 					var url = '<?php echo $actionUrl; ?>'; // Safe string
 					var data = { 'translations': [] };
 					data.translations[0] = {
 						'key': $input.data('key'),
-						'value': [ $input.val() ]
+						'value': values
 					};
 
 					$.post(url, JSON.stringify(data), function (data, textStatus, jqXHR) {
