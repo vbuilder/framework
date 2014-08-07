@@ -9,6 +9,14 @@ nette:
 			'<type js>/<file [a-f0-9]{32}\.js>': 'vBuilder:WebFile:default'
 			'<type css>/<file [a-f0-9]{32}\.css>': 'vBuilder:WebFile:default'
 
+	latte:
+		macros: [
+			'vBuilder\Latte\Macros\TranslationMacros::install',
+			'vBuilder\Latte\Macros\SystemMacros::install',
+			'vBuilder\Latte\Macros\RegionMacros::install'
+		]
+
+
 database:
 	tables:
 		'config': '%pkg.vbuilder.framework.dir%/db/config.sql'

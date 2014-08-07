@@ -114,6 +114,25 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 		$container->getDefinition('user')->addSetup('Tracy\Debugger::getBar()->addPanel(new vBuilder\Security\Diagnostics\UserPanel(?, $service))', array(
 			$container->expand('%pkg.nette.security.dir%')
 		));
+
+		// ---------------------------------------------------------------------
+		// Templating helpers
+		// ---------------------------------------------------------------------
+
+		$helpers = array(
+			array('translate', array('@translator', 'translate')),
+			array('printf', 'sprintf'),
+			array('stripBetweenTags', 'vBuilder\\Latte\\Helpers\\FormatHelpers::stripBetweenTags'),
+			array('monthName', 'vBuilder\\Latte\\Helpers\\DateFormatHelpers::monthName'),
+			array('weekDayName', 'vBuilder\\Latte\\Helpers\\DateFormatHelpers::weekDayName')
+		);
+
+		foreach($helpers as $params) {
+			$container->getDefinition('nette.latteFactory')->addSetup(
+				'$service->addFilter(?, ?)',
+				$params
+			);
+		}
 	}
 
 }
