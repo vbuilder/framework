@@ -185,10 +185,13 @@ class TranslationBar implements IBarPanel {
 			$translation['translations'] = array();
 
 			foreach($pluralForm['plurals'] as $form => $n) {
-				$translated = $this->translator->getTranslation(
+				list($translated, $ok) = $this->translator->getTranslation(
 					isset($translation['plural']) ? array($translation['singular'], $translation['plural']) : $translation['singular'],
 					array('n' => $n)
 				);
+
+				if(!$ok)
+					$translated = NULL;
 
 				if($translated === NULL && $translation['isTranslated'])
 					$translation['isTranslated'] = FALSE;

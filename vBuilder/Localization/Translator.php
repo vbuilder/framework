@@ -172,11 +172,11 @@ class Translator extends Nette\FreezableObject implements ITranslator
 	 */
 	public function translate($message, $count = NULL) {
 
-		$message = call_user_func_array(array($this, 'getTranslation'), func_get_args());
+		list($message, $ok) = call_user_func_array(array($this, 'getTranslation'), func_get_args());
 
 		// Logging
 		if($this->logger) {
-			if($message !== NULL) call_user_func_array(array($this->logger, 'translation'), func_get_args());
+			if($ok) call_user_func_array(array($this->logger, 'translation'), func_get_args());
 			else call_user_func_array(array($this->logger, 'missingTranslation'), func_get_args());
 		}
 
@@ -190,6 +190,8 @@ class Translator extends Nette\FreezableObject implements ITranslator
 
 	/**
 	 * Returns unexpanded translation in correct form
+	 *
+	 * @return array(message, isOk)
 	 */
 	public function getTranslation($message, $count = NULL) {
 		if(!$this->isFrozen()) {
@@ -212,11 +214,11 @@ class Translator extends Nette\FreezableObject implements ITranslator
 		$message = isset($messages[$plural]) ? $messages[$plural] : $messages[0];
 		foreach ($this->dictionaries as $dictionary) {
 			if (($tmp = $dictionary->translate(reset($messages), $form)) !== NULL) {
-				return $tmp;
+				return array($tmp, TRUE);
 			}
 		}
 
-		return NULL;
+		return array($message, FALSE);
 	}
 
 	/**
