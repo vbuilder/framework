@@ -24,7 +24,18 @@
 namespace vBuilder\Diagnostics;
 
 use vBuilder,
-	Nette;
+	vBuilder\Localization\Translator,
+	vBuilder\Utils\Strings,
+	Nette,
+	Nette\Http\Session,
+	Nette\InvalidStateException,
+	Nette\Application\Application,
+	Nette\Application\Routers\Route,
+	Nette\Utils\Json,
+	Nette\Application\BadRequestException,
+	Nette\Application\Responses\JsonResponse,
+	Nette\Http\Request,
+	Tracy\IBarPanel;
 
 /**
  * Debug bar for translations
@@ -32,7 +43,7 @@ use vBuilder,
  * @author Adam Staněk (velbloud)
  * @since Mar 17, 2014
  */
-class TranslationBar implements Nette\Diagnostics\IBarPanel {
+class TranslationBar implements IBarPanel {
 
 	private static $registeredRoute;
 
@@ -50,14 +61,14 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 	 *
 	 * This method is called from $app->onStartup() event
 	 */
-	static function register(Nette\Application\Application $app) {
+	static function register(Application $app) {
 
 		if(isset(self::$registeredRoute))
-			throw new Nette\InvalidStateException(__CLASS__ . "::register called twice?");
+			throw new InvalidStateException(__CLASS__ . "::register called twice?");
 
 		$routeList = $app->getRouter();
 
-		self::$registeredRoute = new Nette\Application\Routers\Route('/<language [a-z]{2}>/vbuilder-translation-bar/<token [a-z0-9]{8}>', function (vBuilder\Localization\Translator $translator, Nette\Http\Session $session) use ($app) {
+		self::$registeredRoute = new Route('/<language [a-z]{2}>/vbuilder-translation-bar/<token [a-z0-9]{8}>', function (Translator $translator, Session $session) use ($app) {
 			list($request) = $app->getRequests();
 
 			$dictionary = NULL;
@@ -67,19 +78,19 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 					break;
 				}
 			}
-			if($dictionary === NULL) throw new Nette\InvalidStateException("Missing translationBar dictionary");
+			if($dictionary === NULL) throw new InvalidStateException("Missing translationBar dictionary");
 			if(!$dictionary->isFrozen()) $dictionary->init($request->parameters['language']);
 
 			if(!$request->isPost())
-				throw new Nette\Application\BadRequestException('Expected POST', 400);
+				throw new BadRequestException('Expected POST', 400);
 
 			// Check authorization token (basic CSRF prevention)
 			$session = $session->getSection(strtr(__CLASS__, '\\', '.'));
 			if(!isset($session->authToken) || $request->parameters['token'] != $session->authToken)
-				throw new Nette\Application\BadRequestException('Invalid token', 403);
+				throw new BadRequestException('Invalid token', 403);
 
 			// Process input
-			$data = Nette\Utils\Json::decode(file_get_contents('php://input'), Nette\Utils\Json::FORCE_ARRAY);
+			$data = Json::decode(file_get_contents('php://input'), Json::FORCE_ARRAY);
 			if(isset($data['translations'])) {
 				foreach($data['translations'] as $tr) {
 					if(!isset($tr['key']) || !isset($tr['value'])) continue;
@@ -92,7 +103,7 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 			$dictionary->save();
 
 			$payload = array('ok' => TRUE);
-			return new Nette\Application\Responses\JsonResponse($payload);
+			return new JsonResponse($payload);
 		});
 
 		// Add our route as first
@@ -105,18 +116,18 @@ class TranslationBar implements Nette\Diagnostics\IBarPanel {
 	 * Constructor.
 	 * Takes translator service and prepares URL for save requests
 	 */
-	function __construct(vBuilder\Localization\Translator $translator, Nette\Http\Request $httpRequest, Nette\Http\Session $session, Nette\DI\Container $container) {
+	function __construct(Translator $translator, Request $httpRequest, Session $session, Nette\DI\Container $container) {
 		$this->translator = $translator;
 		$this->httpRequest = $httpRequest;
 		$this->basePath = $container->parameters['wwwDir'] . '/..';
 
 		if(!isset(self::$registeredRoute))
-			throw new Nette\InvalidStateException(__CLASS__ . "::register not called?");
+			throw new InvalidStateException(__CLASS__ . "::register not called?");
 
 		// Creates unique authorization token (basic CSRF prevention)
 		$session = $session->getSection(strtr(__CLASS__, '\\', '.'));
 		if(!isset($session->authToken))
-			$session->authToken = vBuilder\Utils\Strings::randomHumanToken(8);
+			$session->authToken = Strings::randomHumanToken(8);
 
 		$this->authToken = $session->authToken;
 	}
