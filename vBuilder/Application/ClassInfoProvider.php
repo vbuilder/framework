@@ -56,7 +56,8 @@ class ClassInfoProvider extends Nette\Object {
 		$cacheKey[] = $parentClassName;
 
 		return $this->getAllClassesHelper($cacheKey, function ($className) use ($parentClassName) {
-			return is_subclass_of($className, $parentClassName);
+			// @ NetteLoader triggers user warning on obsolete classes
+			return @is_subclass_of($className, $parentClassName);
 		});
 	}
 
