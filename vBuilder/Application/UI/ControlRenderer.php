@@ -201,6 +201,19 @@ class ControlRenderer extends vBuilder\Object {
 	}
 
 	/**
+	 * @param ITemplate|FALSE
+	 * @return self
+	 */
+	public function setTemplate($template) {
+
+		if($template !== FALSE && !($template instanceof ITemplate))
+			throw new Nette\UnexpectedValueException("Expected instance of Nette\\Application\\UI\\ITemplate or FALSE.");
+
+		$this->template = $template;
+		return $this;
+	}
+
+	/**
 	 * @return ITemplate
 	 */
 	public function getTemplate()
