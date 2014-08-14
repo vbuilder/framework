@@ -112,15 +112,15 @@ class ControlRenderer extends vBuilder\Object {
 	 * @return void
 	 */
 	function render() {
-		if($this->template !== FALSE) {
+		if(($template = $this->getTemplate()) !== FALSE) {
 
 			// File templates
-			if(!$this->template->getFile()) {
+			if(!$template->getFile()) {
 				foreach($this->formatTemplateFiles() as $file) {
 					if(file_exists($file)) {
-						$this->template->setFile($file);
+						$template->setFile($file);
 
-						$this->template->render();
+						$template->render();
 						return ;
 					}
 				}
@@ -129,7 +129,7 @@ class ControlRenderer extends vBuilder\Object {
 			}
 
 			// Other templates
-			$this->template->render();
+			$template->render();
 		}
 	}
 
