@@ -56,7 +56,7 @@ class SessionRepository extends BaseRepository {
 	public function __construct(Nette\DI\Container $context) {
 		parent::__construct($context);
 
-		Debugger::getBar()->addPanel(new vBuilder\Diagnostics\OrmSessionBar);
+		Debugger::getBar()->addPanel(new vBuilder\Diagnostics\OrmSessionBar($this));
 	}
 
 	public function findAll($entityName, $processSubclasses = false) {

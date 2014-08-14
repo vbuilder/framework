@@ -47,7 +47,7 @@ class OrmSessionBar implements IBarPanel {
 	 * @return string
 	 */
 	public function getTab() {
-		if(!$this->getContext()->session->isStarted()) return ;
+		if(!$this->repository->getContext()->session->isStarted()) return ;
 
 		ob_start();
 
@@ -61,7 +61,7 @@ class OrmSessionBar implements IBarPanel {
 	 * @return string
 	 */
 	public function getPanel() {
-		if(!$this->getContext()->session->isStarted()) return;
+		if(!$this->repository->getContext()->session->isStarted()) return;
 
 		ob_start();
 
