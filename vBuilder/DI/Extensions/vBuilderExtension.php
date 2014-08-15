@@ -116,17 +116,34 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 		));
 
 		// ---------------------------------------------------------------------
-		// Templating helpers
+		// Templating helpers (filters)
 		// ---------------------------------------------------------------------
 
-		$helpers = array(
-			array('translate', array('@translator', 'translate')),
-			array('printf', 'sprintf'),
-			array('stripBetweenTags', 'vBuilder\\Latte\\Helpers\\FormatHelpers::stripBetweenTags'),
-			array('monthName', 'vBuilder\\Latte\\Helpers\\DateFormatHelpers::monthName'),
-			array('weekDayName', 'vBuilder\\Latte\\Helpers\\DateFormatHelpers::weekDayName')
+		// Classes with helpers
+		$helperClasses = array(
+			'vBuilder\\Latte\\Helpers\\FormatHelpers',
+			'vBuilder\\Latte\\Helpers\\DateFormatHelpers'
 		);
 
+		// Specific helpers
+		$helpers = array(
+			array('translate', array('@translator', 'translate')),
+			array('printf', 'sprintf')
+		);
+
+		// Find all helpers in helper classes
+		foreach($helperClasses as $className) {
+			$refl = new \ReflectionClass($className);
+			$methods = $refl->getMethods(\ReflectionMethod::IS_STATIC | \ReflectionMethod::IS_PUBLIC);
+			foreach($methods as $method) {
+				$helpers[] = array(
+					$method->getName(),
+					$className . '::' . $method->getName()
+				);
+			}
+		}
+
+		// Register helpers
 		foreach($helpers as $params) {
 			$container->getDefinition('nette.latteFactory')->addSetup(
 				'$service->addFilter(?, ?)',
