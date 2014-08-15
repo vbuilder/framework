@@ -949,7 +949,7 @@ class AclAuthorizator extends Nette\Object implements Nette\Security\IAuthorizat
 		if ($resource !== self::ALL) {
 			$resourcesToProcess = is_array($resource) ? $resource : array($resource);
 
-			foreach($resourcesToProcess as $resource) {
+			foreach($resourcesToProcess as &$resource) {
 				if ($resource instanceof IResource) {
 					$resource = $resource->getResourceId();
 				}
