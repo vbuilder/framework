@@ -132,11 +132,14 @@ class WebFilesGenerator extends Nette\Object {
 						$path = Strings::endsWith($prefix, '/') ? $prefix : $prefix . '/';
 						$path .= $file;
 
-						if(file_exists($path)) break;
+						// @ May trigger open_basedir restriction warning
+						if(@file_exists($path))
+							break;
 					}
 				}
 
-				if(!isset($path) || !file_exists($path))
+				// @ May trigger open_basedir restriction warning
+				if(!isset($path) || !@file_exists($path))
 					throw new Nette\InvalidArgumentException("File '$file' does not exist (Search paths: '" . implode($basePath, "', '") . "')");
 
 				$lastMod = filemtime($path);
