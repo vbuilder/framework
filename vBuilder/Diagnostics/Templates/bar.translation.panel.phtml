@@ -36,55 +36,60 @@
 	</table>
 	<script style="text/javascript">
 		if (typeof jQuery != 'undefined') {
-			var $panel = $('.vbuilder-TranslationPanel');
 
-			$panel.find('INPUT').prop('disabled', false);
+			// Requires jQuery >= 1.7.0
+			var version = $.fn.jquery.split('.');
+			if(parseInt(version[0]) > 1 || parseInt(version[1]) > 7) {
 
-			$panel.on('focus', '.vbuilder-missing-translation', function () {
-				$(this)
-					.val('')
-					.removeClass('vbuilder-missing-translation');
-			});
+				var $panel = $('.vbuilder-TranslationPanel');
+				$panel.find('INPUT').prop('disabled', false);
 
-			$panel.on('focus', 'INPUT[type=text]', function (event) {
-
-					$(this).removeClass('vbuilder-saved-translation');
-
-				}).on('keyup', 'INPUT[type=text]', function (event) {
-
-					if(event.keyCode == 13) {
-						$(this).blur();
-					}
+				$panel.on('focus', '.vbuilder-missing-translation', function () {
+					$(this)
+						.val('')
+						.removeClass('vbuilder-missing-translation');
 				});
 
-			$panel.on('blur', 'INPUT[type=text]', function () {
-				var $input = $(this)
+				$panel.on('focus', 'INPUT[type=text]', function (event) {
 
-				if($input.val() == '' && $input.data('missing'))
-					$input.val('Missing').addClass('vbuilder-missing-translation');
+						$(this).removeClass('vbuilder-saved-translation');
 
-				else {
+					}).on('keyup', 'INPUT[type=text]', function (event) {
 
-					var values = [];
-					$panel.find('INPUT[data-key="' + $input.data('key') + '"]').each(function () {
-						values.push($(this).val());
+						if(event.keyCode == 13) {
+							$(this).blur();
+						}
 					});
 
-					var url = '<?php echo $actionUrl; ?>'; // Safe string
-					var data = { 'translations': [] };
-					data.translations[0] = {
-						'key': $input.data('key'),
-						'value': values
-					};
+				$panel.on('blur', 'INPUT[type=text]', function () {
+					var $input = $(this)
 
-					$.post(url, JSON.stringify(data), function (data, textStatus, jqXHR) {
-						$input.addClass('vbuilder-saved-translation');
+					if($input.val() == '' && $input.data('missing'))
+						$input.val('Missing').addClass('vbuilder-missing-translation');
 
-					}).fail(function () {
-						alert('Error occured while saving translation.');
-					});
-				}
-			});
+					else {
+
+						var values = [];
+						$panel.find('INPUT[data-key="' + $input.data('key') + '"]').each(function () {
+							values.push($(this).val());
+						});
+
+						var url = '<?php echo $actionUrl; ?>'; // Safe string
+						var data = { 'translations': [] };
+						data.translations[0] = {
+							'key': $input.data('key'),
+							'value': values
+						};
+
+						$.post(url, JSON.stringify(data), function (data, textStatus, jqXHR) {
+							$input.addClass('vbuilder-saved-translation');
+
+						}).fail(function () {
+							alert('Error occured while saving translation.');
+						});
+					}
+				});
+			}
 		}
 	</script>
 </div>
