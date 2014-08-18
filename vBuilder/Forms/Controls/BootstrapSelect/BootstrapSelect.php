@@ -237,7 +237,7 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 			}
 
 			$jsObject->{'custom-value'} = $customEntryValue;
-			if($this->customEntryPrefixLabel) $jsObject->{'custom-prefix'} = $this->customEntryPrefixLabel;
+			if($this->customEntryPrefixLabel) $jsObject->{'custom-prefix'} = $this->translate($this->customEntryPrefixLabel);
 		}
 
 		// Wrapper with script
