@@ -33,18 +33,6 @@ use Nette;
  */
 class vBuilderExtension extends Nette\DI\CompilerExtension {
 
-	public function setCompiler(Nette\DI\Compiler $compiler, $name) {
-		parent::setCompiler($compiler, $name);
-
-		// We have to set this BEFORE loadConfiguration(), because this
-		// variable is already used in our config.neon
-		$libraryPath = realpath(__DIR__ . '/../../../');
-		$this->getContainerBuilder()->parameters['vBuilderFwDir'] = $libraryPath;
-
-		return $this;
-	}
-
-
 	public function loadConfiguration() {
 		$container = $this->getContainerBuilder();
 

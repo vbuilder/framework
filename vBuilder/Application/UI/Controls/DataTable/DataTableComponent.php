@@ -66,8 +66,7 @@ class Component extends Nette\Object {
 
 	public function getClass($rowData = NULL) {
 		if(is_callable($this->_class) && $rowData !== NULL) {
-			$foo = $this->_class;
-			return $foo($rowData);
+			return call_user_func($this->_class, $rowData);
 		}
 
 		return $this->_class;
@@ -80,8 +79,7 @@ class Component extends Nette\Object {
 
 	public function isVisible($rowData = NULL) {
 		if(is_callable($this->_visible) && $rowData !== NULL) {
-			$foo = $this->_visible;
-			return $foo($rowData);
+			return call_user_func($this->_visible, $rowData);
 		}
 
 		return $this->_visible;

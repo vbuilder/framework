@@ -57,8 +57,7 @@ class Column extends Component {
 
 	public function render($value, $rowData) {
 		if($this->_renderer) {
-			$r = $this->_renderer;
-			return $r($value, $rowData);
+			return call_user_func($this->_renderer, $value, $rowData);
 		}
 
 		return $value;
