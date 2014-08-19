@@ -74,10 +74,16 @@ class ClassInfoProvider extends Nette\Object {
 
 		return $this->getAllClassesHelper($cacheKey, function ($className) use ($interfaceName) {
 
-			// @ NetteLoader triggers user warning on obsolete classes
-			@$class = new Nette\Reflection\ClassType($className);
+			// Class might not exist
+			try {
 
-			return $class->implementsInterface($interfaceName) && $interfaceName != $className;
+				// @ NetteLoader triggers user warning on obsolete classes
+				@$class = new Nette\Reflection\ClassType($className);
+				return $class->implementsInterface($interfaceName) && $interfaceName != $className;
+
+			} catch(\ReflectionException $e) {
+				return FALSE;
+			}
 		});
 	}
 
