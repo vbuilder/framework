@@ -116,6 +116,16 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 		));
 
 		// ---------------------------------------------------------------------
+		// Template factory
+		// ---------------------------------------------------------------------
+
+		$templateFactoryDef = $container->getDefinition('nette.templateFactory');
+		$templateFactoryDef->setClass(
+			'vBuilder\\Application\\UI\TemplateFactory',
+			$templateFactoryDef->getParameters()
+		);
+
+		// ---------------------------------------------------------------------
 		// Templating helpers (filters)
 		// ---------------------------------------------------------------------
 
