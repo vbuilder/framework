@@ -1,11 +1,9 @@
-A.integerPickerMore,
-A.integerPickerLess {
-	text-decoration: none;
-}
-
-A.integerPickerMore IMG,
-A.integerPickerLess IMG {
-	border: none;
+BUTTON.integerPickerMore:focus,
+BUTTON.integerPickerLess:focus {
+	border-color: none !important;
+	box-shadow: none !important;
+	-webkit-box-shadow: none !important;
+	outline: none !important;
 }
 
 

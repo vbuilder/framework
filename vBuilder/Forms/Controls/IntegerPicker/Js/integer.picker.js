@@ -1,7 +1,7 @@
 $(function() {
-	
+
 	//##//##// integerPicker:
-	
+
 	var changeAmount = function (input, addend) {
 		var num = parseInt(input.val(), 10),
 			result = num + addend;
@@ -15,8 +15,10 @@ $(function() {
 
 		$(document).on('click', '.'+i, ((function (m) {
 			return function (e){
-				changeAmount($('#'+$(this).attr('data-integerPicker-id')), tmp[m]);
-				e.preventDefault();
+				var $ip = $('#'+$(this).attr('data-integerpicker-id'));
+				changeAmount($ip, tmp[m]);
+				$ip.focus();
+				return false;
 			}
 		})(i)));
 	}

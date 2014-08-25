@@ -11,21 +11,22 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * vStore is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
-
+ *
  * You should have received a copy of the GNU General Public License
  * along with vStore bundle. If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace vBuilder\Application\UI\Form;
 
-use vStore, Nette,
-	vBuilder,
-	Nette\Application\UI\Form;
+use Nette,
+	Nette\Utils\Html;
+
+use vBuilder\Application\WebFilesGenerator;
 
 /**
  * Shop products listing
@@ -35,45 +36,68 @@ use vStore, Nette,
  */
 class IntegerPicker extends Nette\Forms\Controls\TextInput {
 
-	protected static $registered = false;
-
 	const POSITIVE = ':positive';
 
-	public static function addIntegerPicker(Form $form, $name, $label = null, $cols = null, $maxLength = null) {
-		$control = new static($label, $cols, $maxLength);
-		return $form[$name] = $control->addRule(Form::INTEGER);
+	/**
+	 * Appends this control to a form container.
+	 *
+	 * @return IntegerPicker
+	 */
+	public static function addToContainer(Nette\Forms\Container $fContainer, $name, $label = NULL) {
+		return $fContainer[$name] = new static($label);
 	}
 
-	public static function register() {
-		if (!self::$registered) {
-			Form::extensionMethod('addIntegerPicker', __NAMESPACE__.'\IntegerPicker::addIntegerPicker');
-			self::$registered = true;
+	/**
+	 * Adds static files when connected to form (and presenter).
+	 *
+	 * @param  IComponent
+	 * @return void
+	 */
+	protected function attached($parent) {
+		parent::attached($parent);
+
+		if($parent instanceof Nette\Application\UI\Presenter) {
+			$context = $parent->getContext();
+			$context->webFilesGenerator->addFile(__DIR__ . '/Css/integer.picker.css', WebFilesGenerator::STYLESHEET);
+			$context->webFilesGenerator->addFile(__DIR__ . '/Js/integer.picker.js', WebFilesGenerator::JAVASCRIPT);
 		}
 	}
 
+	/**
+	 * Sets up monitoring for Presenter
+	 *
+	 * @return void
+	 */
+	protected function validateParent(Nette\ComponentModel\IContainer $parent) {
+		parent::validateParent($parent);
+		$this->monitor('Nette\Application\UI\Presenter');
+	}
+
+	/**
+	 * Creates control HTML element
+	 *
+	 * @return void
+	 */
 	public function getControl() {
-		$container = Nette\Utils\Html::el('span');
-		$control = parent::getControl();
-		$control->class[] = 'form-control integerPicker';
 
-		/*$template = $this->getForm()->getPresenter()->createTemplate();
-		$template->setFile(__DIR__.'/Templates/control.latte');
-		$template->input = $control; */
+		$el = Html::el('div')->class('input-group');
+		$controlEl = parent::getControl();
 
-		$context = $this->getForm()->getPresenter()->getContext();
+		$el->add($addonEl = Html::el('span')->class('input-group-btn'));
+		$addonEl->add($lessEl = Html::el('button')->class('btn btn-default integerPickerLess')->type('button'));
+		$lessEl->{'data-integerpicker-id'} = $controlEl->id;
+		$lessEl->add(Html::el('span')->class('glyphicon glyphicon-chevron-down'));
 
-		$template = new Nette\Templating\FileTemplate(__DIR__.'/Templates/control.latte');
+		$el->add($controlEl);
 
-		$latte = $context->getService('nette.latte');
-		$template->registerFilter($latte);
-		vBuilder\Latte\Macros\SystemMacros::install($latte->compiler);
+		$el->add($addonEl = Html::el('span')->class('input-group-btn'));
+		$addonEl->add($moreEl = Html::el('button')->class('btn btn-default integerPickerMore')->type('button'));
+		$moreEl->{'data-integerpicker-id'} = $controlEl->id;
+		$moreEl->add(Html::el('span')->class('glyphicon glyphicon-chevron-up'));
 
-		$template->context = $context;
-		$template->input = $control;
-		$template->_control = $this->getForm()->lookup('Nette\Application\UI\Control', true);
+		$controlEl->class[] = 'form-control integerPicker';
 
-		$container->setHtml($template);
-		return $container;
+		return $el;
 	}
 
 	public static function validatePositive(IntegerPicker $control) {

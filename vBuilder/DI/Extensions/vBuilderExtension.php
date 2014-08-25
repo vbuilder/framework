@@ -162,4 +162,15 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 		}
 	}
 
+	public function afterCompile(Nette\PhpGenerator\ClassType $class) {
+		$initialize = $class->methods['initialize'];
+
+		$initialize->addBody(
+			'Nette\Forms\Container::extensionMethod(' .
+				'\'addIntegerPicker\', ' .
+				'\'vBuilder\Application\UI\Form\IntegerPicker::addToContainer\'' .
+			');'
+		);
+	}
+
 }
