@@ -33,13 +33,13 @@ class Captcha extends Nette\Forms\Controls\TextBase
 	public static $defaultFontSize = 30;
 
 	/** @var array from Image::rgb() */
-	public static $defaultTextColor = array('red' => 0, 'green' => 0, 'blue' => 0);
+	public static $defaultTextColor = array('red' => 48, 'green' => 48, 'blue' => 48);
 
 	/** @var int */
 	public static $defaultTextMargin = 25;
 
 	/** @var array from Image::rgb() */
-	public static $defaultBackgroundColor = array('red' => 255, 'green' => 255, 'blue' => 255);
+	public static $defaultBackgroundColor = array('red' => 232, 'green' => 234, 'blue' => 236);
 
 	/** @var int */
 	public static $defaultLength = 5;
@@ -124,6 +124,9 @@ class Captcha extends Nette\Forms\Controls\TextBase
 		$this->addFilter('strtolower');
 		$this->label = Html::el('img');
 
+		if(!self::$defaultFontFile)
+			self::$defaultFontFile = __DIR__ . "/fonts/Vera.ttf";
+
 		$this->setFontFile(self::$defaultFontFile);
 		$this->setFontSize(self::$defaultFontSize);
 		$this->setTextColor(self::$defaultTextColor);
@@ -141,38 +144,16 @@ class Captcha extends Nette\Forms\Controls\TextBase
 	}
 
 	/**
-	 * Register CaptchaControl to FormContainer, start session and set $defaultFontFile (if not set)
-	 * @return void
-	 * @throws \Nette\InvalidStateException
-	 */
-	public static function register()
-	{
-		if (self::$registered)
-			throw new \Nette\InvalidStateException(__CLASS__ . " is already registered");
-
-		$session = Environment::getService('session');
-		if (!$session->isStarted()) {
-			$session->start();
-		}
-
-		self::$session = $session->getSection('PavelMaca.Captcha');
-
-		if (!self::$defaultFontFile)
-			self::$defaultFontFile = __DIR__ . "/fonts/Vera.ttf";
-
-		FormContainer::extensionMethod('addCaptcha', callback(__CLASS__, 'addCaptcha'));
-		self::$registered = TRUE;
-	}
-
-	/**
 	 * Form container extension method. Do not call directly.
 	 * @param Form
 	 * @param string name
 	 * @return CaptchaControl
 	 */
-	public static function addCaptcha(Form $form, $name)
+	public static function addToContainer(Form $form, $name, $label = NULL)
 	{
-		return $form[$name] = new static;
+		$_this = new static;
+		$_this->caption = $label;
+		return $form[$name] = $_this;
 	}
 
 	/*	 * **************** Setters & Getters **************p*m* */
@@ -532,13 +513,36 @@ class Captcha extends Nette\Forms\Controls\TextBase
 	 * @param \Nette\ComponentModel\IComponent
 	 * @return void
 	 */
-	protected function attached($form)
-	{
-		parent::attached($form);
-		if ($form instanceof Form) {
+	protected function attached($parent) {
+		parent::attached($parent);
+
+		if($parent instanceof Form) {
 			$name = $this->getUidName();
-			$form[$name] = new HiddenField($this->getUid());
+			$parent[$name] = new HiddenField($this->getUid());
 		}
+
+		if($parent instanceof Nette\Application\UI\Presenter) {
+			$context = $parent->getContext();
+
+			if(!isset(self::$session)) {
+
+				$session = $context->session;
+				if(!$session->isStarted())
+					$session->start();
+
+				self::$session = $session->getSection('PavelMaca.Captcha');
+			}
+		}
+	}
+
+	/**
+	 * Sets up monitoring for Presenter
+	 *
+	 * @return void
+	 */
+	protected function validateParent(Nette\ComponentModel\IContainer $parent) {
+		parent::validateParent($parent);
+		$this->monitor('Nette\Application\UI\Presenter');
 	}
 
 	/*	 * **************** Drawing image **************p*m* */

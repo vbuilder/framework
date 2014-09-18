@@ -171,6 +171,13 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 				'\'vBuilder\Application\UI\Form\IntegerPicker::addToContainer\'' .
 			');'
 		);
+
+		$initialize->addBody(
+			'Nette\Forms\Container::extensionMethod(' .
+				'\'addCaptcha\', ' .
+				'\'vBuilder\Forms\Controls\Captcha::addToContainer\'' .
+			');'
+		);
 	}
 
 }
