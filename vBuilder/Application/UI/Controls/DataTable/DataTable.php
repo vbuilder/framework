@@ -431,9 +431,24 @@ class DataTable extends vBuilder\Application\UI\Control {
 	public function getResultSet() {
 		if(!$this->_initialized) $this->init();
 
+		// Saved sort columns might not be available anymore (columns have changed)
+		if(isset($this->session->sortColumns)) {
+
+			$sortColumns = array();
+			foreach($this->session->sortColumns as $name => $m) {
+				if($this->getColumn($name, FALSE))
+					$sortColumns[$name] = $m;
+			}
+
+			if(count($sortColumns) == 0)
+				$sortColumns = $this->_defaultSortColumns;
+
+		} else
+			$sortColumns = $this->_defaultSortColumns;
+
 		return $this->model->getResultSet(
 			$this->_filter,
-			isset($this->session->sortColumns) ? $this->session->sortColumns : $this->_defaultSortColumns
+			$sortColumns
 		);
 	}
 
@@ -488,8 +503,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 		// Row class
 		if(isset($this->_rowClass)) {
 			if(is_callable($this->_rowClass)) {
-				$cb = $this->_rowClass;
-				$class = $cb($rowData);
+				$class = call_user_func($this->_rowClass, $rowData);
 			} else
 				$class = $this->_rowClass;
 
@@ -582,8 +596,7 @@ class DataTable extends vBuilder\Application\UI\Control {
 				throw new Nette\InvalidArgumentException("Missing ID column " . var_export($key, true) . " for action " . var_export($this->getParam('action'), true));
 		}
 
-		$cb = $this->_actions[$this->getParam('action')];
-		$cb($pk, $this);
+		call_user_func($this->_actions[$this->getParam('action')], $pk, $this);
 	}
 
 	/**

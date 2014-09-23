@@ -75,10 +75,21 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 	protected function attached($parent) {
 		parent::attached($parent);
 
-		$presenter = $this->lookup('Nette\Application\UI\Presenter', true);
-		$context = $presenter->getContext();
-		$context->webFilesGenerator->addFile(__DIR__ . '/Js/bootstrap-select.js', WebFilesGenerator::JAVASCRIPT);
-		$context->webFilesGenerator->addFile(__DIR__ . '/Css/bootstrap-select.css', WebFilesGenerator::STYLESHEET);
+		if($parent instanceof Nette\Application\UI\Presenter) {
+			$context = $parent->getContext();
+			$context->webFilesGenerator->addFile(__DIR__ . '/Js/bootstrap-select.js', WebFilesGenerator::JAVASCRIPT);
+			$context->webFilesGenerator->addFile(__DIR__ . '/Css/bootstrap-select.css', WebFilesGenerator::STYLESHEET);
+		}
+	}
+
+	/**
+	 * Sets up monitoring for Presenter
+	 *
+	 * @return void
+	 */
+	protected function validateParent(Nette\ComponentModel\IContainer $parent) {
+		parent::validateParent($parent);
+		$this->monitor('Nette\Application\UI\Presenter');
 	}
 
 	/**
@@ -226,7 +237,7 @@ class BootstrapSelect extends Nette\Forms\Controls\TextInput {
 			}
 
 			$jsObject->{'custom-value'} = $customEntryValue;
-			if($this->customEntryPrefixLabel) $jsObject->{'custom-prefix'} = $this->customEntryPrefixLabel;
+			if($this->customEntryPrefixLabel) $jsObject->{'custom-prefix'} = $this->translate($this->customEntryPrefixLabel);
 		}
 
 		// Wrapper with script

@@ -62,8 +62,7 @@ class Button extends Component {
 
 	public function render($rowData) {
 		if($this->_renderer) {
-			$r = $this->_renderer;
-			return $r($this);
+			return call_user_func($this->_renderer, $this);
 		}
 
 		// Direct URL
@@ -71,8 +70,7 @@ class Button extends Component {
 
 			// URL callback
 			if(is_callable($this->_url)) {
-				$foo = $this->_url;
-				$url = $foo($rowData);
+				$url = call_user_func($this->_url, $rowData);
 			}
 
 			// URL string
