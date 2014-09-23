@@ -146,6 +146,9 @@ class LdapBindAuthenticator extends BaseAuthenticator {
 			$result = $this->ldapConnection->search($bindDn, '(objectclass=*)', array('givenname', 'sn', 'displayName', 'gidNumber', 'uidNumber'));
 			$info = $result->fetch();
 
+			if(!$info)
+				throw new AuthenticationException("Couldn't load user profile from LDAP", self::FAILURE);
+
 			$identity = $this->identityFactory->createIdentity(
 				$info,
 				$this
