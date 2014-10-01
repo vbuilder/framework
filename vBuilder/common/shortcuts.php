@@ -198,7 +198,6 @@ function _nx($single, $plural, $number, array $args)
 
 Nette\Application\UI\Form::extensionMethod('loadFromEntity', 'vBuilder\Orm\FormHelper::loadFromEntity');
 Nette\Application\UI\Form::extensionMethod('fillInEntity', 'vBuilder\Orm\FormHelper::fillInEntity');
-Nette\Forms\Container::extensionMethod('addBootstrapSelect', 'vBuilder\Forms\Controls\BootstrapSelect::addToContainer');
 
 // -----------------------------------------------------------------------------
 // Some predefines Route classes
