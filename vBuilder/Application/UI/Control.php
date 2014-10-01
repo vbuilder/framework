@@ -28,6 +28,8 @@ use vBuilder, Nette;
 /**
  * Advanced base control for vBuilder based applications
  *
+ * @note Please note, that this Control is considered deprecated since vBuilder 2.0.
+ *
  * @author Adam Staněk (velbloud)
  * @since Oct 7, 2011
  */
