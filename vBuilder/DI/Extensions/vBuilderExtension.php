@@ -165,19 +165,20 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 	public function afterCompile(Nette\PhpGenerator\ClassType $class) {
 		$initialize = $class->methods['initialize'];
 
-		$initialize->addBody(
-			'Nette\Forms\Container::extensionMethod(' .
-				'\'addIntegerPicker\', ' .
-				'\'vBuilder\Application\UI\Form\IntegerPicker::addToContainer\'' .
-			');'
+		$formExtensions = array(
+			'addIntegerPicker' => 'vBuilder\Application\UI\Form\IntegerPicker::addToContainer',
+			'addCaptcha' => 'vBuilder\Forms\Controls\Captcha::addToContainer',
+			'addBootstrapSelect' => 'vBuilder\Forms\Controls\BootstrapSelect::addToContainer'
 		);
 
-		$initialize->addBody(
-			'Nette\Forms\Container::extensionMethod(' .
-				'\'addCaptcha\', ' .
-				'\'vBuilder\Forms\Controls\Captcha::addToContainer\'' .
-			');'
-		);
+		foreach($formExtensions as $alias => $target) {
+			$initialize->addBody(
+				'Nette\Forms\Container::extensionMethod(' .
+					var_export($alias, TRUE) . ', ' .
+					var_export($target, TRUE) .
+				');'
+			);
+		}
 	}
 
 }
