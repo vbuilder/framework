@@ -1,6 +1,7 @@
 {
 	"name": "vbuilder/framework",
 	"type": "library",
+	"license": "GPL-3.0",
 	"description": "vBuilder Framework Library",
 	"keywords": ["framework", "nette"],
 	"homepage": "http://www.vbuilder.cz",
