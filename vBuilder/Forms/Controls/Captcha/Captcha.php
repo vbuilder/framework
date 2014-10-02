@@ -121,6 +121,7 @@ class Captcha extends Nette\Forms\Controls\TextBase
 		}
 
 		parent::__construct();
+		$this->setOmitted(TRUE);
 		$this->addFilter('strtolower');
 		$this->label = Html::el('img');
 
@@ -519,6 +520,7 @@ class Captcha extends Nette\Forms\Controls\TextBase
 		if($parent instanceof Form) {
 			$name = $this->getUidName();
 			$parent[$name] = new HiddenField($this->getUid());
+			$parent[$name]->setOmitted(TRUE);
 		}
 
 		if($parent instanceof Nette\Application\UI\Presenter) {
