@@ -27,10 +27,6 @@
 		"bin/tr-compile"
 	],
 	"extra": {
-		"branch-alias": {
-			"dev-master": "1.0.x-dev"
-		},
-
 		"vbuilder": {
 			"extensions": {
 				"vBuilder": "vBuilder\\DI\\Extensions\\vBuilderExtension"
