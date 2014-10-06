@@ -1,4 +1,8 @@
-<h1>Translations (<?php echo htmlspecialchars(strtoupper($lang)); ?>)</h1>
+<?php
+
+use vBuilder\Utils\FileSystem;
+
+?><h1>Translations (<?php echo htmlspecialchars(strtoupper($lang)); ?>)</h1>
 
 <div class="tracy-inner tracy-DumpPanel vbuilder-TranslationPanel">
 	<style>
@@ -10,20 +14,20 @@
 			color: #33bb33 !important;
 		}
 	</style>
-	<table style="font-size: 0.9em; min-width: 500px;">
+	<table style="font-size: 0.9em; margin-right: 15px;">
 		<?php foreach($translations as $key => $translation) : $formIndex = 0;?>
 		<tr>
-			<td><div style="padding: 8px 0 5px 0; line-height: 11px;"><?php
+			<td style="min-width: 230px;"><div style="padding: 8px 0 5px 0; line-height: 11px;"><?php
 				echo htmlspecialchars($translation['singular']);
 				if(isset($translation['plural'])) { echo '<br />' . htmlspecialchars($translation['plural']); }
 			?></div></td>
-			<td><?php for($i = 0; $i < (isset($translation['plural']) ? count($pluralForm['plurals']) : 1); $i++) : ?><input type="text" class="form-control<?php if(!$translation['isTranslated']) echo ' vbuilder-missing-translation'; ?>" style="background: #fffdf3; padding: 5px; margin-top: 3px; font-size: 10px; line-height: 10px; height: auto; width: 93%;" <?php if(!$translation['isTranslated'] || !isset($translation['translations'][$i])) echo 'value="Missing" data-missing="true"'; else echo 'value="' . htmlspecialchars($translation['translations'][$i])  . '"'; ?> data-key="<?php echo htmlspecialchars($translation['singular']); ?>"  disabled="disabled" />
+			<td<?php if(count($translation['hints']) == 0) : ?> style="padding-bottom: 5px;"<?php endif ?>><?php for($i = 0; $i < (isset($translation['plural']) ? count($pluralForm['plurals']) : 1); $i++) : ?><input type="text" class="form-control<?php if(!$translation['isTranslated']) echo ' vbuilder-missing-translation'; ?>" style="background: #fffdf3; padding: 5px; margin-top: 3px; font-size: 10px; line-height: 10px; height: auto; width: 200px;" <?php if(!$translation['isTranslated'] || !isset($translation['translations'][$i])) echo 'value="Missing" data-missing="true"'; else echo 'value="' . htmlspecialchars($translation['translations'][$i])  . '"'; ?> data-key="<?php echo htmlspecialchars($translation['singular']); ?>"  disabled="disabled" />
 			<?php endfor;
 
 				if(count($translation['hints'])) {
 					echo "<p style=\"color: #666; font-size: 9px; margin-top: 10px;\">From:<br />";
 					foreach(array_slice($translation['hints'], 0, 3) as $hint) {
-						echo htmlspecialchars(substr($hint, 0, strlen($basePath) + 1) == "$basePath/" ? substr($hint, strlen($basePath)) : $hint);
+						echo htmlspecialchars('./' . FileSystem::getRelativePath($basePath, $hint));
 						echo "<br />";
 					}
 
@@ -33,6 +37,16 @@
 			?></td>
 		</tr>
 		<?php endforeach; ?>
+
+		<tr style="background: none;">
+			<td colspan="2" style="background: white; border-left: none; border-right: none;">&nbsp;</td>
+		</tr>
+
+		<?php foreach($dictionaries as $dictionary) : ?><tr>
+			<td colspan="2">
+				<?php echo htmlspecialchars('./' . FileSystem::getRelativePath($basePath, $dictionary['path'])); ?>
+			</td>
+		</tr><?php endforeach ?>
 	</table>
 	<script style="text/javascript">
 		if (typeof jQuery != 'undefined') {

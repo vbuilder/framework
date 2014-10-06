@@ -238,6 +238,16 @@ class TranslationBar implements IBarPanel {
 
 		ob_start();
 
+		$dictionaries = array();
+		foreach($this->translator->dictionaries as $dictionary) {
+			$path = str_replace(array('%dir%', '%lang%'), array($dictionary->dir, $this->translator->getLang()), $dictionary->fileMask);
+
+			$dictionaries[] = array(
+				'path' => $path,
+				'present' => @file_exists($path) && is_readable($path) // @ possible open_basedir restriction
+			);
+		}
+
 		$translations = $this->queriedTranslations;
 		$lang = $this->translator->getLang();
 		$basePath = $this->basePath;
