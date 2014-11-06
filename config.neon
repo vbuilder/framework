@@ -45,14 +45,6 @@ database:
 			structure: '%pkg.vbuilder.framework.dir%/db/security_log.sql'
 			data: false
 
-		'oauth2_clients':
-			structure: '%pkg.vbuilder.framework.dir%/db/oauth2_clients.sql'
-			data: false
-
-		'oauth2_tokens':
-			structure: '%pkg.vbuilder.framework.dir%/db/oauth2_tokens.sql'
-			data: false
-
 services:
 	# Support for construction mode
 	app.constructionMode:
@@ -158,23 +150,6 @@ services:
 	# UI Region provider
 	regionProvider:
 		class: vBuilder\Application\UI\RegionProvider
-
-	# REST API
-	rest.router:
-		class: vBuilder\RestApi\RequestRouter
-		inject: true
-
-	# REST API: Token manager
-	rest.oauth2.databaseTokenManager:
-		class: vBuilder\RestApi\OAuth2\DatabaseTokenManager
-		inject: true
-		setup:
-			- setSecretKey(%secretKey%)
-
-	# REST API: Client authenticator
-	rest.oauth2.databaseClientAuthenticator:
-		class: vBuilder\RestApi\OAuth2\DatabaseClientAuthenticator
-		inject: true
 
 	# Cryptography
 	crypto.secretKeeper:
