@@ -159,12 +159,15 @@ class User extends vBuilder\Events\Observable {
 
 			// Iterate through all the matching handlers
 			$e = NULL;
-			foreach($handlers as $handler) {
-				try {
-					$identity = $handler->authenticate(array_slice(func_get_args(), 2));
-					$e = NULL;
-					break;
-				} catch(AuthenticationException $e) { }
+			foreach($handlers as $source) {
+				$handlers2 = is_array($source) ? $source : array($source);
+				foreach($handlers2 as $handler) {
+					try {
+						$identity = $handler->authenticate(array_slice(func_get_args(), 2));
+						$e = NULL;
+						break;
+					} catch(AuthenticationException $e) { }
+				}
 			}
 
 			if($e !== NULL) {
