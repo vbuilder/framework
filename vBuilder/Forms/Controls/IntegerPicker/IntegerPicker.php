@@ -83,6 +83,9 @@ class IntegerPicker extends Nette\Forms\Controls\TextInput {
 		$el = Html::el('div')->class('input-group');
 		$controlEl = parent::getControl();
 
+		// @see https://developer.apple.com/library/ios/documentation/StringsTextFonts/Conceptual/TextAndWebiPhoneOS/KeyboardManagement/KeyboardManagement.html
+		$controlEl->pattern("[0-9]*");
+
 		$el->add($addonEl = Html::el('span')->class('input-group-btn'));
 		$addonEl->add($lessEl = Html::el('button')->class('btn btn-default integerPickerLess')->type('button'));
 		$lessEl->{'data-integerpicker-id'} = $controlEl->id;

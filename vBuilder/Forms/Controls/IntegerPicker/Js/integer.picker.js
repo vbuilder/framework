@@ -17,7 +17,7 @@ $(function() {
 			return function (e){
 				var $ip = $('#'+$(this).attr('data-integerpicker-id'));
 				changeAmount($ip, tmp[m]);
-				$ip.focus();
+				$(this).blur();
 				return false;
 			}
 		})(i)));
