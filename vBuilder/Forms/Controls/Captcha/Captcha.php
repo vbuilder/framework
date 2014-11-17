@@ -484,7 +484,8 @@ class Captcha extends Nette\Forms\Controls\TextBase
 		$image->src = $this->getImageSrc();
 		$image->width = $this->getImageWidth();
 		$image->height = $this->getImageHeight();
-		$image->class[] = 'captcha';
+		if(is_array($image->class)) $image->class[] = 'captcha';
+			else $image->class .= ' captcha';
 
 		if (!isset($image->alt))
 			$image->alt = "Captcha";
