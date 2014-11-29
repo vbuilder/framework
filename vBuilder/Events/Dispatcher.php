@@ -48,10 +48,9 @@ class Dispatcher extends Nette\Object {
 	private $eventLog = array();
 	private $events = array();
 
-	public function __construct(Nette\DI\Container $context) {
-		$this->lateChecking = $context->parameters['debugMode'];
+	public function __construct($lateChecking = FALSE) {
+		$this->lateChecking = (bool) $lateChecking;
 	}
-
 
 	public function subscribe($source, $event, $subscriber = NULL, $ignoreLateCheck = FALSE) {
 
