@@ -120,6 +120,14 @@ class vBuilderExtension extends Nette\DI\CompilerExtension {
 		// ---------------------------------------------------------------------
 
 		$templateFactoryDef = $container->getDefinition('nette.templateFactory');
+
+		if($templateFactoryDef->getFactory()) {
+			$templateFactoryDef->setFactory(
+				'vBuilder\\Application\\UI\TemplateFactory',
+				(array) $templateFactoryDef->getFactory()->arguments
+			);
+		}
+
 		$templateFactoryDef->setClass(
 			'vBuilder\\Application\\UI\TemplateFactory',
 			$templateFactoryDef->getParameters()

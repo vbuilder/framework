@@ -34,7 +34,7 @@
 {/if}
 <!-- {/if}<script type="text/javascript">
 	var _gaq = _gaq || [];
-	_gaq.push(['_setAccount', '{$gaAccount}']);
+	_gaq.push(['_setAccount', {!$gaAccount|escapeJs}]);
 	_gaq.push(['_trackPageview']);
 			
 	(function() {

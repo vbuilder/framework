@@ -147,7 +147,9 @@ class Presenter extends Nette\Application\UI\Presenter {
 			$this->snippetMode = TRUE;
 
 		// Redering kvuli tomu, aby se zpracovaly pripadna addCss/Js makra pro generator
-		$rendered = $template->__toString(true);
+		ob_start();
+		$template->render();
+		$rendered = ob_get_clean();
 
 		if($this->context->hasService('webFilesGenerator'))	{
 			$webFileTypes = array(WebFilesGenerator::JAVASCRIPT, WebFilesGenerator::STYLESHEET);

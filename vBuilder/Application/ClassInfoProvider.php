@@ -114,18 +114,22 @@ class ClassInfoProvider extends Nette\Object {
 	public static function getIndexedClasses() {
 		$loaders = (array) spl_autoload_functions();
 
+		$blacklist = array(
+			'vBuilder\Composer\Plugin'
+		);
+
 		$classes = array();
 		foreach($loaders as $loader) {
 			if(!is_array($loader)) continue;
 			if($loader[0] instanceof Nette\Loaders\RobotLoader) {
 				foreach($loader[0]->getIndexedClasses() as $class => $file) {
-					if($file && !in_array($class, $classes))
+					if($file && !in_array($class, $classes) && !in_array($class, $blacklist))
 						$classes[] = $class;
 				}
 
 			} elseif($loader[0] instanceof Composer\Autoload\ClassLoader) {
 				foreach($loader[0]->getClassMap() as $class => $file) {
-					if($file && !in_array($class, $classes))
+					if($file && !in_array($class, $classes) && !in_array($class, $blacklist))
 						$classes[] = $class;
 				}
 			}

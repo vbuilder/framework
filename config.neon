@@ -54,7 +54,7 @@ services:
 
 	# Event dispatcher
 	events.dispatcher:
-		class: vBuilder\Events\Dispatcher
+		class: vBuilder\Events\Dispatcher(%debugMode%)
 
 	# Authentication / authorization layer
 	user:
