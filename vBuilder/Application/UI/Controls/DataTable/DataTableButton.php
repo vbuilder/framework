@@ -37,6 +37,7 @@ class Button extends Component {
 
 	private $_el;
 	private $_url;
+	private $_beforeRender = array();
 
 	public function setUrl($url) {
 		$this->_url = $url;
@@ -58,6 +59,13 @@ class Button extends Component {
 		}
 
 		return $this->_el;
+	}
+
+	public function beforeRender($callable) {
+		if(!is_callable($callable))
+			throw new Nette\InvalidArgumentException("Given argument is not callable");
+
+		$this->_beforeRender[] = $callable;
 	}
 
 	public function render($rowData) {
@@ -91,6 +99,11 @@ class Button extends Component {
 		// Class
 		if(($class = $this->getClass($rowData)) !== NULL) {
 			$element->class .= " $class";
+		}
+
+		// Before render callbacks
+		foreach($this->_beforeRender as $callable) {
+			call_user_func($callable, $rowData, $this, $element);
 		}
 
 		return (string) $element;
