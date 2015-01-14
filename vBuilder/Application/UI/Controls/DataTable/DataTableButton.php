@@ -65,6 +65,8 @@ class Button extends Component {
 			return call_user_func($this->_renderer, $this);
 		}
 
+		$element = clone $this->element;
+
 		// Direct URL
 		if($this->_url !== NULL) {
 
@@ -80,18 +82,18 @@ class Button extends Component {
 					$url->appendQuery(array('record' . ucfirst($key) => isset($rowData->{$key}) ? $rowData->{$key} : NULL));
 			}
 
-			$this->element->href((string) $url);
+			$element->href((string) $url);
 
 		// Standard action's URL
 		} else
-			$this->element->href($this->_table->createActionLink($this->getName(), $rowData));
+			$element->href($this->_table->createActionLink($this->getName(), $rowData));
 
 		// Class
 		if(($class = $this->getClass($rowData)) !== NULL) {
-			$this->element->class .= " $class";
+			$element->class .= " $class";
 		}
 
-		return (string) $this->element;
+		return (string) $element;
 	}
 
 }
