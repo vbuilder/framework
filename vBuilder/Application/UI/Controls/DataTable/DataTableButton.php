@@ -62,7 +62,7 @@ class Button extends Component {
 
 	public function render($rowData) {
 		if($this->_renderer) {
-			return call_user_func($this->_renderer, $this);
+			return call_user_func($this->_renderer, $rowData, $this);
 		}
 
 		$element = clone $this->element;
